@@ -1,113 +1,154 @@
-import { getSession } from '@/lib/auth';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth/helpers';
+import { prisma } from '@/lib/prisma';
+import { FileBarChart, Users, Calendar } from 'lucide-react';
 
-export default async function ReportsPage() {
-  const session = await getSession();
+export default async function ReportsListPage() {
+  const currentUser = await getCurrentUser();
 
-  if (!session) {
+  if (!currentUser) {
     redirect('/admin/login');
   }
 
+  // Role-based filtering
+  const campaigns = await prisma.surveyCampaign.findMany({
+    where:
+      currentUser.role === 'SUPER_ADMIN'
+        ? { status: { in: ['COMPLETED', 'ACTIVE'] } }
+        : {
+            organizationId: currentUser.organizationId || undefined,
+            status: { in: ['COMPLETED', 'ACTIVE'] },
+          },
+    include: {
+      organization: true,
+      _count: {
+        select: {
+          invitations: true,
+        },
+      },
+      invitations: {
+        where: {
+          status: 'COMPLETED',
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  const getResponseRate = (
+    invitations: { status: string }[],
+    totalInvited: number
+  ) => {
+    if (totalInvited === 0) return 0;
+    return Math.round((invitations.length / totalInvited) * 100);
+  };
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          View analytics and export survey results
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          View survey results and analytics for completed campaigns
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg bg-white p-6 shadow">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Survey Analytics
-            </h2>
-            <button className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-              Export
-            </button>
-          </div>
-          <div className="text-center py-8">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-            <p className="mt-2 text-sm text-gray-500">
-              No data available yet
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Response Rates
-            </h2>
-            <select className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500">
-              <option>Last 30 days</option>
-              <option>Last 90 days</option>
-              <option>All time</option>
-            </select>
-          </div>
-          <div className="text-center py-8">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"
-              />
-            </svg>
-            <p className="mt-2 text-sm text-gray-500">
-              No campaigns to track yet
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-lg bg-white p-6 shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Recent Reports
-        </h2>
-        <div className="text-center py-8">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-            />
-          </svg>
-          <p className="mt-2 text-sm text-gray-500">
-            No reports generated yet
+      {campaigns.length === 0 ? (
+        <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+          <FileBarChart className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            No reports available
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Complete a campaign to view its report.
           </p>
+          <div className="mt-6">
+            <Link
+              href="/admin/campaigns"
+              className="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              View Campaigns
+            </Link>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {campaigns.map((campaign) => {
+            const completedCount = campaign.invitations.length;
+            const totalInvitations = campaign._count.invitations;
+            const responseRate = getResponseRate(
+              campaign.invitations,
+              totalInvitations || 1
+            );
+
+            return (
+              <Link
+                key={campaign.id}
+                href={`/admin/reports/${campaign.id}`}
+                className="block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">
+                      {campaign.surveyTitle}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {campaign.organization.name}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      campaign.status === 'COMPLETED'
+                        ? 'bg-gray-100 text-gray-800'
+                        : 'bg-green-100 text-green-800'
+                    }`}
+                  >
+                    {campaign.status}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>
+                      {completedCount} / {totalInvitations} responses
+                    </span>
+                    <span className="ml-2 font-medium text-primary-600">
+                      ({responseRate}%)
+                    </span>
+                  </div>
+
+                  {campaign.endDate && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      <span>
+                        Ended{' '}
+                        {new Date(campaign.endDate).toLocaleDateString(
+                          'en-US',
+                          {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          }
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">View Report</span>
+                    <span className="text-primary-600">→</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

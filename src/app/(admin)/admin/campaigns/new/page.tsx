@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { getAllSurveys } from '@/lib/sanity';
 import { NewCampaignForm } from '@/components/admin/NewCampaignForm';
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewCampaignPage() {
   // Fetch organizations from database
   const organizations = await prisma.organization.findMany({

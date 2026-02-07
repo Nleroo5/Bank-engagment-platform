@@ -1,132 +1,318 @@
-import { getSession } from '@/lib/auth';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth/helpers';
+import { prisma } from '@/lib/prisma';
+import {
+  BarChart3,
+  Users,
+  Clock,
+  TrendingUp,
+  Plus,
+  Upload,
+  ArrowRight,
+} from 'lucide-react';
 
 export default async function DashboardPage() {
-  const session = await getSession();
+  const currentUser = await getCurrentUser();
 
-  if (!session) {
+  if (!currentUser) {
     redirect('/admin/login');
   }
 
+  // Role-based filtering
+  const orgFilter =
+    currentUser.role === 'SUPER_ADMIN'
+      ? {}
+      : { organizationId: currentUser.organizationId || undefined };
+
+  // Fetch stats
+  const [campaigns, users, invitations] = await Promise.all([
+    // Total campaigns (active ones)
+    prisma.surveyCampaign.count({
+      where: {
+        ...orgFilter,
+        status: 'ACTIVE',
+      },
+    }),
+
+    // Total users
+    prisma.user.count({ where: orgFilter }),
+
+    // All invitations for completion metrics
+    prisma.invitation.findMany({
+      where: {
+        campaign: orgFilter,
+      },
+      select: {
+        status: true,
+      },
+    }),
+  ]);
+
+  // Calculate pending responses (SENT or OPENED, not completed)
+  const pendingResponses = invitations.filter(
+    (inv) => inv.status === 'SENT' || inv.status === 'OPENED'
+  ).length;
+
+  // Calculate completion rate
+  const completedResponses = invitations.filter(
+    (inv) => inv.status === 'COMPLETED'
+  ).length;
+  const completionRate =
+    invitations.length > 0
+      ? Math.round((completedResponses / invitations.length) * 100)
+      : 0;
+
+  // Fetch recent campaigns
+  const recentCampaigns = await prisma.surveyCampaign.findMany({
+    where: orgFilter,
+    include: {
+      organization: true,
+      _count: {
+        select: {
+          invitations: true,
+        },
+      },
+      invitations: {
+        where: {
+          status: 'COMPLETED',
+        },
+        select: {
+          id: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: 5,
+  });
+
+  const getResponseRate = (completedCount: number, totalCount: number) => {
+    if (totalCount === 0) return 0;
+    return Math.round((completedCount / totalCount) * 100);
+  };
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Welcome back, {session.user.name || session.user.email}
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Welcome back, {currentUser.name || currentUser.email}
         </p>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Stats cards */}
-        <div className="rounded-lg bg-white p-6 shadow">
+        {/* Total Active Campaigns */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">
-                Total Campaigns
+                Active Campaigns
               </p>
-              <p className="mt-2 text-3xl font-semibold text-gray-900">0</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{campaigns}</p>
             </div>
             <div className="rounded-full bg-blue-100 p-3">
-              <svg
-                className="h-6 w-6 text-blue-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+              <BarChart3 className="h-6 w-6 text-blue-600" />
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">
-                Active Surveys
-              </p>
-              <p className="mt-2 text-3xl font-semibold text-gray-900">0</p>
-            </div>
-            <div className="rounded-full bg-green-100 p-3">
-              <svg
-                className="h-6 w-6 text-green-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow">
+        {/* Total Users */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Users</p>
-              <p className="mt-2 text-3xl font-semibold text-gray-900">3</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{users}</p>
             </div>
             <div className="rounded-full bg-purple-100 p-3">
-              <svg
-                className="h-6 w-6 text-purple-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
+              <Users className="h-6 w-6 text-purple-600" />
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow">
+        {/* Pending Responses */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">
-                Responses
+                Pending Responses
               </p>
-              <p className="mt-2 text-3xl font-semibold text-gray-900">0</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">
+                {pendingResponses}
+              </p>
             </div>
             <div className="rounded-full bg-orange-100 p-3">
-              <svg
-                className="h-6 w-6 text-orange-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
+              <Clock className="h-6 w-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
+
+        {/* Completion Rate */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">
+                Completion Rate
+              </p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">
+                {completionRate}%
+              </p>
+            </div>
+            <div className="rounded-full bg-green-100 p-3">
+              <TrendingUp className="h-6 w-6 text-green-600" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg bg-white p-6 shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Recent Activity
+      {/* Quick Actions */}
+      <div className="mt-8">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          Quick Actions
         </h2>
-        <p className="text-sm text-gray-500">No recent activity to display.</p>
+        <div className="flex gap-4">
+          <Link
+            href="/admin/campaigns/new"
+            className="inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+          >
+            <Plus className="h-4 w-4" />
+            New Campaign
+          </Link>
+          <Link
+            href="/admin/users/import"
+            className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Upload className="h-4 w-4" />
+            Import Users
+          </Link>
+        </div>
+      </div>
+
+      {/* Recent Campaigns */}
+      <div className="mt-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Recent Campaigns
+          </h2>
+          <Link
+            href="/admin/campaigns"
+            className="text-sm font-medium text-primary-600 hover:text-primary-700"
+          >
+            View all →
+          </Link>
+        </div>
+
+        {recentCampaigns.length === 0 ? (
+          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
+            <BarChart3 className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              No campaigns yet
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by creating a new campaign.
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/admin/campaigns/new"
+                className="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Campaign
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Survey
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Organization
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Response Rate
+                  </th>
+                  <th className="relative px-6 py-3">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {recentCampaigns.map((campaign) => {
+                  const totalInvitations = campaign._count.invitations;
+                  const completedCount = campaign.invitations.length;
+                  const responseRate = getResponseRate(
+                    completedCount,
+                    totalInvitations
+                  );
+
+                  return (
+                    <tr key={campaign.id} className="hover:bg-gray-50">
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {campaign.surveyTitle}
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="text-sm text-gray-500">
+                          {campaign.organization.name}
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                            campaign.status === 'ACTIVE'
+                              ? 'bg-green-100 text-green-800'
+                              : campaign.status === 'COMPLETED'
+                                ? 'bg-gray-100 text-gray-800'
+                                : campaign.status === 'DRAFT'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {campaign.status}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="text-sm font-medium text-gray-900">
+                            {responseRate}%
+                          </div>
+                          <div className="ml-2 w-16">
+                            <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+                              <div
+                                className="h-full bg-primary-600"
+                                style={{ width: `${responseRate}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                        <Link
+                          href={`/admin/campaigns/${campaign.id}`}
+                          className="inline-flex items-center text-primary-600 hover:text-primary-900"
+                        >
+                          View
+                          <ArrowRight className="ml-1 h-4 w-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

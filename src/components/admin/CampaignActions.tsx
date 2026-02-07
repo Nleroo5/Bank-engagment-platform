@@ -85,8 +85,30 @@ export function CampaignActions({ campaign }: CampaignActionsProps) {
       return;
     }
 
-    setError('Reminder emails are not yet implemented');
-    // TODO: Implement reminder email sending
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await fetch(`/api/campaigns/${campaign.id}/remind`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to send reminders');
+      }
+
+      const data = await response.json();
+      setSuccess(
+        data.message || `Sent ${data.remindersSent} reminder(s) successfully!`
+      );
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCloseCampaign = async () => {

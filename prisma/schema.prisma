@@ -79,17 +79,18 @@ model SurveyCampaign {
 // ─── Invitations ─────────────────────────────────────────────────────────
 
 model Invitation {
-  id          String         @id @default(uuid())
-  campaignId  String
-  campaign    SurveyCampaign @relation(fields: [campaignId], references: [id])
-  userId      String
-  user        User           @relation(fields: [userId], references: [id])
-  token       String         @unique @default(uuid())
-  status      String         @default("PENDING") // PENDING | SENT | OPENED | IN_PROGRESS | COMPLETED | EXPIRED
-  sentAt      DateTime?
-  openedAt    DateTime?
-  completedAt DateTime?
-  createdAt   DateTime       @default(now())
+  id             String         @id @default(uuid())
+  campaignId     String
+  campaign       SurveyCampaign @relation(fields: [campaignId], references: [id])
+  userId         String
+  user           User           @relation(fields: [userId], references: [id])
+  token          String         @unique @default(uuid())
+  status         String         @default("PENDING") // PENDING | SENT | OPENED | IN_PROGRESS | COMPLETED | EXPIRED
+  sentAt         DateTime?
+  openedAt       DateTime?
+  completedAt    DateTime?
+  reminderSentAt DateTime?
+  createdAt      DateTime       @default(now())
 
   session   ResponseSession?
   responses Response[]

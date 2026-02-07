@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSurveyById } from '@/lib/sanity';
+import { sendInvitation } from '@/lib/email/send';
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -11,7 +13,11 @@ export async function POST(
       where: { id: params.id },
       include: {
         organization: true,
-        invitations: true,
+        invitations: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
 
@@ -62,20 +68,50 @@ export async function POST(
       )
     );
 
-    // TODO: Send invitation emails
-    // This would integrate with Resend or SendGrid
-    // For now, we just create the invitations
+    // Fetch survey details from Sanity
+    const survey = await getSurveyById(campaign.sanitysurveyId);
 
-    // Placeholder for email sending
-    console.log(
-      `Would send ${invitations.length} invitation emails for campaign ${campaign.id}`
-    );
+    if (!survey) {
+      return NextResponse.json(
+        { error: 'Survey content not found in CMS' },
+        { status: 404 }
+      );
+    }
+
+    // Send invitation emails
+    let emailsSent = 0;
+    const emailErrors: string[] = [];
+
+    for (const invitation of invitations) {
+      try {
+        // Fetch the full invitation with user data
+        const invitationWithUser = await prisma.invitation.findUnique({
+          where: { id: invitation.id },
+          include: { user: true },
+        });
+
+        if (!invitationWithUser || !invitationWithUser.user) {
+          emailErrors.push(`Failed to send to invitation ${invitation.id}: User not found`);
+          continue;
+        }
+
+        await sendInvitation(invitationWithUser, campaign, survey);
+        emailsSent++;
+      } catch (error) {
+        console.error(`Failed to send invitation email to ${invitation.userId}:`, error);
+        emailErrors.push(
+          `Failed to send to ${invitation.userId}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,
       invitationsSent: invitations.length,
+      emailsSent,
+      emailErrors: emailErrors.length > 0 ? emailErrors : undefined,
       totalInvitations: campaign.invitations.length + invitations.length,
-      message: `Created ${invitations.length} new invitations. Email sending is not yet implemented.`,
+      message: `Created ${invitations.length} new invitations. Successfully sent ${emailsSent} emails.`,
     });
   } catch (error) {
     console.error('Error sending invitations:', error);
