@@ -113,13 +113,13 @@ async function main() {
       if (!actualMappings[q.categoryName]) {
         actualMappings[q.categoryName] = [];
       }
-      actualMappings[q.categoryName].push(q.number);
+      actualMappings[q.categoryName]!.push(q.number);
       questionsByNumber[q.number] = q;
     });
 
     // Sort question numbers in each category
     Object.keys(actualMappings).forEach((cat) => {
-      actualMappings[cat].sort((a, b) => a - b);
+      actualMappings[cat]!.sort((a, b) => a - b);
     });
 
     // Compare expected vs actual
