@@ -37,16 +37,37 @@ export const category = defineType({
       type: "number",
       description: "Display order in reports and dashboards",
     }),
+    defineField({
+      name: "weight",
+      title: "Scoring Weight Multiplier",
+      type: "number",
+      description:
+        "Multiplier applied to category totals for weighted scoring (e.g., 1.75 for Communication, 2.3 for Culture). Default is 1.0 (no weighting). Used in report calculations.",
+      initialValue: 1.0,
+      validation: (rule) =>
+        rule.required().min(0.1).max(10).precision(2).custom((weight) => {
+          if (weight === undefined || weight === null) {
+            return "Weight is required";
+          }
+          if (weight <= 0) {
+            return "Weight must be greater than 0";
+          }
+          return true;
+        }),
+    }),
   ],
   preview: {
     select: {
       title: "name",
       colorCode: "colorCode",
+      weight: "weight",
     },
-    prepare({ title, colorCode }) {
+    prepare({ title, colorCode, weight }) {
+      const weightDisplay = weight ? `×${weight}` : "×1.0";
+      const colorDisplay = colorCode || "No color";
       return {
         title,
-        subtitle: colorCode || "No color set",
+        subtitle: `${colorDisplay} | Weight: ${weightDisplay}`,
       };
     },
   },

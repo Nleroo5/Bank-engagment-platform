@@ -25,6 +25,7 @@ export interface Category {
   colorCode?: string;
   description?: string;
   sortOrder?: number;
+  weight: number; // Scoring weight multiplier (e.g., 1.75, 2.3) - default 1.0
 }
 
 // Question with populated category reference

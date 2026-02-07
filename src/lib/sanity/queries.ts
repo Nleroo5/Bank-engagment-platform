@@ -21,7 +21,8 @@ const CATEGORY_FRAGMENT = `
     name,
     colorCode,
     description,
-    sortOrder
+    sortOrder,
+    weight
   }
 `;
 
@@ -108,7 +109,8 @@ export async function getCategoriesForSurvey(
         name,
         colorCode,
         description,
-        sortOrder
+        sortOrder,
+        weight
       }
     }.categories
   `;
@@ -172,7 +174,8 @@ export async function getAllCategories(): Promise<Category[]> {
       name,
       colorCode,
       description,
-      sortOrder
+      sortOrder,
+      weight
     }
   `;
 

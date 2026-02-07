@@ -4,10 +4,12 @@ import { getSurveyById } from '@/lib/sanity';
 import { getCurrentUser } from '@/lib/auth/helpers';
 import {
   calculateCategoryScores,
-  calculateSectionScores,
-  calculateSurveyScore,
-} from '@/lib/scoring/calculate';
-import { checkAnonymityThreshold, ANONYMOUS_SURVEY_TYPES } from '@/lib/scoring/anonymity';
+  prepareResponsesForScoring,
+} from '@/lib/scoring/categoryScoring';
+import {
+  checkAnonymityThreshold,
+  ANONYMOUS_SURVEY_TYPES,
+} from '@/lib/scoring/anonymity';
 import type { Response } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -34,7 +36,7 @@ export async function GET(
       );
     }
 
-    // Fetch campaign
+    // Fetch campaign with all data
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.campaignId },
       include: {
@@ -43,17 +45,16 @@ export async function GET(
           where: { status: 'COMPLETED' },
           include: {
             user: true,
-            responses: true,
+            responses: {
+              orderBy: { questionNumber: 'asc' },
+            },
           },
         },
       },
     });
 
     if (!campaign) {
-      return NextResponse.json(
-        { error: 'Campaign not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
     }
 
     // Role-based access
@@ -70,9 +71,9 @@ export async function GET(
     // Fetch survey from Sanity
     const survey = await getSurveyById(campaign.sanitysurveyId);
 
-    if (!survey) {
+    if (!survey || !survey.scale) {
       return NextResponse.json(
-        { error: 'Survey content not found' },
+        { error: 'Survey content not found or incomplete' },
         { status: 404 }
       );
     }
@@ -94,274 +95,328 @@ export async function GET(
       );
     }
 
-    // Collect all responses
-    const allResponses: Response[] = [];
-    for (const invitation of campaign.invitations) {
-      allResponses.push(...invitation.responses);
-    }
-
-    // Prepare question definitions
+    // Extract questions with full metadata
     const questions = survey.sections.flatMap((section) =>
       section.questions.map((q) => ({
         _id: q._id,
-        questionNumber: q.number,
+        number: q.number,
+        text: q.text,
         isReversed: q.isReversed,
-        category: q.category,
+        category: {
+          _id: q.category._id,
+          name: q.category.name,
+          weight: q.category.weight,
+          colorCode: q.category.colorCode,
+          sortOrder: q.category.sortOrder,
+        },
         section: { _id: section._id, title: section.title },
       }))
     );
 
-    const scaleMax = survey.surveyType === 'likert3' ? 3 : 5;
+    // Extract unique categories
+    const categoriesMap = new Map(
+      questions.map((q) => [q.category._id, q.category])
+    );
+    const categories = Array.from(categoriesMap.values()).sort((a, b) => {
+      if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+        return a.sortOrder - b.sortOrder;
+      }
+      return a.name.localeCompare(b.name);
+    });
 
-    // Calculate scores
-    const surveyScore = calculateSurveyScore(allResponses, questions, scaleMax);
-    const categoryScores = calculateCategoryScores(allResponses, questions, scaleMax);
-    const sectionScores = calculateSectionScores(allResponses, questions, scaleMax);
+    // Calculate weighted scores for each respondent
+    const individualResults = campaign.invitations.map((invitation) => {
+      const preparedResponses = prepareResponsesForScoring(
+        invitation.responses.map((r) => ({
+          sanityQuestionId: r.sanityQuestionId,
+          questionNumber: r.questionNumber,
+          value: r.value!,
+        })),
+        questions
+      );
 
-    // Generate Excel export
+      const scoringResult = calculateCategoryScores(
+        preparedResponses,
+        categories,
+        survey._id,
+        survey.title,
+        invitation.id,
+        survey.scale!.min,
+        survey.scale!.max,
+        survey.surveyType as 'likert3' | 'likert5'
+      );
+
+      return {
+        invitationId: invitation.id,
+        userName: invitation.user.name || invitation.user.email,
+        ...scoringResult,
+      };
+    });
+
+    // Calculate aggregate statistics
+    const aggregateStats = categories.map((category) => {
+      const categoryScores = individualResults
+        .map((result) =>
+          result.categoryScores.find((cs) => cs.categoryId === category._id)
+        )
+        .filter((cs) => cs !== undefined);
+
+      const weightedScores = categoryScores.map((cs) => cs!.weightedScore);
+      const rawScores = categoryScores.map((cs) => cs!.rawTotal);
+
+      const averageWeighted =
+        weightedScores.reduce((sum, score) => sum + score, 0) /
+        weightedScores.length;
+      const averageRaw =
+        rawScores.reduce((sum, score) => sum + score, 0) / rawScores.length;
+
+      const mean = averageWeighted;
+      const squaredDiffs = weightedScores.map((score) =>
+        Math.pow(score - mean, 2)
+      );
+      const variance =
+        squaredDiffs.reduce((sum, diff) => sum + diff, 0) /
+        weightedScores.length;
+      const stdDev = Math.sqrt(variance);
+
+      return {
+        categoryName: category.name,
+        categoryWeight: category.weight,
+        questionCount: categoryScores[0]?.questionCount || 0,
+        respondentCount: weightedScores.length,
+        averageWeightedScore: Math.round(averageWeighted * 10) / 10,
+        averageRawScore: Math.round(averageRaw * 10) / 10,
+        minWeightedScore: Math.min(...weightedScores),
+        maxWeightedScore: Math.max(...weightedScores),
+        standardDeviation: Math.round(stdDev * 10) / 10,
+        averagePercentage:
+          Math.round(
+            (averageWeighted / categoryScores[0]!.maxPossibleWeighted) *
+              100 *
+              10
+          ) / 10,
+      };
+    });
+
+    const isAnonymousSurvey = ANONYMOUS_SURVEY_TYPES.includes(
+      survey.surveyType.toLowerCase()
+    );
+
+    // ================================================================================
+    // EXCEL EXPORT
+    // ================================================================================
     if (format === 'xlsx') {
       const workbook = XLSX.utils.book_new();
 
       // Sheet 1: Summary
+      const totalInvitations = campaign.invitations.length + (await prisma.invitation.count({
+        where: { campaignId: campaign.id }
+      })) - campaign.invitations.length;
+
+      const completionRate = totalInvitations > 0
+        ? Math.round((campaign.invitations.length / totalInvitations) * 100 * 10) / 10
+        : 0;
+
+      const overallWeightedScore =
+        individualResults.reduce(
+          (sum, r) => sum + r.overallMetrics.totalWeightedScore,
+          0
+        ) / individualResults.length;
+
       const summaryData = [
-        ['Survey Report'],
+        ['WEIGHTED SCORING REPORT'],
         [''],
+        ['Survey Information'],
         ['Survey Title', campaign.surveyTitle],
         ['Organization', campaign.organization.name],
         ['Survey Type', survey.surveyType],
+        ['Survey Number', survey.surveyNumber || 'N/A'],
         ['Start Date', campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : 'N/A'],
         ['End Date', campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'N/A'],
         ['Status', campaign.status],
         [''],
         ['Response Metrics'],
-        ['Total Invitations', campaign.invitations.length],
+        ['Total Invitations', totalInvitations],
         ['Completed Responses', campaign.invitations.length],
-        ['Completion Rate', `${Math.round((campaign.invitations.length / (campaign.invitations.length || 1)) * 100)}%`],
+        ['Completion Rate', `${completionRate}%`],
         [''],
-        ['Overall Score'],
-        ['Average Score', surveyScore.averageScore.toFixed(1)],
-        ['Scale Maximum', scaleMax],
-        ['Total Questions', surveyScore.totalQuestions],
-        ['Total Responses', surveyScore.totalResponses],
+        ['Overall Weighted Score'],
+        ['Average Weighted Score', overallWeightedScore.toFixed(1)],
+        ['Scale Range', `${survey.scale.min} - ${survey.scale.max}`],
       ];
 
       const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-      // Sheet 2: Category Scores
+      // Sheet 2: Weighted Category Scores ⭐ NEW!
       const categoryData = [
-        ['Category Scores'],
+        ['WEIGHTED CATEGORY SCORES'],
         [''],
-        ['Category', 'Average Score', 'Question Count', 'Response Count'],
-        ...categoryScores.map((cat) => [
+        [
+          'Category',
+          'Weight (×)',
+          'Avg Weighted Score',
+          'Avg Raw Score',
+          'Min',
+          'Max',
+          'Std Dev',
+          'Percentage',
+          'Questions',
+          'Respondents',
+        ],
+        ...aggregateStats.map((cat) => [
           cat.categoryName,
-          cat.averageScore.toFixed(1),
+          cat.categoryWeight,
+          cat.averageWeightedScore,
+          cat.averageRawScore,
+          cat.minWeightedScore.toFixed(1),
+          cat.maxWeightedScore.toFixed(1),
+          cat.standardDeviation,
+          `${cat.averagePercentage}%`,
           cat.questionCount,
-          cat.responseCount,
+          cat.respondentCount,
         ]),
+        [''],
+        ['Legend:'],
+        ['Weight (×) = Multiplier applied to raw score totals'],
+        ['Avg Weighted Score = (Sum of adjusted responses) × Weight'],
+        ['Avg Raw Score = Sum of adjusted responses (before weight)'],
+        ['Percentage = (Avg Weighted / Max Possible Weighted) × 100'],
       ];
 
       const categorySheet = XLSX.utils.aoa_to_sheet(categoryData);
       XLSX.utils.book_append_sheet(workbook, categorySheet, 'Category Scores');
 
-      // Sheet 3: Section Scores
-      const sectionData = [
-        ['Section Scores'],
-        [''],
-        ['Section', 'Average Score', 'Item Count', 'Response Count'],
-        ...sectionScores.map((sec) => [
-          sec.sectionTitle,
-          sec.averageScore.toFixed(1),
-          sec.questionCount,
-          sec.responseCount,
-        ]),
-      ];
-
-      const sectionSheet = XLSX.utils.aoa_to_sheet(sectionData);
-      XLSX.utils.book_append_sheet(workbook, sectionSheet, 'Section Scores');
-
-      // Sheet 4: Raw Data (ONLY if not Survey 7)
-      const isAnonymousSurvey = ANONYMOUS_SURVEY_TYPES.includes(survey.surveyType.toLowerCase());
-
+      // Sheet 3: Individual Scores (if not anonymous)
       if (!isAnonymousSurvey) {
-        const rawDataHeaders = [
-          'Response ID',
-          'Question Number',
-          'Question Text',
-          'Category',
-          'Section',
-          'Raw Value',
-          'Adjusted Value',
-          'Is Reversed',
+        const individualHeaders = [
+          'Respondent',
+          ...categories.map((c) => `${c.name} (×${c.weight})`),
+          'Total Weighted',
+          'Completion',
         ];
 
-        const rawDataRows = allResponses
-          .filter((r) => r.value !== null)
-          .map((response) => {
-            const question = questions.find((q) => q._id === response.sanityQuestionId);
-            const questionData = survey.sections
-              .flatMap((s) => s.questions)
-              .find((q) => q._id === response.sanityQuestionId);
+        const individualRows = individualResults.map((result) => {
+          const categoryValues = categories.map((cat) => {
+            const catScore = result.categoryScores.find(
+              (cs) => cs.categoryId === cat._id
+            );
+            return catScore ? catScore.weightedScore.toFixed(1) : 'N/A';
+          });
 
-            if (!question || !questionData) {
-              return null;
-            }
+          return [
+            result.userName,
+            ...categoryValues,
+            result.overallMetrics.totalWeightedScore.toFixed(1),
+            `${result.overallMetrics.completionRate.toFixed(0)}%`,
+          ];
+        });
 
-            const rawValue = response.value!;
-            const adjustedValue = question.isReversed
-              ? scaleMax + 1 - rawValue
-              : rawValue;
+        const individualData = [
+          ['INDIVIDUAL WEIGHTED SCORES'],
+          [''],
+          individualHeaders,
+          ...individualRows,
+        ];
 
-            return [
-              response.id,
-              question.questionNumber,
-              questionData.text,
-              question.category?.name || 'N/A',
-              question.section?.title || 'N/A',
-              rawValue,
-              adjustedValue,
-              question.isReversed ? 'Yes' : 'No',
-            ];
-          })
-          .filter((row): row is (string | number)[] => row !== null);
-
-        const rawData = [['Raw Response Data'], [''], rawDataHeaders, ...rawDataRows];
-
-        const rawDataSheet = XLSX.utils.aoa_to_sheet(rawData);
-        XLSX.utils.book_append_sheet(workbook, rawDataSheet, 'Raw Data');
+        const individualSheet = XLSX.utils.aoa_to_sheet(individualData);
+        XLSX.utils.book_append_sheet(workbook, individualSheet, 'Individual Scores');
       }
 
       // Generate buffer
       const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
-      // Return Excel file
       return new NextResponse(buffer, {
         status: 200,
         headers: {
-          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'Content-Disposition': `attachment; filename="${campaign.surveyTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Report.xlsx"`,
+          'Content-Type':
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="${campaign.surveyTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Weighted_Report.xlsx"`,
         },
       });
     }
 
-    // PDF export
+    // ================================================================================
+    // PDF EXPORT
+    // ================================================================================
     if (format === 'pdf') {
       const doc = new jsPDF();
-      const isAnonymousSurvey = ANONYMOUS_SURVEY_TYPES.includes(survey.surveyType.toLowerCase());
+      let yPosition = 20;
 
-      // Cover page
-      doc.setFontSize(24);
-      doc.text('Survey Report', 105, 30, { align: 'center' });
+      // Title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Weighted Scoring Report', 105, yPosition, { align: 'center' });
+      yPosition += 15;
 
-      doc.setFontSize(16);
-      doc.text(campaign.surveyTitle, 105, 45, { align: 'center' });
+      // Survey info
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Survey: ${campaign.surveyTitle}`, 20, yPosition);
+      yPosition += 7;
+      doc.text(`Organization: ${campaign.organization.name}`, 20, yPosition);
+      yPosition += 7;
+      doc.text(
+        `Completed: ${campaign.invitations.length} respondents`,
+        20,
+        yPosition
+      );
+      yPosition += 15;
 
-      doc.setFontSize(12);
-      doc.text(campaign.organization.name, 105, 55, { align: 'center' });
-
-      if (campaign.startDate && campaign.endDate) {
-        const dateRange = `${new Date(campaign.startDate).toLocaleDateString()} - ${new Date(campaign.endDate).toLocaleDateString()}`;
-        doc.text(dateRange, 105, 65, { align: 'center' });
-      }
-
-      // Anonymity notice for Survey 7
-      if (isAnonymousSurvey) {
-        doc.setFontSize(10);
-        doc.setTextColor(255, 0, 0);
-        doc.text('ANONYMITY PROTECTED', 105, 80, { align: 'center' });
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(9);
-        const noticeText = 'Individual responses are protected. Only aggregated scores are included.';
-        doc.text(noticeText, 105, 87, { align: 'center' });
-      }
-
-      doc.setFontSize(10);
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, isAnonymousSurvey ? 100 : 80, {
-        align: 'center',
-      });
-
-      // Summary section
-      doc.addPage();
-      doc.setFontSize(16);
-      doc.text('Summary', 14, 20);
+      // Category scores table
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Category Weighted Scores', 20, yPosition);
+      yPosition += 10;
 
       autoTable(doc, {
-        startY: 30,
-        head: [['Metric', 'Value']],
-        body: [
-          ['Survey Type', survey.surveyType],
-          ['Status', campaign.status],
-          ['Total Invitations', campaign.invitations.length.toString()],
-          ['Completed Responses', campaign.invitations.length.toString()],
-          [
-            'Completion Rate',
-            `${Math.round((campaign.invitations.length / (campaign.invitations.length || 1)) * 100)}%`,
-          ],
-          ['Overall Score', `${surveyScore.averageScore.toFixed(1)} / ${scaleMax}.0`],
-          ['Total Questions', surveyScore.totalQuestions.toString()],
-          ['Total Responses', surveyScore.totalResponses.toString()],
-        ],
-        theme: 'grid',
-      });
-
-      // Category Scores
-      doc.addPage();
-      doc.setFontSize(16);
-      doc.text('Category Scores', 14, 20);
-
-      autoTable(doc, {
-        startY: 30,
-        head: [['Category', 'Average Score', 'Questions', 'Responses']],
-        body: categoryScores.map((cat) => [
+        startY: yPosition,
+        head: [['Category', 'Weight', 'Weighted Score', 'Raw Score', 'Percentage']],
+        body: aggregateStats.map((cat) => [
           cat.categoryName,
-          cat.averageScore.toFixed(1),
-          cat.questionCount.toString(),
-          cat.responseCount.toString(),
+          `×${cat.categoryWeight}`,
+          cat.averageWeightedScore.toFixed(1),
+          cat.averageRawScore.toFixed(1),
+          `${cat.averagePercentage.toFixed(1)}%`,
         ]),
-        theme: 'striped',
-        headStyles: { fillColor: [59, 130, 246] },
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
       });
 
-      // Section Scores
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const finalY = (doc as any).lastAutoTable.finalY || 30;
-      doc.setFontSize(16);
-      doc.text('Section Scores', 14, finalY + 20);
+      // Footer
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.text(
+          `Page ${i} of ${pageCount} - Generated ${new Date().toLocaleString()}`,
+          105,
+          285,
+          { align: 'center' }
+        );
+      }
 
-      autoTable(doc, {
-        startY: finalY + 30,
-        head: [['Section', 'Average Score', 'Items', 'Responses']],
-        body: sectionScores.map((sec) => [
-          sec.sectionTitle,
-          sec.averageScore.toFixed(1),
-          sec.questionCount.toString(),
-          sec.responseCount.toString(),
-        ]),
-        theme: 'striped',
-        headStyles: { fillColor: [59, 130, 246] },
-      });
-
-      // Generate PDF buffer
       const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
 
-      // Return PDF file
       return new NextResponse(pdfBuffer, {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${campaign.surveyTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Report.pdf"`,
+          'Content-Disposition': `attachment; filename="${campaign.surveyTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Weighted_Report.pdf"`,
         },
       });
     }
 
-    return NextResponse.json(
-      { error: 'Invalid format' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid format' }, { status: 400 });
   } catch (error) {
     console.error('Error generating export:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

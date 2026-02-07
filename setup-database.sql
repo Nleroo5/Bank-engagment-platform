@@ -91,6 +91,7 @@ CREATE TABLE "responses" (
     "sanityQuestionId" TEXT NOT NULL,
     "questionNumber" INTEGER NOT NULL,
     "value" INTEGER,
+    "adjustedValue" INTEGER,
     "textValue" TEXT,
     "submittedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

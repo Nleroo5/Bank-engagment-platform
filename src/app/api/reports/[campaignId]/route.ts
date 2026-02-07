@@ -4,9 +4,8 @@ import { getSurveyById } from '@/lib/sanity';
 import { getCurrentUser } from '@/lib/auth/helpers';
 import {
   calculateCategoryScores,
-  calculateSectionScores,
-  calculateSurveyScore,
-} from '@/lib/scoring/calculate';
+  prepareResponsesForScoring,
+} from '@/lib/scoring/categoryScoring';
 import {
   checkAnonymityThreshold,
   getFilterableOptions,
@@ -25,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch campaign
+    // Fetch campaign with all related data
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.campaignId },
       include: {
@@ -33,7 +32,9 @@ export async function GET(
         invitations: {
           include: {
             user: true,
-            responses: true,
+            responses: {
+              orderBy: { questionNumber: 'asc' },
+            },
           },
         },
       },
@@ -57,17 +58,51 @@ export async function GET(
       );
     }
 
-    // Fetch survey from Sanity
-    const survey = await getSurveyById(campaign.sanitysurveyId);
+    // Fetch survey from Sanity with full question and category data
+    let survey;
+    try {
+      survey = await getSurveyById(campaign.sanitysurveyId);
+    } catch (sanityError) {
+      console.error('Sanity fetch error:', sanityError);
+      return NextResponse.json(
+        {
+          error: 'Sanity CMS not configured',
+          message:
+            'Survey content could not be loaded from Sanity CMS. Please configure your Sanity project and ensure survey content exists.\n\n' +
+            'Steps to fix:\n' +
+            '1. Set SANITY_API_TOKEN in your environment variables\n' +
+            '2. Create survey content in Sanity Studio\n' +
+            '3. Ensure the survey ID matches: ' +
+            campaign.sanitysurveyId,
+        },
+        { status: 503 }
+      );
+    }
 
     if (!survey) {
       return NextResponse.json(
-        { error: 'Survey content not found' },
+        {
+          error: 'Survey content not found',
+          message:
+            `Survey with ID "${campaign.sanitysurveyId}" was not found in Sanity.\n\n` +
+            'Please create the survey content in Sanity Studio first, or update the campaign to reference an existing survey.',
+        },
         { status: 404 }
       );
     }
 
-    // Check anonymity threshold for Survey 7
+    // Validate survey has scale information
+    if (!survey.scale) {
+      return NextResponse.json(
+        {
+          error: 'Survey configuration incomplete',
+          message: 'Survey is missing scale information. Please configure the scale in Sanity Studio.',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check anonymity threshold for Survey 7 (Associate 180)
     const meetsThreshold = await checkAnonymityThreshold(
       campaign.id,
       survey.surveyType
@@ -139,40 +174,116 @@ export async function GET(
       });
     }
 
-    // Collect all responses from filtered invitations
-    const allResponses: Response[] = [];
-    for (const invitation of filteredInvitations) {
-      allResponses.push(...invitation.responses);
-    }
-
-    // Prepare question definitions
+    // Extract all questions with their metadata
     const questions = survey.sections.flatMap((section) =>
       section.questions.map((q) => ({
         _id: q._id,
-        questionNumber: q.number,
+        number: q.number,
         isReversed: q.isReversed,
-        category: q.category,
-        section: { _id: section._id, title: section.title },
+        category: {
+          _id: q.category._id,
+          name: q.category.name,
+          weight: q.category.weight,
+          colorCode: q.category.colorCode,
+          sortOrder: q.category.sortOrder,
+        },
       }))
     );
 
-    // Determine scale max
-    const scaleMax = survey.surveyType === 'likert3' ? 3 : 5;
-
-    // Calculate scores
-    const surveyScore = calculateSurveyScore(allResponses, questions, scaleMax);
-    const categoryScores = calculateCategoryScores(
-      allResponses,
-      questions,
-      scaleMax
+    // Extract unique categories
+    const categoriesMap = new Map(
+      questions.map((q) => [q.category._id, q.category])
     );
-    const sectionScores = calculateSectionScores(
-      allResponses,
-      questions,
-      scaleMax
-    );
+    const categories = Array.from(categoriesMap.values()).sort((a, b) => {
+      if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+        return a.sortOrder - b.sortOrder;
+      }
+      return a.name.localeCompare(b.name);
+    });
 
-    // Calculate response metrics
+    // Calculate weighted scores for each respondent
+    const individualResults = filteredInvitations.map((invitation) => {
+      // Prepare responses for scoring
+      const preparedResponses = prepareResponsesForScoring(
+        invitation.responses.map((r) => ({
+          sanityQuestionId: r.sanityQuestionId,
+          questionNumber: r.questionNumber,
+          value: r.value!,
+        })),
+        questions
+      );
+
+      // Calculate weighted category scores
+      const scoringResult = calculateCategoryScores(
+        preparedResponses,
+        categories,
+        survey._id,
+        survey.title,
+        invitation.id,
+        survey.scale!.min,
+        survey.scale!.max,
+        survey.surveyType as 'likert3' | 'likert5'
+      );
+
+      return {
+        invitationId: invitation.id,
+        userId: invitation.userId,
+        userName: invitation.user.name || invitation.user.email,
+        completedAt: invitation.completedAt,
+        ...scoringResult,
+      };
+    });
+
+    // Calculate aggregate statistics across all respondents
+    const aggregateStats = categories.map((category) => {
+      const categoryScores = individualResults
+        .map((result) =>
+          result.categoryScores.find((cs) => cs.categoryId === category._id)
+        )
+        .filter((cs) => cs !== undefined);
+
+      const weightedScores = categoryScores.map((cs) => cs!.weightedScore);
+      const rawScores = categoryScores.map((cs) => cs!.rawTotal);
+
+      const averageWeighted =
+        weightedScores.reduce((sum, score) => sum + score, 0) /
+        weightedScores.length;
+      const averageRaw =
+        rawScores.reduce((sum, score) => sum + score, 0) / rawScores.length;
+
+      // Calculate standard deviation
+      const mean = averageWeighted;
+      const squaredDiffs = weightedScores.map((score) =>
+        Math.pow(score - mean, 2)
+      );
+      const variance =
+        squaredDiffs.reduce((sum, diff) => sum + diff, 0) /
+        weightedScores.length;
+      const stdDev = Math.sqrt(variance);
+
+      return {
+        categoryId: category._id,
+        categoryName: category.name,
+        categoryWeight: category.weight,
+        colorCode: category.colorCode,
+        sortOrder: category.sortOrder,
+        respondentCount: weightedScores.length,
+        questionCount: categoryScores[0]?.questionCount || 0,
+        averageWeightedScore: Math.round(averageWeighted * 10) / 10,
+        minWeightedScore: Math.min(...weightedScores),
+        maxWeightedScore: Math.max(...weightedScores),
+        standardDeviation: Math.round(stdDev * 10) / 10,
+        averageRawScore: Math.round(averageRaw * 10) / 10,
+        averagePercentage:
+          Math.round(
+            (averageWeighted / categoryScores[0]!.maxPossibleWeighted) *
+              100 *
+              10
+          ) / 10,
+      };
+    });
+
+    // Calculate overall metrics
     const totalInvitations = campaign.invitations.length;
     const completedCount = filteredInvitations.length;
     const completionRate =
@@ -180,11 +291,21 @@ export async function GET(
         ? Math.round((completedCount / totalInvitations) * 100 * 10) / 10
         : 0;
 
+    const overallWeightedScore =
+      individualResults.reduce(
+        (sum, r) => sum + r.overallMetrics.totalWeightedScore,
+        0
+      ) / individualResults.length;
+
+    // Determine if individual scores should be shown (not for Associate 180)
+    const showIndividualScores = survey.surveyType !== 'associate180';
+
     return NextResponse.json({
       campaign: {
         id: campaign.id,
         surveyTitle: campaign.surveyTitle,
         surveyType: survey.surveyType,
+        surveyNumber: survey.surveyNumber,
         organizationName: campaign.organization.name,
         startDate: campaign.startDate,
         endDate: campaign.endDate,
@@ -195,21 +316,28 @@ export async function GET(
         completedCount,
         completionRate,
         filteredCount: filteredInvitations.length,
+        averageOverallWeightedScore: Math.round(overallWeightedScore * 10) / 10,
       },
-      scores: {
-        overall: surveyScore.averageScore,
-        categories: categoryScores,
-        sections: sectionScores,
-      },
+      categoryAggregates: aggregateStats,
+      individualScores: showIndividualScores ? individualResults : undefined,
       filters: {
         applied: filters,
         available: filterOptions,
       },
+      scale: {
+        min: survey.scale.min,
+        max: survey.scale.max,
+        type: survey.surveyType,
+      },
     });
   } catch (error) {
-    console.error('Error generating report:', error);
+    console.error('Error generating weighted scoring report:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        message:
+          error instanceof Error ? error.message : 'Unknown error occurred',
+      },
       { status: 500 }
     );
   }
