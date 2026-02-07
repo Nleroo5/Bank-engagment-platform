@@ -1,0 +1,141 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+interface LikertScale3Props {
+  questionId: string;
+  questionNumber: number;
+  questionText: string;
+  anchorText?: string;
+  value?: number;
+  onChange: (questionId: string, value: number) => void;
+  disabled?: boolean;
+  isReversed?: boolean;
+}
+
+const SCALE_LABELS = [
+  { value: 1, label: 'Rarely' },
+  { value: 2, label: 'Sometimes' },
+  { value: 3, label: 'Frequently' },
+];
+
+export function LikertScale3({
+  questionId,
+  questionNumber,
+  questionText,
+  anchorText,
+  value,
+  onChange,
+  disabled = false,
+  isReversed = false,
+}: LikertScale3Props) {
+  const [selectedValue, setSelectedValue] = useState<number | undefined>(value);
+
+  useEffect(() => {
+    setSelectedValue(value);
+  }, [value]);
+
+  const handleChange = (newValue: number) => {
+    setSelectedValue(newValue);
+    onChange(questionId, newValue);
+  };
+
+  return (
+    <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
+      <div className="mb-4">
+        <div className="mb-2 flex items-start gap-3">
+          <span className="flex-shrink-0 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
+            Q{questionNumber}
+          </span>
+          <div className="flex-1">
+            <p className="text-base font-medium text-gray-900">
+              {questionText}
+            </p>
+            {isReversed && (
+              <span className="mt-1 inline-block text-xs text-orange-600">
+                ⚠️ Reverse scored
+              </span>
+            )}
+          </div>
+        </div>
+        {anchorText && (
+          <p className="ml-14 text-sm italic text-gray-600">{anchorText}</p>
+        )}
+      </div>
+
+      {/* Desktop view */}
+      <div className="hidden md:block">
+        <div className="flex items-center justify-between gap-4">
+          {SCALE_LABELS.map((item) => (
+            <label
+              key={item.value}
+              className={`flex flex-1 cursor-pointer flex-col items-center rounded-lg border-2 p-4 transition-all ${
+                selectedValue === item.value
+                  ? 'border-primary-600 bg-primary-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+            >
+              <input
+                type="radio"
+                name={questionId}
+                value={item.value}
+                checked={selectedValue === item.value}
+                onChange={() => handleChange(item.value)}
+                disabled={disabled}
+                className="sr-only"
+              />
+              <span
+                className={`mb-2 flex h-10 w-10 items-center justify-center rounded-full border-2 text-base font-semibold ${
+                  selectedValue === item.value
+                    ? 'border-primary-600 bg-primary-600 text-white'
+                    : 'border-gray-300 text-gray-600'
+                }`}
+              >
+                {item.value}
+              </span>
+              <span
+                className={`text-center text-sm ${
+                  selectedValue === item.value
+                    ? 'font-medium text-primary-900'
+                    : 'text-gray-600'
+                }`}
+              >
+                {item.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile view */}
+      <div className="md:hidden">
+        <div className="space-y-2">
+          {SCALE_LABELS.map((item) => (
+            <label
+              key={item.value}
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+                selectedValue === item.value
+                  ? 'border-primary-600 bg-primary-50'
+                  : 'border-gray-200'
+              } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+            >
+              <input
+                type="radio"
+                name={questionId}
+                value={item.value}
+                checked={selectedValue === item.value}
+                onChange={() => handleChange(item.value)}
+                disabled={disabled}
+                className="h-5 w-5 text-primary-600 focus:ring-primary-500"
+              />
+              <div className="flex-1">
+                <span className="font-medium text-gray-900">{item.label}</span>
+                <span className="ml-2 text-sm text-gray-500">({item.value})</span>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

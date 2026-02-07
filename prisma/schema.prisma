@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Organizations ───────────────────────────────────────────────────────
+
+model Organization {
+  id              String   @id @default(uuid())
+  name            String
+  sizeRange       String?
+  locationCountry String?
+  locationState   String?
+  locationMetro   String?
+  locationCity    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users     User[]
+  campaigns SurveyCampaign[]
+
+  @@map("organizations")
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  name             String?
+  passwordHash     String?
+  role             String   @default("RESPONDENT") // SUPER_ADMIN | ORG_ADMIN | VIEWER | RESPONDENT
+  organizationId   String?
+  organization     Organization? @relation(fields: [organizationId], references: [id])
+  division         String?
+  jobRole          String?
+  employmentStatus String? // FULL_TIME | PART_TIME | PEAK_TIME
+  gender           String? // FEMALE | MALE | OTHER
+  timeAtBank       String?
+  bankExperience   String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  invitations Invitation[]
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("users")
+}
+
+// ─── Survey Campaigns ────────────────────────────────────────────────────
+
+model SurveyCampaign {
+  id             String   @id @default(uuid())
+  sanitysurveyId String
+  surveyTitle    String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  status         String   @default("DRAFT") // DRAFT | ACTIVE | COMPLETED | ARCHIVED
+  startDate      DateTime?
+  endDate        DateTime?
+  reminderDays   Int      @default(3)
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invitations Invitation[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("survey_campaigns")
+}
+
+// ─── Invitations ─────────────────────────────────────────────────────────
+
+model Invitation {
+  id          String         @id @default(uuid())
+  campaignId  String
+  campaign    SurveyCampaign @relation(fields: [campaignId], references: [id])
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  token       String         @unique @default(uuid())
+  status      String         @default("PENDING") // PENDING | SENT | OPENED | IN_PROGRESS | COMPLETED | EXPIRED
+  sentAt      DateTime?
+  openedAt    DateTime?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+
+  session   ResponseSession?
+  responses Response[]
+
+  @@unique([campaignId, userId])
+  @@index([token])
+  @@index([campaignId])
+  @@index([userId])
+  @@map("invitations")
+}
+
+// ─── Response Sessions ───────────────────────────────────────────────────
+
+model ResponseSession {
+  id           String     @id @default(uuid())
+  invitationId String     @unique
+  invitation   Invitation @relation(fields: [invitationId], references: [id])
+  device       String?
+  userAgent    String?
+  ipHash       String?
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+  lastActiveAt DateTime   @default(now())
+
+  @@map("response_sessions")
+}
+
+// ─── Responses ───────────────────────────────────────────────────────────
+
+model Response {
+  id               String     @id @default(uuid())
+  invitationId     String
+  invitation       Invitation @relation(fields: [invitationId], references: [id])
+  sanityQuestionId String
+  questionNumber   Int
+  value            Int? // For Likert scale responses (1-5 or 1-3)
+  textValue        String? // For demographics text responses
+  submittedAt      DateTime   @default(now())
+
+  @@unique([invitationId, sanityQuestionId])
+  @@index([invitationId])
+  @@index([sanityQuestionId])
+  @@map("responses")
+}
