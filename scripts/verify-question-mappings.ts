@@ -178,7 +178,7 @@ async function main() {
 
     if (orphanedQuestions.length > 0) {
       console.log('⚠️  Found questions not in expected mappings:');
-      orphanedQuestions.forEach((q) => {
+      orphanedQuestions.forEach((q: { number: number; category: string }) => {
         console.log(`  - Q${q.number} (currently in "${q.category}")`);
       });
       hasErrors = true;
@@ -220,7 +220,7 @@ async function main() {
 
     if (reversedQuestions.length > 0) {
       console.log(`Found ${reversedQuestions.length} reverse-scored questions:`);
-      reversedQuestions.forEach((q) => {
+      reversedQuestions.forEach((q: { number: number; category: string }) => {
         console.log(`  - Q${q.number} (${q.category})`);
       });
     } else {

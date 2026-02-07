@@ -112,7 +112,7 @@ async function main() {
     // Display current state
     console.log('📋 Current category state:');
     console.log('─'.repeat(70));
-    categories.forEach((cat) => {
+    categories.forEach((cat: SanityCategory) => {
       const currentWeight = cat.weight ? `×${cat.weight}` : 'NOT SET';
       const sortOrder = cat.sortOrder !== undefined ? cat.sortOrder : 'NOT SET';
       console.log(`  ${cat.name.padEnd(20)} | Weight: ${currentWeight.padEnd(10)} | Sort: ${sortOrder}`);
@@ -172,7 +172,7 @@ async function main() {
     if (missingCategories.length > 0) {
       console.log(`⚠️  Missing categories: ${missingCategories.length}`);
       console.log('\n   The following categories need to be created in Sanity:');
-      missingCategories.forEach((name) => {
+      missingCategories.forEach((name: string) => {
         const weight = CATEGORY_WEIGHTS[name as keyof typeof CATEGORY_WEIGHTS];
         const sortOrder = CATEGORY_SORT_ORDER[name as keyof typeof CATEGORY_SORT_ORDER];
         console.log(`   - ${name} (weight: ${weight}, sortOrder: ${sortOrder})`);

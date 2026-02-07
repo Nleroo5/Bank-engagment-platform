@@ -69,7 +69,7 @@ async function main() {
 
     // Build lookup map
     const questionMap = new Map(
-      questions.map((q) => [
+      questions.map((q: { _id: string; isReversed: boolean; scale?: { min: number; max: number } | null }) => [
         q._id,
         {
           isReversed: q.isReversed,
@@ -109,7 +109,7 @@ async function main() {
     for (let i = 0; i < responses.length; i += batchSize) {
       const batch = responses.slice(i, i + batchSize);
 
-      const updates = batch.map((response) => {
+      const updates = batch.map((response: { id: string; sanityQuestionId: string; value: number | null }) => {
         const questionInfo = questionMap.get(response.sanityQuestionId);
 
         if (!questionInfo) {
