@@ -10,7 +10,6 @@ import {
   checkAnonymityThreshold,
   ANONYMOUS_SURVEY_TYPES,
 } from '@/lib/scoring/anonymity';
-import type { Response } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -385,7 +384,7 @@ export async function GET(
       });
 
       // Footer
-      const pageCount = (doc as any).internal.getNumberOfPages();
+      const pageCount = doc.getNumberOfPages();
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       for (let i = 1; i <= pageCount; i++) {

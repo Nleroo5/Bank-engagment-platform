@@ -149,7 +149,8 @@ describe('validateScoringData', () => {
         _id: 'cat1',
         _type: 'category',
         name: 'Test',
-        weight: undefined as any, // Missing weight
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        weight: undefined as any, // Intentionally invalid for testing
       },
     ];
 

@@ -11,7 +11,6 @@ import {
   getFilterableOptions,
   validateFilteredAnonymity,
 } from '@/lib/scoring/anonymity';
-import type { Response } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,

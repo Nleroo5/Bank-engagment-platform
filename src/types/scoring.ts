@@ -8,8 +8,6 @@
  * - Validation structures
  */
 
-import type { Category } from './survey';
-
 /**
  * Raw response from database
  */
