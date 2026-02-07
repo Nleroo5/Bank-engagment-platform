@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import type { Invitation } from '@prisma/client';
 import { Plus } from 'lucide-react';
 
+// Force dynamic rendering - admin pages need database access at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function CampaignsPage() {
   const campaigns = await prisma.surveyCampaign.findMany({
     include: {

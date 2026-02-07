@@ -6,6 +6,9 @@ import { ReportView } from '@/components/reports/ReportView';
 import { ExportButtons } from '@/components/reports/ExportButtons';
 import { ArrowLeft, Calendar, Building2 } from 'lucide-react';
 
+// Force dynamic rendering - admin pages need database access at runtime
+export const dynamic = 'force-dynamic';
+
 interface ReportPageProps {
   params: { campaignId: string };
 }

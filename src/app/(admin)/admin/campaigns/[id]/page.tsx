@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { CampaignActions } from '@/components/admin/CampaignActions';
 import { ArrowLeft } from 'lucide-react';
 
+// Force dynamic rendering - admin pages need database access at runtime
+export const dynamic = 'force-dynamic';
+
 interface CampaignDetailPageProps {
   params: {
     id: string;

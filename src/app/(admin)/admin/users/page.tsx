@@ -4,6 +4,9 @@ import { getCurrentUser } from '@/lib/auth/helpers';
 import { redirect } from 'next/navigation';
 import { Plus, Upload } from 'lucide-react';
 
+// Force dynamic rendering - admin pages need database access at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function UsersPage() {
   const currentUser = await getCurrentUser();
 

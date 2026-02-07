@@ -4,6 +4,9 @@ import { getCurrentUser } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/prisma';
 import { FileBarChart, Users, Calendar } from 'lucide-react';
 
+// Force dynamic rendering - admin pages need database access at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function ReportsListPage() {
   const currentUser = await getCurrentUser();
 

@@ -12,6 +12,9 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
+// Force dynamic rendering - admin pages need database access at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const currentUser = await getCurrentUser();
 
