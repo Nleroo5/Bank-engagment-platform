@@ -6,9 +6,34 @@ import { InvitationEmail } from './templates/InvitationEmail';
 import { ReminderEmail } from './templates/ReminderEmail';
 import { ConfirmationEmail } from './templates/ConfirmationEmail';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const IS_DEVELOPMENT = !RESEND_API_KEY || process.env.NODE_ENV === 'development';
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@example.com';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
+/**
+ * Mock email sending for development - logs to console instead of sending
+ */
+async function mockSendEmail(params: {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  console.log('\n📧 [DEV MODE] Email would be sent:');
+  console.log('  From:', params.from);
+  console.log('  To:', params.to);
+  console.log('  Subject:', params.subject);
+  console.log('  Preview: Open your terminal to see full HTML\n');
+
+  return {
+    id: `mock-${Date.now()}`,
+    from: params.from,
+    to: params.to,
+    created_at: new Date().toISOString(),
+  };
+}
 
 interface InvitationWithUser extends Invitation {
   user: User;
@@ -41,6 +66,17 @@ export async function sendInvitation(
         estimatedMinutes: survey.estimatedMinutes,
       })
     );
+
+    // Use mock email in development mode
+    if (IS_DEVELOPMENT || !resend) {
+      const mockData = await mockSendEmail({
+        from: EMAIL_FROM,
+        to: invitation.user.email,
+        subject: `Survey Invitation: ${survey.title}`,
+        html,
+      });
+      return mockData;
+    }
 
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
@@ -97,6 +133,17 @@ export async function sendReminder(
       })
     );
 
+    // Use mock email in development mode
+    if (IS_DEVELOPMENT || !resend) {
+      const mockData = await mockSendEmail({
+        from: EMAIL_FROM,
+        to: invitation.user.email,
+        subject: `Reminder: ${survey.title} - ${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} remaining`,
+        html,
+      });
+      return mockData;
+    }
+
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
       to: invitation.user.email,
@@ -148,6 +195,17 @@ export async function sendConfirmation(
         completedAt,
       })
     );
+
+    // Use mock email in development mode
+    if (IS_DEVELOPMENT || !resend) {
+      const mockData = await mockSendEmail({
+        from: EMAIL_FROM,
+        to: invitation.user.email,
+        subject: `Thank you for completing: ${survey.title}`,
+        html,
+      });
+      return mockData;
+    }
 
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
