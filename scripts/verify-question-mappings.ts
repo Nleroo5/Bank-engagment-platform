@@ -19,7 +19,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // Expected mappings from scoring matrix reference document
-const EXPECTED_MAPPINGS = {
+const EXPECTED_MAPPINGS: { [category: string]: number[] } = {
   'Communication': [6, 13, 20, 26],
   'Leadership': [1, 7, 14, 21, 27, 33, 35],
   'Culture': [8, 15, 28],
@@ -27,7 +27,7 @@ const EXPECTED_MAPPINGS = {
   'Execution': [3, 10, 17, 23, 30],
   'Associate': [4, 11, 18, 24, 31],
   'Team Dynamics': [5, 12, 19, 25, 32],
-} as const;
+};
 
 const TOTAL_EXPECTED_QUESTIONS = 35;
 const SURVEY_SLUG = 'managerial-assessment'; // Adjust if different
