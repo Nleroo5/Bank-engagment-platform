@@ -121,7 +121,7 @@ async function main() {
       }
 
       // Create the category document
-      const newCategory = await client.create({
+      await client.create({
         _type: 'category',
         name: category.name,
         colorCode: category.colorCode,
