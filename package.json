@@ -17,6 +17,7 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "create-admin": "tsx create-admin.ts",
     "sanity:dev": "cd sanity && sanity dev",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
