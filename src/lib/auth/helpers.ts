@@ -11,7 +11,15 @@ export async function getCurrentUser() {
   const session = await getSession();
 
   if (!session?.user) {
-    throw new Error('Unauthorized');
+    // TEMPORARY: Return mock admin user for demo (login disabled)
+    return {
+      id: 'demo-admin',
+      email: 'admin@demo.com',
+      name: 'Demo Admin',
+      role: 'SUPER_ADMIN' as UserRole,
+      organizationId: null,
+      isActive: true,
+    };
   }
 
   return session.user;
