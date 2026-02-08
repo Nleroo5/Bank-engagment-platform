@@ -36,7 +36,9 @@ const QUESTION_FRAGMENT = `
   "text": coalesce(questionText, text),
   ${CATEGORY_FRAGMENT},
   isReversed,
-  anchorText
+  anchorText,
+  fieldType,
+  slug
 `;
 
 const SECTION_FRAGMENT = `
