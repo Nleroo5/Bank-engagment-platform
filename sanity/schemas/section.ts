@@ -14,25 +14,33 @@ export const section = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "sortOrder",
-      title: "Sort Order",
+      name: "order",
+      title: "Order",
       type: "number",
-      validation: (rule) => rule.required(),
+      description: "Display order of this section (1, 2, 3, etc.)",
     }),
     defineField({
-      name: "survey",
-      title: "Parent Survey",
-      type: "reference",
-      to: [{ type: "survey" }],
-      validation: (rule) => rule.required(),
+      name: "sortOrder",
+      title: "Sort Order (Legacy)",
+      type: "number",
+      description: "Legacy field - use order instead",
+      hidden: true,
+    }),
+    defineField({
+      name: "description",
+      title: "Description",
+      type: "text",
+      rows: 2,
+      description:
+        "Instructions specific to this section, shown above the questions",
     }),
     defineField({
       name: "directions",
-      title: "Section Directions",
+      title: "Section Directions (Rich Text)",
       type: "array",
       of: [{ type: "block" }],
       description:
-        "Instructions specific to this section, shown above the questions",
+        "Rich text instructions specific to this section (optional - use description for simple text)",
     }),
     defineField({
       name: "questions",
@@ -44,6 +52,11 @@ export const section = defineType({
   ],
   orderings: [
     {
+      title: "Order",
+      name: "orderAsc",
+      by: [{ field: "order", direction: "asc" }],
+    },
+    {
       title: "Sort Order",
       name: "sortOrderAsc",
       by: [{ field: "sortOrder", direction: "asc" }],
@@ -52,13 +65,14 @@ export const section = defineType({
   preview: {
     select: {
       title: "title",
+      order: "order",
       sortOrder: "sortOrder",
-      surveyTitle: "survey.title",
     },
-    prepare({ title, sortOrder, surveyTitle }) {
+    prepare({ title, order, sortOrder }) {
+      const orderNum = order || sortOrder;
       return {
-        title: `${sortOrder}. ${title}`,
-        subtitle: surveyTitle,
+        title: orderNum ? `${orderNum}. ${title}` : title,
+        subtitle: orderNum ? `Section ${orderNum}` : "Section",
       };
     },
   },

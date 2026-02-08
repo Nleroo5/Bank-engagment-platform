@@ -14,7 +14,10 @@ export interface Scale {
   scaleType: 'likert5' | 'likert3';
   min: number;
   max: number;
-  labels: ScaleLabel[];
+  minLabel?: string;
+  maxLabel?: string;
+  midLabel?: string;
+  labels?: ScaleLabel[];
 }
 
 // Category for question grouping
@@ -49,6 +52,7 @@ export interface Section {
   _type: 'section';
   title: string;
   sortOrder: number;
+  description?: string;
   directions?: PortableTextBlock[];
   questions: Question[];
 }
@@ -62,11 +66,15 @@ export interface Survey {
     current: string;
   };
   surveyNumber?: number;
-  surveyType: 'demographics' | 'likert5' | 'likert3';
-  instructions?: PortableTextBlock[];
+  surveyType: 'demographics' | 'likert5' | 'likert3' | 'managerial' | 'ote' | 'associate_180';
+  description?: string;
+  instructions?: PortableTextBlock[] | string;
   sections: Section[];
   scale?: Scale;
   respondentNameField?: string;
+  requiresManagerName?: boolean;
+  anonymityRequired?: boolean;
+  minimumRespondents?: number;
   welcomeMessage?: string;
   completionMessage?: string;
   estimatedMinutes?: number;

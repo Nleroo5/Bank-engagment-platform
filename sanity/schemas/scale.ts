@@ -6,11 +6,17 @@ export const scale = defineType({
   type: "document",
   fields: [
     defineField({
-      name: "name",
-      title: "Scale Name",
+      name: "title",
+      title: "Title",
       type: "string",
       description: 'e.g., "5-Point Likert", "3-Point Frequency"',
-      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "name",
+      title: "Scale Name (Legacy)",
+      type: "string",
+      description: 'Legacy field - use title instead',
+      hidden: true,
     }),
     defineField({
       name: "scaleType",
@@ -38,8 +44,26 @@ export const scale = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "minLabel",
+      title: "Minimum Label",
+      type: "string",
+      description: 'e.g., "Strongly Disagree", "Rarely"',
+    }),
+    defineField({
+      name: "maxLabel",
+      title: "Maximum Label",
+      type: "string",
+      description: 'e.g., "Strongly Agree", "Frequently"',
+    }),
+    defineField({
+      name: "midLabel",
+      title: "Middle Label",
+      type: "string",
+      description: 'e.g., "Neutral", "Sometimes" (for 3 and 5 point scales)',
+    }),
+    defineField({
       name: "labels",
-      title: "Scale Labels",
+      title: "Scale Labels (Detailed)",
       type: "array",
       of: [
         {
@@ -67,13 +91,24 @@ export const scale = defineType({
         },
       ],
       description:
-        'Define each point on the scale. E.g., { value: 5, label: "Strongly Agree" }',
+        'Optional: Define each point on the scale explicitly. E.g., { value: 5, label: "Strongly Agree" }. Use minLabel/maxLabel/midLabel for simpler scales.',
     }),
   ],
   preview: {
-    select: { title: "name", scaleType: "scaleType" },
-    prepare({ title, scaleType }) {
-      return { title, subtitle: scaleType };
+    select: {
+      title: "title",
+      name: "name",
+      scaleType: "scaleType",
+      min: "min",
+      max: "max",
+    },
+    prepare({ title, name, scaleType, min, max }) {
+      const displayTitle = title || name;
+      const range = min && max ? `(${min}-${max})` : "";
+      return {
+        title: displayTitle,
+        subtitle: `${scaleType} ${range}`.trim(),
+      };
     },
   },
 });

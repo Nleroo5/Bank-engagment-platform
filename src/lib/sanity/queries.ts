@@ -6,10 +6,13 @@ const SCALE_FRAGMENT = `
   scale->{
     _id,
     _type,
-    name,
+    "name": coalesce(title, name),
     scaleType,
     min,
     max,
+    minLabel,
+    maxLabel,
+    midLabel,
     labels
   }
 `;
@@ -29,8 +32,8 @@ const CATEGORY_FRAGMENT = `
 const QUESTION_FRAGMENT = `
   _id,
   _type,
-  number,
-  text,
+  "number": coalesce(questionNumber, number),
+  "text": coalesce(questionText, text),
   ${CATEGORY_FRAGMENT},
   isReversed,
   anchorText
@@ -40,8 +43,9 @@ const SECTION_FRAGMENT = `
   _id,
   _type,
   title,
-  sortOrder,
+  "sortOrder": coalesce(order, sortOrder),
   directions,
+  description,
   "questions": questions[]->{
     ${QUESTION_FRAGMENT}
   }

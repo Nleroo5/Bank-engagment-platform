@@ -33,8 +33,11 @@ export function WelcomeScreen({ survey, onBegin }: WelcomeScreenProps) {
           <div className="mb-6 rounded-md bg-blue-50 p-4">
             <h2 className="mb-2 font-semibold text-blue-900">Instructions</h2>
             <div className="prose prose-sm text-blue-800">
-              {/* Render portable text instructions if needed */}
-              <p>Please read each statement carefully and select the option that best represents your view.</p>
+              {typeof survey.instructions === 'string' ? (
+                <p>{survey.instructions}</p>
+              ) : (
+                <p>Please read each statement carefully and select the option that best represents your view.</p>
+              )}
             </div>
           </div>
         )}

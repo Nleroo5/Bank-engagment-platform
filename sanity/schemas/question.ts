@@ -6,19 +6,33 @@ export const question = defineType({
   type: "document",
   fields: [
     defineField({
-      name: "number",
+      name: "questionNumber",
       title: "Question Number",
       type: "number",
       description: "Display order within the survey (1-40)",
       validation: (rule) => rule.required().min(1),
     }),
     defineField({
-      name: "text",
+      name: "number",
+      title: "Question Number (Legacy)",
+      type: "number",
+      description: "Legacy field - use questionNumber instead",
+      hidden: true,
+    }),
+    defineField({
+      name: "questionText",
       title: "Question Text",
       type: "text",
       rows: 3,
       description: "The statement presented to the respondent",
       validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "text",
+      title: "Question Text (Legacy)",
+      type: "text",
+      description: "Legacy field - use questionText instead",
+      hidden: true,
     }),
     defineField({
       name: "category",
@@ -28,11 +42,11 @@ export const question = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "section",
-      title: "Parent Section",
+      name: "scale",
+      title: "Rating Scale",
       type: "reference",
-      to: [{ type: "section" }],
-      validation: (rule) => rule.required(),
+      to: [{ type: "scale" }],
+      description: "The rating scale used for this question",
     }),
     defineField({
       name: "isReversed",
@@ -41,6 +55,13 @@ export const question = defineType({
       description:
         "If true, the scoring is inverted at report time (e.g., 1 becomes 3 on a 3-point scale). Used in Managerial Assessment and Associate 180.",
       initialValue: false,
+    }),
+    defineField({
+      name: "isRequired",
+      title: "Required",
+      type: "boolean",
+      description: "Whether this question must be answered",
+      initialValue: true,
     }),
     defineField({
       name: "anchorText",
@@ -83,16 +104,20 @@ export const question = defineType({
   ],
   preview: {
     select: {
+      questionNumber: "questionNumber",
       number: "number",
+      questionText: "questionText",
       text: "text",
       categoryName: "category.name",
       isReversed: "isReversed",
     },
-    prepare({ number, text, categoryName, isReversed }) {
+    prepare({ questionNumber, number, questionText, text, categoryName, isReversed }) {
+      const qNum = questionNumber || number;
+      const qText = questionText || text;
       const truncated =
-        text && text.length > 60 ? text.substring(0, 60) + "..." : text;
+        qText && qText.length > 60 ? qText.substring(0, 60) + "..." : qText;
       return {
-        title: `Q${number}: ${truncated}`,
+        title: `Q${qNum}: ${truncated}`,
         subtitle: `${categoryName || "No category"}${isReversed ? " (REVERSED)" : ""}`,
       };
     },
