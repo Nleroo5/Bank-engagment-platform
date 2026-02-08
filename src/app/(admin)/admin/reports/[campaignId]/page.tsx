@@ -1,6 +1,4 @@
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/prisma';
 import { ReportView } from '@/components/reports/ReportView';
 import { ExportButtons } from '@/components/reports/ExportButtons';
@@ -14,12 +12,6 @@ interface ReportPageProps {
 }
 
 export default async function ReportPage({ params }: ReportPageProps) {
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
-    redirect('/admin/login');
-  }
-
   // Fetch campaign for header information
   const campaign = await prisma.surveyCampaign.findUnique({
     where: { id: params.campaignId },
@@ -35,31 +27,6 @@ export default async function ReportPage({ params }: ReportPageProps) {
           <h3 className="text-sm font-medium text-red-800">Campaign not found</h3>
           <p className="mt-2 text-sm text-red-700">
             The campaign you are looking for does not exist.
-          </p>
-          <div className="mt-4">
-            <Link
-              href="/admin/reports"
-              className="text-sm font-medium text-red-800 hover:text-red-900"
-            >
-              Back to Reports →
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Role-based access: ORG_ADMIN can only view their org's campaigns
-  if (
-    currentUser.role !== 'SUPER_ADMIN' &&
-    campaign.organizationId !== currentUser.organizationId
-  ) {
-    return (
-      <div className="p-8">
-        <div className="rounded-md bg-red-50 p-4">
-          <h3 className="text-sm font-medium text-red-800">Access Denied</h3>
-          <p className="mt-2 text-sm text-red-700">
-            You do not have permission to view this report.
           </p>
           <div className="mt-4">
             <Link

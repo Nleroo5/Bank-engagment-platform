@@ -1,6 +1,4 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/prisma';
 import { FileBarChart, Users, Calendar } from 'lucide-react';
 
@@ -8,21 +6,11 @@ import { FileBarChart, Users, Calendar } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 
 export default async function ReportsListPage() {
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
-    redirect('/admin/login');
-  }
-
-  // Role-based filtering
+  // Fetch campaigns (show all - no role-based filtering)
   const campaigns = await prisma.surveyCampaign.findMany({
-    where:
-      currentUser.role === 'SUPER_ADMIN'
-        ? { status: { in: ['COMPLETED', 'ACTIVE'] } }
-        : {
-            organizationId: currentUser.organizationId || undefined,
-            status: { in: ['COMPLETED', 'ACTIVE'] },
-          },
+    where: {
+      status: { in: ['COMPLETED', 'ACTIVE'] },
+    },
     include: {
       organization: true,
       _count: {

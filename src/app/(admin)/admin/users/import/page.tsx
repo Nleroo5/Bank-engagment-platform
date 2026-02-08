@@ -1,23 +1,9 @@
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth/helpers';
-import { redirect } from 'next/navigation';
 import { CSVImportForm } from '@/components/admin/CSVImportForm';
 
 export default async function ImportUsersPage() {
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
-    redirect('/admin/login');
-  }
-
-  // Fetch organizations for mapping
-  const where =
-    currentUser.role === 'SUPER_ADMIN'
-      ? {}
-      : { id: currentUser.organizationId || '' };
-
+  // Fetch all organizations (no role-based filtering)
   const organizations = await prisma.organization.findMany({
-    where,
     orderBy: {
       name: 'asc',
     },

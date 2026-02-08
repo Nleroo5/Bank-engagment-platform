@@ -1,27 +1,13 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth/helpers';
-import { redirect } from 'next/navigation';
 import { Plus, Upload } from 'lucide-react';
 
 // Force dynamic rendering - admin pages need database access at runtime
 export const dynamic = 'force-dynamic';
 
 export default async function UsersPage() {
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
-    redirect('/admin/login');
-  }
-
-  // Role-based filtering: ORG_ADMIN sees only their org, SUPER_ADMIN sees all
-  const where =
-    currentUser.role === 'SUPER_ADMIN'
-      ? {}
-      : { organizationId: currentUser.organizationId };
-
+  // Fetch all users (no role-based filtering)
   const users = await prisma.user.findMany({
-    where,
     include: {
       organization: true,
     },

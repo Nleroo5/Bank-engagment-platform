@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/sanity';
-import { getCurrentUser } from '@/lib/auth/helpers';
 import {
   calculateCategoryScores,
   prepareResponsesForScoring,
@@ -19,12 +18,6 @@ export async function GET(
   { params }: { params: { campaignId: string } }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'xlsx';
 
@@ -54,17 +47,6 @@ export async function GET(
 
     if (!campaign) {
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
-    }
-
-    // Role-based access
-    if (
-      currentUser.role !== 'SUPER_ADMIN' &&
-      campaign.organizationId !== currentUser.organizationId
-    ) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      );
     }
 
     // Fetch survey from Sanity

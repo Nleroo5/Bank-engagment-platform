@@ -1,23 +1,9 @@
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth/helpers';
-import { redirect } from 'next/navigation';
 import { NewUserForm } from '@/components/admin/NewUserForm';
 
 export default async function NewUserPage() {
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
-    redirect('/admin/login');
-  }
-
-  // Fetch organizations
-  const where =
-    currentUser.role === 'SUPER_ADMIN'
-      ? {}
-      : { id: currentUser.organizationId || '' };
-
+  // Fetch all organizations (no role-based filtering)
   const organizations = await prisma.organization.findMany({
-    where,
     orderBy: {
       name: 'asc',
     },
@@ -35,7 +21,7 @@ export default async function NewUserPage() {
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <NewUserForm
           organizations={organizations}
-          currentUserRole={currentUser.role}
+          currentUserRole="SUPER_ADMIN"
         />
       </div>
     </div>

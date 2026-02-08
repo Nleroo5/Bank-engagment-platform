@@ -1,6 +1,4 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/prisma';
 import {
   BarChart3,
@@ -16,41 +14,20 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
-    redirect('/admin/login');
-  }
-
-  // Role-based filtering
-  const orgFilter =
-    currentUser.role === 'SUPER_ADMIN'
-      ? {}
-      : { organizationId: currentUser.organizationId || undefined };
-
-  // Fetch stats
+  // Fetch stats (show all data - no role-based filtering)
   const [campaigns, users, invitations] = await Promise.all([
     // Total campaigns (active ones)
     prisma.surveyCampaign.count({
       where: {
-        ...orgFilter,
         status: 'ACTIVE',
       },
     }),
 
     // Total users
-    prisma.user.count({ where: orgFilter }),
+    prisma.user.count(),
 
     // All invitations for completion metrics
     prisma.invitation.findMany({
-      where:
-        currentUser.role === 'SUPER_ADMIN'
-          ? {} // Super admin sees all invitations
-          : {
-              campaign: {
-                organizationId: currentUser.organizationId || undefined,
-              },
-            },
       select: {
         status: true,
       },
@@ -73,7 +50,6 @@ export default async function DashboardPage() {
 
   // Fetch recent campaigns
   const recentCampaigns = await prisma.surveyCampaign.findMany({
-    where: orgFilter,
     include: {
       organization: true,
       _count: {
@@ -107,7 +83,7 @@ export default async function DashboardPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-2 text-sm text-gray-600">
-          Welcome back, {currentUser.name || currentUser.email}
+          Welcome to the Survey Administration Dashboard
         </p>
       </div>
 

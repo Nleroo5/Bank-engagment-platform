@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth/helpers';
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -12,20 +11,8 @@ const createUserSchema = z.object({
 
 export async function GET() {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Role-based filtering
-    const where =
-      currentUser.role === 'SUPER_ADMIN'
-        ? {}
-        : { organizationId: currentUser.organizationId };
-
+    // Fetch all users (no role-based filtering)
     const users = await prisma.user.findMany({
-      where,
       include: {
         organization: true,
       },
@@ -46,22 +33,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { email, name, role, organizationId } = createUserSchema.parse(body);
-
-    // Permission check: only SUPER_ADMIN can create SUPER_ADMIN users
-    if (role === 'SUPER_ADMIN' && currentUser.role !== 'SUPER_ADMIN') {
-      return NextResponse.json(
-        { error: 'Insufficient permissions to create SUPER_ADMIN users' },
-        { status: 403 }
-      );
-    }
 
     // Check if organization exists
     const organization = await prisma.organization.findUnique({

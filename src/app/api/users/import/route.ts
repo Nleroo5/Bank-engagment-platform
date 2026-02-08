@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth/helpers';
 
 const importUserSchema = z.object({
   email: z.string().email(),
@@ -18,12 +17,6 @@ const importSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { users } = importSchema.parse(body);
 
