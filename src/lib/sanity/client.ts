@@ -39,7 +39,7 @@ export async function sanityFetch<T>({
   }
 
   return sanityClient.fetch<T>(query, params, {
-    cache: 'force-cache',
+    cache: 'no-store', // Changed from 'force-cache' to always fetch fresh data
     next: { tags },
   });
 }
