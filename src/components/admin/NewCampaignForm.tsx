@@ -18,6 +18,13 @@ export function NewCampaignForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Temporary debugging
+  console.log('[NewCampaignForm] Received props:', {
+    organizationsCount: organizations.length,
+    surveysCount: surveys.length,
+    surveys: surveys.map((s) => ({ id: s._id, title: s.title, isActive: s.isActive })),
+  });
+
   const [formData, setFormData] = useState({
     surveyId: '',
     organizationId: '',
@@ -79,6 +86,11 @@ export function NewCampaignForm({
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
         >
           <option value="">Select a survey</option>
+          {surveys.length === 0 && (
+            <option value="" disabled>
+              No surveys available (surveys array is empty)
+            </option>
+          )}
           {surveys.map((survey) => (
             <option key={survey._id} value={survey._id}>
               {survey.title}
