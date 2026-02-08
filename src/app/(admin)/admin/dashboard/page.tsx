@@ -43,9 +43,14 @@ export default async function DashboardPage() {
 
     // All invitations for completion metrics
     prisma.invitation.findMany({
-      where: {
-        campaign: orgFilter,
-      },
+      where:
+        currentUser.role === 'SUPER_ADMIN'
+          ? {} // Super admin sees all invitations
+          : {
+              campaign: {
+                organizationId: currentUser.organizationId || undefined,
+              },
+            },
       select: {
         status: true,
       },
