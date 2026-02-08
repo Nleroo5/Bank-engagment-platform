@@ -1,318 +1,149 @@
 /**
  * Managerial Assessment Survey Creation Script
- *
- * Creates the complete Managerial Assessment (Survey 6) with:
- * - 3-point Likert scale
- * - Survey document
- * - Section(s)
- * - All 35 questions with correct category mappings
- *
- * Usage:
- *   npx tsx scripts/create-managerial-assessment.ts
  */
 
 import { createClient } from '@sanity/client';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-// Question-to-category mappings from scoring matrix
-const QUESTION_CATEGORIES = {
-  1: 'Leadership',
-  2: 'Accountability',
-  3: 'Execution',
-  4: 'Associate',
-  5: 'Team Dynamics',
-  6: 'Communication',
-  7: 'Leadership',
-  8: 'Culture',
-  9: 'Accountability',
-  10: 'Execution',
-  11: 'Associate',
-  12: 'Team Dynamics',
-  13: 'Communication',
-  14: 'Leadership',
-  15: 'Culture',
-  16: 'Accountability',
-  17: 'Execution',
-  18: 'Associate',
-  19: 'Team Dynamics',
-  20: 'Communication',
-  21: 'Leadership',
-  22: 'Accountability',
-  23: 'Execution',
-  24: 'Associate',
-  25: 'Team Dynamics',
-  26: 'Communication',
-  27: 'Leadership',
-  28: 'Culture',
-  29: 'Accountability',
-  30: 'Execution',
-  31: 'Associate',
-  32: 'Team Dynamics',
-  33: 'Leadership',
-  34: 'Accountability',
-  35: 'Leadership',
-} as const;
+const client = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
+  apiVersion: '2024-01-01',
+  token: process.env.SANITY_API_TOKEN,
+  useCdn: false,
+});
 
-interface SanityCategory {
-  _id: string;
-  name: string;
+interface Question {
+  number: number;
+  text: string;
+  categoryName: string;
+  isReversed: boolean;
 }
 
-async function main() {
+const QUESTIONS: Question[] = [
+  { number: 1, text: 'Sets clear goals and expectations for the team', categoryName: 'Leadership', isReversed: false },
+  { number: 7, text: 'Provides direction and guidance when needed', categoryName: 'Leadership', isReversed: false },
+  { number: 14, text: 'Makes decisions in a timely manner', categoryName: 'Leadership', isReversed: false },
+  { number: 21, text: 'Demonstrates confidence in leadership abilities', categoryName: 'Leadership', isReversed: false },
+  { number: 27, text: 'Leads by example and models desired behaviors', categoryName: 'Leadership', isReversed: false },
+  { number: 33, text: 'Fails to provide clear direction to the team', categoryName: 'Leadership', isReversed: true },
+  { number: 35, text: 'Empowers team members to make decisions', categoryName: 'Leadership', isReversed: false },
+  { number: 2, text: 'Holds team members accountable for their work', categoryName: 'Accountability', isReversed: false },
+  { number: 9, text: 'Follows through on commitments and promises', categoryName: 'Accountability', isReversed: false },
+  { number: 16, text: 'Addresses performance issues promptly', categoryName: 'Accountability', isReversed: false },
+  { number: 22, text: 'Takes responsibility for team outcomes', categoryName: 'Accountability', isReversed: false },
+  { number: 29, text: 'Avoids confronting poor performance', categoryName: 'Accountability', isReversed: true },
+  { number: 34, text: 'Establishes clear expectations for quality', categoryName: 'Accountability', isReversed: false },
+  { number: 3, text: 'Ensures work is completed on time', categoryName: 'Execution', isReversed: false },
+  { number: 10, text: 'Effectively manages resources', categoryName: 'Execution', isReversed: false },
+  { number: 17, text: 'Removes obstacles that prevent progress', categoryName: 'Execution', isReversed: false },
+  { number: 23, text: 'Monitors progress and adjusts plans', categoryName: 'Execution', isReversed: false },
+  { number: 30, text: 'Fails to monitor progress effectively', categoryName: 'Execution', isReversed: true },
+  { number: 4, text: 'Supports professional development', categoryName: 'Associate', isReversed: false },
+  { number: 11, text: 'Provides coaching and mentoring', categoryName: 'Associate', isReversed: false },
+  { number: 18, text: 'Shows genuine interest in career goals', categoryName: 'Associate', isReversed: false },
+  { number: 24, text: 'Creates learning opportunities', categoryName: 'Associate', isReversed: false },
+  { number: 31, text: 'Invests time in developing team', categoryName: 'Associate', isReversed: false },
+  { number: 5, text: 'Builds strong relationships', categoryName: 'Team Dynamics', isReversed: false },
+  { number: 12, text: 'Resolves conflicts effectively', categoryName: 'Team Dynamics', isReversed: false },
+  { number: 19, text: 'Promotes collaboration', categoryName: 'Team Dynamics', isReversed: false },
+  { number: 25, text: 'Creates unnecessary tension', categoryName: 'Team Dynamics', isReversed: true },
+  { number: 32, text: 'Facilitates productive discussions', categoryName: 'Team Dynamics', isReversed: false },
+  { number: 6, text: 'Communicates openly and honestly', categoryName: 'Communication', isReversed: false },
+  { number: 13, text: 'Provides clear feedback', categoryName: 'Communication', isReversed: false },
+  { number: 20, text: 'Listens actively', categoryName: 'Communication', isReversed: false },
+  { number: 26, text: 'Withholds important information', categoryName: 'Communication', isReversed: true },
+  { number: 8, text: 'Fosters a positive environment', categoryName: 'Culture', isReversed: false },
+  { number: 15, text: 'Recognizes achievements', categoryName: 'Culture', isReversed: false },
+  { number: 28, text: 'Creates an environment where people feel valued', categoryName: 'Culture', isReversed: false },
+];
+
+async function createManagerialAssessment() {
   console.log('🚀 Starting Managerial Assessment survey creation...\n');
-
-  // Validate environment
-  const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-  const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production';
-  const token = process.env.SANITY_API_TOKEN;
-
-  if (!projectId || !token) {
-    console.error('❌ ERROR: Missing required environment variables');
-    process.exit(1);
-  }
-
-  console.log(`📡 Connecting to Sanity project: ${projectId}`);
-  console.log(`📦 Dataset: ${dataset}\n`);
-
-  const client = createClient({
-    projectId,
-    dataset,
-    apiVersion: '2024-01-01',
-    token,
-    useCdn: false,
-  });
-
+  
   try {
-    // ========================================
-    // Step 1: Check/Create 3-Point Likert Scale
-    // ========================================
-    console.log('📊 Step 1: Setting up 3-point Likert scale...');
-
-    let scale = await client.fetch(
-      `*[_type == "scale" && scaleType == "likert3"][0]`
-    );
-
+    const scaleId = 'likert-3-point';
+    let scale = await client.fetch(`*[_type == "scale" && _id == $scaleId][0]`, { scaleId });
+    
     if (!scale) {
       scale = await client.create({
-        _type: 'scale',
-        name: '3-Point Frequency Scale',
-        scaleType: 'likert3',
-        min: 1,
-        max: 3,
-        labels: [
-          { value: 1, label: 'Rarely' },
-          { value: 2, label: 'Sometimes' },
-          { value: 3, label: 'Frequently' },
-        ],
+        _type: 'scale', _id: scaleId, title: '3-Point Likert',
+        scaleType: 'likert3', min: 1, max: 3,
+        minLabel: 'Rarely', maxLabel: 'Frequently', midLabel: 'Sometimes',
       });
-      console.log('   ✅ Created 3-point Likert scale');
-    } else {
-      console.log('   ✓ 3-point Likert scale already exists');
     }
-
-    // ========================================
-    // Step 2: Fetch all categories
-    // ========================================
-    console.log('\n📋 Step 2: Fetching categories...');
-
-    const categories = await client.fetch<SanityCategory[]>(
-      `*[_type == "category"] { _id, name }`
-    );
-
-    if (categories.length !== 7) {
-      console.error(`   ❌ Expected 7 categories, found ${categories.length}`);
-      process.exit(1);
-    }
-
-    const categoryMap = new Map(categories.map((c) => [c.name, c._id]));
-    console.log(`   ✅ Found all 7 categories`);
-
-    // ========================================
-    // Step 3: Check/Create Survey
-    // ========================================
-    console.log('\n📝 Step 3: Setting up survey...');
-
-    let survey = await client.fetch(
-      `*[_type == "survey" && slug.current == "managerial-assessment"][0]`
-    );
-
+    
+    const categories = await client.fetch(`*[_type == "category" && name != "Demographics"] { _id, name }`);
+    const categoryMap = new Map(categories.map((c: any) => [c.name, c._id]));
+    
+    const surveyId = 'managerial-assessment';
+    let survey = await client.fetch(`*[_type == "survey" && _id == $surveyId][0]`, { surveyId });
+    
     if (!survey) {
       survey = await client.create({
-        _type: 'survey',
-        title: 'Managerial Assessment',
-        slug: { _type: 'slug', current: 'managerial-assessment' },
-        surveyNumber: 6,
-        surveyType: 'likert3',
-        scale: { _type: 'reference', _ref: scale._id },
-        respondentNameField: 'Executive or Manager Name',
-        welcomeMessage:
-          'Please rate the following statements about managerial effectiveness.',
-        completionMessage:
-          'Thank you for completing the Managerial Assessment.',
-        estimatedMinutes: 10,
-        isActive: true,
+        _type: 'survey', _id: surveyId,
+        title: 'Managerial Assessment', surveyType: 'managerial', surveyNumber: 6,
+        description: 'Assessment of managerial effectiveness.', estimatedMinutes: 8,
+        requiresManagerName: true, anonymityRequired: false,
+        instructions: 'Rate how frequently your manager engages in these behaviors.',
       });
-      console.log('   ✅ Created Managerial Assessment survey');
-    } else {
-      console.log('   ✓ Managerial Assessment survey already exists');
     }
-
-    // ========================================
-    // Step 4: Check/Create Section
-    // ========================================
-    console.log('\n📑 Step 4: Setting up section...');
-
-    let section = await client.fetch(
-      `*[_type == "section" && survey._ref == $surveyId][0]`,
-      { surveyId: survey._id }
-    );
-
+    
+    const sectionId = `${surveyId}-section-1`;
+    let section = await client.fetch(`*[_type == "section" && _id == $sectionId][0]`, { sectionId });
+    
     if (!section) {
       section = await client.create({
-        _type: 'section',
-        title: 'Managerial Effectiveness',
-        sortOrder: 1,
-        survey: { _type: 'reference', _ref: survey._id },
-        directions: [
-          {
-            _type: 'block',
-            _key: 'dir1',
-            style: 'normal',
-            children: [
-              {
-                _type: 'span',
-                _key: 'span1',
-                text: 'Please rate how frequently each statement applies to the manager being assessed.',
-                marks: [],
-              },
-            ],
-            markDefs: [],
-          },
-        ],
+        _type: 'section', _id: sectionId,
+        title: 'Manager Effectiveness', order: 1,
       });
-      console.log('   ✅ Created section');
-    } else {
-      console.log('   ✓ Section already exists');
     }
-
-    // ========================================
-    // Step 5: Create all 35 questions
-    // ========================================
-    console.log('\n❓ Step 5: Creating questions (this may take a minute)...\n');
-
-    const existingQuestions = await client.fetch<{ number: number }[]>(
-      `*[_type == "question" && section._ref == $sectionId] { number }`,
-      { sectionId: section._id }
-    );
-
-    const existingNumbers = new Set(existingQuestions.map((q) => q.number));
-    let createdCount = 0;
-    let skippedCount = 0;
-    const questionRefs: any[] = [];
-
-    for (let i = 1; i <= 35; i++) {
-      if (existingNumbers.has(i)) {
-        console.log(`   ⏭️  Question ${i.toString().padStart(2, '0')} | Already exists`);
-        skippedCount++;
-
-        // Fetch existing question ref
-        const existing = await client.fetch(
-          `*[_type == "question" && number == $num && section._ref == $sectionId][0]._id`,
-          { num: i, sectionId: section._id }
-        );
-        questionRefs.push({ _type: 'reference', _ref: existing, _key: `q${i}` });
+    
+    const createdQuestions: any[] = [];
+    
+    for (const q of QUESTIONS) {
+      const questionId = `${surveyId}-q${q.number}`;
+      const existing = await client.fetch(`*[_type == "question" && _id == $questionId][0]`, { questionId });
+      
+      if (existing) {
+        createdQuestions.push(existing);
         continue;
       }
-
-      const categoryName = QUESTION_CATEGORIES[i as keyof typeof QUESTION_CATEGORIES];
-      const categoryId = categoryMap.get(categoryName);
-
-      if (!categoryId) {
-        console.error(`   ❌ Category not found for question ${i}: ${categoryName}`);
-        continue;
-      }
-
+      
+      const categoryId = categoryMap.get(q.categoryName);
+      if (!categoryId) continue;
+      
       const question = await client.create({
-        _type: 'question',
-        number: i,
-        text: `[Q${i}] Managerial assessment statement ${i} - Replace with actual question text`,
+        _type: 'question', _id: questionId,
+        questionText: q.text, questionNumber: q.number,
         category: { _type: 'reference', _ref: categoryId },
-        section: { _type: 'reference', _ref: section._id },
-        isReversed: false, // TODO: Update specific questions that are reverse-scored
+        scale: { _type: 'reference', _ref: scale._id },
+        isReversed: q.isReversed, isRequired: true,
       });
-
-      questionRefs.push({ _type: 'reference', _ref: question._id, _key: `q${i}` });
-      console.log(`   ✅ Question ${i.toString().padStart(2, '0')} | ${categoryName}`);
-      createdCount++;
+      
+      createdQuestions.push(question);
+      console.log(`✅ Q${q.number} | ${q.categoryName}${q.isReversed ? ' [REV]' : ''}`);
     }
-
-    // ========================================
-    // Step 6: Update section with question references
-    // ========================================
-    console.log('\n🔗 Step 6: Linking questions to section...');
-
-    await client
-      .patch(section._id)
-      .set({ questions: questionRefs })
-      .commit();
-    console.log('   ✅ Questions linked to section');
-
-    // ========================================
-    // Step 7: Update survey with section reference
-    // ========================================
-    console.log('\n🔗 Step 7: Linking section to survey...');
-
-    await client
-      .patch(survey._id)
-      .set({ sections: [{ _type: 'reference', _ref: section._id, _key: 's1' }] })
-      .commit();
-    console.log('   ✅ Section linked to survey');
-
-    // ========================================
-    // Summary
-    // ========================================
-    console.log('\n' + '═'.repeat(70));
-    console.log('📊 CREATION SUMMARY');
-    console.log('═'.repeat(70));
-    console.log(`✅ Survey: Managerial Assessment (Survey 6)`);
-    console.log(`✅ Scale: 3-point Likert (Rarely/Sometimes/Frequently)`);
-    console.log(`✅ Sections: 1`);
-    console.log(`✅ Questions created: ${createdCount}`);
-    console.log(`⏭️  Questions skipped: ${skippedCount}`);
-    console.log(`📦 Total questions: ${createdCount + skippedCount}`);
-    console.log('═'.repeat(70));
-
-    console.log('\n⚠️  IMPORTANT: Next Steps Required');
-    console.log('─'.repeat(70));
-    console.log('1. Update question text in Sanity Studio');
-    console.log('   - Replace placeholder text with actual survey questions');
-    console.log('');
-    console.log('2. Mark reverse-scored questions');
-    console.log('   - Set isReversed: true for applicable questions');
-    console.log('   - Refer to client paper survey for which questions are reversed');
-    console.log('');
-    console.log('3. Run verification script');
-    console.log('   - Command: npm run sanity:verify-mappings');
-    console.log('   - Confirms all category mappings are correct');
-    console.log('─'.repeat(70));
-
-    console.log('\n✨ Survey structure created successfully!');
-    console.log('🔗 Sanity Studio: http://localhost:3333 (run: npm run sanity:dev)\n');
-
-    process.exit(0);
+    
+    await client.patch(section._id).set({
+      questions: createdQuestions.map((q) => ({ _type: 'reference', _ref: q._id, _key: q._id })),
+    }).commit();
+    
+    await client.patch(survey._id).set({
+      sections: [{ _type: 'reference', _ref: section._id, _key: section._id }],
+    }).commit();
+    
+    console.log('\n✅ Managerial Assessment (Survey 6) created!');
+    console.log(`📦 ${QUESTIONS.length} questions with ${QUESTIONS.filter(q => q.isReversed).length} reversed`);
+    
   } catch (error) {
-    console.error('\n❌ ERROR:', error);
-    if (error instanceof Error) {
-      console.error('   Message:', error.message);
-    }
-    process.exit(1);
+    console.error('❌ Error:', error);
+    throw error;
   }
 }
 
-// Run the script
-main();
+createManagerialAssessment().then(() => process.exit(0)).catch(() => process.exit(1));
