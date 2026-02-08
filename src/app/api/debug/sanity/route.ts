@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAllSurveys } from '@/lib/sanity';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Debug endpoint to test Sanity connection
  * Visit: https://www.drivemoreleads.co/api/debug/sanity
