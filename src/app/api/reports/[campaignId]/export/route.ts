@@ -103,6 +103,7 @@ export async function GET(
         isReversed: q.isReversed,
         category: {
           _id: q.category._id,
+          _type: 'category' as const,
           name: q.category.name,
           weight: q.category.weight,
           colorCode: q.category.colorCode,
