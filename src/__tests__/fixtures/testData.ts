@@ -78,6 +78,7 @@ export const createMockResponse = (overrides?: Partial<Response>): Response => (
   sanityQuestionId: `question-${Date.now()}`,
   questionNumber: 1,
   value: 5,
+  adjustedValue: null,
   textValue: null,
   submittedAt: new Date(),
   ...overrides,

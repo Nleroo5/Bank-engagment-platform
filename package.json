@@ -25,7 +25,13 @@
     "sanity:create-survey": "tsx scripts/create-managerial-assessment.ts",
     "sanity:verify-mappings": "tsx scripts/verify-question-mappings.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky",
+    "validate": "npm run type-check && npm run lint && npm run format:check",
+    "validate:build": "npm run validate && npm run build",
+    "pre-deploy": "npm run validate:build && npm run test",
+    "audit": "tsx scripts/audit-code.ts",
+    "audit:full": "npm run audit && npm run validate:build && npm run test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -68,6 +74,8 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.0",
     "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "postcss": "^8.4.0",
     "prettier": "^3.3.0",
     "prettier-plugin-tailwindcss": "^0.6.0",

@@ -169,7 +169,7 @@ describe('validateScoringData', () => {
     const validation = validateScoringData(responses, invalidCategories, 1, 3);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toHaveLength(1);
-    expect(validation.errors[0].type).toBe('MISSING_WEIGHT');
+    expect(validation.errors[0]!.type).toBe('MISSING_WEIGHT');
   });
 
   it('should fail when response value is out of range', () => {
@@ -188,7 +188,7 @@ describe('validateScoringData', () => {
     const validation = validateScoringData(responses, mockCategories, 1, 3);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toHaveLength(1);
-    expect(validation.errors[0].type).toBe('INVALID_VALUE');
+    expect(validation.errors[0]!.type).toBe('INVALID_VALUE');
   });
 
   it('should fail when category does not exist', () => {
@@ -207,7 +207,7 @@ describe('validateScoringData', () => {
     const validation = validateScoringData(responses, mockCategories, 1, 3);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toHaveLength(1);
-    expect(validation.errors[0].type).toBe('MISSING_CATEGORY');
+    expect(validation.errors[0]!.type).toBe('MISSING_CATEGORY');
   });
 });
 
@@ -515,11 +515,11 @@ describe('prepareResponsesForScoring', () => {
     const prepared = prepareResponsesForScoring(dbResponses, questions);
 
     expect(prepared).toHaveLength(1);
-    expect(prepared[0].sanityQuestionId).toBe('q1');
-    expect(prepared[0].value).toBe(3);
-    expect(prepared[0].isReversed).toBe(true);
-    expect(prepared[0].categoryName).toBe('Test Category');
-    expect(prepared[0].categoryWeight).toBe(1.5);
+    expect(prepared[0]!.sanityQuestionId).toBe('q1');
+    expect(prepared[0]!.value).toBe(3);
+    expect(prepared[0]!.isReversed).toBe(true);
+    expect(prepared[0]!.categoryName).toBe('Test Category');
+    expect(prepared[0]!.categoryWeight).toBe(1.5);
   });
 
   it('should throw error for missing question', () => {

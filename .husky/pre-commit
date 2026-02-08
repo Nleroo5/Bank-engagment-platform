@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit validation..."
+
+# Type check
+echo "📝 Type checking..."
+npm run type-check || { echo "❌ Type check failed!"; exit 1; }
+
+# Lint
+echo "🔎 Linting..."
+npm run lint || { echo "❌ Lint failed!"; exit 1; }
+
+echo "✅ Pre-commit checks passed!"

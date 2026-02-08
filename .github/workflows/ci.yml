@@ -1,0 +1,100 @@
+name: CI/CD Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  validate:
+    name: Build & Type Check
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Run TypeScript type check
+        run: npm run type-check
+        continue-on-error: false
+
+      - name: Check code formatting
+        run: npm run format:check
+        continue-on-error: false
+
+      - name: Run tests
+        run: npm run test
+        continue-on-error: false
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          # Dummy env vars for build (replace with actual secrets in production)
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+          NEXTAUTH_SECRET: dummy-secret-for-ci-build-only
+          NEXTAUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+          NEXT_PUBLIC_SANITY_DATASET: production
+          SANITY_API_TOKEN: ${{ secrets.SANITY_API_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          BASE_URL: http://localhost:3000
+
+      - name: Upload build artifacts (for debugging)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.node-version }}
+          path: .next/
+
+  type-coverage:
+    name: TypeScript Coverage Report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Check for any types
+        run: |
+          echo "🔍 Searching for 'any' types in source code..."
+          ANY_COUNT=$(grep -r ":\s*any" src/ --include="*.ts" --include="*.tsx" | grep -v "eslint-disable" | wc -l || echo "0")
+          echo "Found $ANY_COUNT occurrences of 'any' type (excluding eslint-disabled)"
+          if [ "$ANY_COUNT" -gt 5 ]; then
+            echo "⚠️  Warning: High number of 'any' types detected"
+            grep -r ":\s*any" src/ --include="*.ts" --include="*.tsx" | grep -v "eslint-disable" || true
+          else
+            echo "✅ Low 'any' type usage - good job!"
+          fi
