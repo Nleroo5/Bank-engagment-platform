@@ -5,23 +5,22 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 // Get the appropriate database URL for the environment
-// In production/serverless, use pooled connection to avoid prepared statement errors
+// Always use pgbouncer parameter to avoid prepared statement errors
 function getDatabaseUrl(): string | undefined {
-  // If explicitly set, use the pooled URL for serverless
-  if (process.env.POOLED_DATABASE_URL) {
-    return process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL;
+
+  if (!url) {
+    return undefined;
   }
 
-  // For Vercel/production, ensure we have pgbouncer parameter
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    const url = process.env.DATABASE_URL;
-    if (url && !url.includes('pgbouncer=true')) {
-      const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}pgbouncer=true&connection_limit=1`;
-    }
+  // Always add pgbouncer parameter to prevent "prepared statement already exists" errors
+  // This happens in both dev and production with hot reloading and serverless functions
+  if (!url.includes('pgbouncer=true')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}pgbouncer=true&connection_limit=1`;
   }
 
-  return process.env.DATABASE_URL;
+  return url;
 }
 
 export const prisma =
