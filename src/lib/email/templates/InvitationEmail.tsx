@@ -28,9 +28,7 @@ export function InvitationEmail({
   return (
     <Html>
       <Head />
-      <Preview>
-        You&apos;ve been invited to complete: {surveyTitle}
-      </Preview>
+      <Preview>You&apos;ve been invited to complete: {surveyTitle}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Heading style={h1}>{surveyTitle}</Heading>

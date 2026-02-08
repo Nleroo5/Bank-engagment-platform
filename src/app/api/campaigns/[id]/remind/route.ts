@@ -67,7 +67,9 @@ export async function POST(
     for (const invitation of invitationsToRemind) {
       try {
         if (!invitation.user) {
-          emailErrors.push(`Failed to send reminder for invitation ${invitation.id}: User not found`);
+          emailErrors.push(
+            `Failed to send reminder for invitation ${invitation.id}: User not found`
+          );
           continue;
         }
 
@@ -83,7 +85,10 @@ export async function POST(
 
         remindersSent++;
       } catch (error) {
-        console.error(`Failed to send reminder email to ${invitation.userId}:`, error);
+        console.error(
+          `Failed to send reminder email to ${invitation.userId}:`,
+          error
+        );
         emailErrors.push(
           `Failed to send to ${invitation.userId}: ${error instanceof Error ? error.message : 'Unknown error'}`
         );

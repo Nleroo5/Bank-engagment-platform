@@ -104,7 +104,9 @@ async function main() {
 
   if (!projectId || !token) {
     console.error('❌ ERROR: Missing required environment variables');
-    console.error('   Required: NEXT_PUBLIC_SANITY_PROJECT_ID, SANITY_API_TOKEN');
+    console.error(
+      '   Required: NEXT_PUBLIC_SANITY_PROJECT_ID, SANITY_API_TOKEN'
+    );
     process.exit(1);
   }
 
@@ -280,7 +282,9 @@ async function main() {
 
     await client
       .patch(survey._id)
-      .set({ sections: [{ _type: 'reference', _ref: section._id, _key: 's1' }] })
+      .set({
+        sections: [{ _type: 'reference', _ref: section._id, _key: 's1' }],
+      })
       .commit();
     console.log('   ✅ Section linked to survey');
 
@@ -301,12 +305,16 @@ async function main() {
     console.log('\n📝 Field Types Configured:');
     console.log('─'.repeat(70));
     DEMOGRAPHICS_QUESTIONS.forEach((q) => {
-      console.log(`   ${q.number.toString().padStart(2, '0')}. ${q.text} (${q.fieldType})`);
+      console.log(
+        `   ${q.number.toString().padStart(2, '0')}. ${q.text} (${q.fieldType})`
+      );
     });
     console.log('─'.repeat(70));
 
     console.log('\n✨ Demographics survey created successfully!');
-    console.log('🔗 Sanity Studio: http://localhost:3333 (run: npm run sanity:dev)\n');
+    console.log(
+      '🔗 Sanity Studio: http://localhost:3333 (run: npm run sanity:dev)\n'
+    );
 
     process.exit(0);
   } catch (error) {

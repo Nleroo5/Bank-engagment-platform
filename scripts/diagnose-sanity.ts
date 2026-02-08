@@ -56,7 +56,12 @@ async function diagnose() {
 
     // Display each survey
     surveys.forEach((survey: any, index: number) => {
-      const activeStatus = survey.isActive === true ? '🟢 Active' : survey.isActive === false ? '🔴 Inactive' : '⚪ Not set';
+      const activeStatus =
+        survey.isActive === true
+          ? '🟢 Active'
+          : survey.isActive === false
+            ? '🔴 Inactive'
+            : '⚪ Not set';
       console.log(`${index + 1}. ${survey.title || 'Untitled'}`);
       console.log(`   ID: ${survey._id}`);
       console.log(`   Survey Number: ${survey.surveyNumber || 'N/A'}`);
@@ -69,8 +74,12 @@ async function diagnose() {
 
     // Count active surveys
     const activeSurveys = surveys.filter((s: any) => s.isActive === true);
-    console.log(`✅ ${activeSurveys.length} surveys are ACTIVE (isActive: true)`);
-    console.log(`⚠️  ${surveys.length - activeSurveys.length} surveys are NOT ACTIVE`);
+    console.log(
+      `✅ ${activeSurveys.length} surveys are ACTIVE (isActive: true)`
+    );
+    console.log(
+      `⚠️  ${surveys.length - activeSurveys.length} surveys are NOT ACTIVE`
+    );
     console.log('');
 
     if (activeSurveys.length === 0) {
@@ -79,13 +88,16 @@ async function diagnose() {
       console.log('   This is why the dropdown is empty.');
       console.log('');
       console.log('💡 SOLUTION:');
-      console.log('   Go to Sanity Studio and set isActive: true for your surveys');
+      console.log(
+        '   Go to Sanity Studio and set isActive: true for your surveys'
+      );
       console.log('   Or run: npm run sanity:update-active-surveys');
     } else {
       console.log('✅ Active surveys should appear in the dropdown!');
-      console.log('   If they still don\'t appear, check browser console for errors.');
+      console.log(
+        "   If they still don't appear, check browser console for errors."
+      );
     }
-
   } catch (error) {
     console.error('❌ Error connecting to Sanity:');
     console.error(error);

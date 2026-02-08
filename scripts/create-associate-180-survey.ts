@@ -49,60 +49,241 @@ interface Question {
 // Survey 7 questions mapped to categories (based on paper form)
 const QUESTIONS: Question[] = [
   // Communication (1, 8, 15, 22, 29) - Category weight: 1.75
-  { number: 1, text: 'My manager engages in open and honest communication with the team', categoryName: 'Communication', isReversed: false },
-  { number: 8, text: 'My manager provides clear and timely feedback on my performance', categoryName: 'Communication', isReversed: false },
-  { number: 15, text: 'My manager listens to and values my input and ideas', categoryName: 'Communication', isReversed: false },
-  { number: 22, text: 'My manager avoids communicating important information in a timely manner', categoryName: 'Communication', isReversed: true },
-  { number: 29, text: 'My manager encourages open dialogue and constructive feedback', categoryName: 'Communication', isReversed: false },
+  {
+    number: 1,
+    text: 'My manager engages in open and honest communication with the team',
+    categoryName: 'Communication',
+    isReversed: false,
+  },
+  {
+    number: 8,
+    text: 'My manager provides clear and timely feedback on my performance',
+    categoryName: 'Communication',
+    isReversed: false,
+  },
+  {
+    number: 15,
+    text: 'My manager listens to and values my input and ideas',
+    categoryName: 'Communication',
+    isReversed: false,
+  },
+  {
+    number: 22,
+    text: 'My manager avoids communicating important information in a timely manner',
+    categoryName: 'Communication',
+    isReversed: true,
+  },
+  {
+    number: 29,
+    text: 'My manager encourages open dialogue and constructive feedback',
+    categoryName: 'Communication',
+    isReversed: false,
+  },
 
   // Leadership (2, 9, 16, 23, 30, 34) - Category weight: 1.0
-  { number: 2, text: 'My manager demonstrates strong leadership skills and leads by example', categoryName: 'Leadership', isReversed: false },
-  { number: 9, text: 'My manager provides a clear vision and direction for the team', categoryName: 'Leadership', isReversed: false },
-  { number: 16, text: 'My manager fails to make decisions when needed', categoryName: 'Leadership', isReversed: true },
-  { number: 23, text: 'My manager inspires and motivates the team to achieve goals', categoryName: 'Leadership', isReversed: false },
-  { number: 30, text: 'My manager demonstrates confidence in their leadership abilities', categoryName: 'Leadership', isReversed: false },
-  { number: 34, text: 'My manager effectively delegates tasks and responsibilities', categoryName: 'Leadership', isReversed: false },
+  {
+    number: 2,
+    text: 'My manager demonstrates strong leadership skills and leads by example',
+    categoryName: 'Leadership',
+    isReversed: false,
+  },
+  {
+    number: 9,
+    text: 'My manager provides a clear vision and direction for the team',
+    categoryName: 'Leadership',
+    isReversed: false,
+  },
+  {
+    number: 16,
+    text: 'My manager fails to make decisions when needed',
+    categoryName: 'Leadership',
+    isReversed: true,
+  },
+  {
+    number: 23,
+    text: 'My manager inspires and motivates the team to achieve goals',
+    categoryName: 'Leadership',
+    isReversed: false,
+  },
+  {
+    number: 30,
+    text: 'My manager demonstrates confidence in their leadership abilities',
+    categoryName: 'Leadership',
+    isReversed: false,
+  },
+  {
+    number: 34,
+    text: 'My manager effectively delegates tasks and responsibilities',
+    categoryName: 'Leadership',
+    isReversed: false,
+  },
 
   // Culture (3, 10, 17, 24, 30) - Category weight: 2.3
-  { number: 3, text: 'My manager fosters a positive and inclusive work environment', categoryName: 'Culture', isReversed: false },
-  { number: 10, text: 'My manager promotes a culture of collaboration and teamwork', categoryName: 'Culture', isReversed: false },
-  { number: 17, text: 'My manager recognizes and celebrates team achievements', categoryName: 'Culture', isReversed: false },
-  { number: 24, text: 'My manager creates an environment where people feel valued', categoryName: 'Culture', isReversed: false },
+  {
+    number: 3,
+    text: 'My manager fosters a positive and inclusive work environment',
+    categoryName: 'Culture',
+    isReversed: false,
+  },
+  {
+    number: 10,
+    text: 'My manager promotes a culture of collaboration and teamwork',
+    categoryName: 'Culture',
+    isReversed: false,
+  },
+  {
+    number: 17,
+    text: 'My manager recognizes and celebrates team achievements',
+    categoryName: 'Culture',
+    isReversed: false,
+  },
+  {
+    number: 24,
+    text: 'My manager creates an environment where people feel valued',
+    categoryName: 'Culture',
+    isReversed: false,
+  },
 
   // Accountability (4, 11, 18, 25, 31) - Category weight: 1.7
-  { number: 4, text: 'My manager holds team members accountable for their responsibilities', categoryName: 'Accountability', isReversed: false },
-  { number: 11, text: 'My manager follows through on commitments and promises', categoryName: 'Accountability', isReversed: false },
-  { number: 18, text: 'My manager addresses performance issues promptly and fairly', categoryName: 'Accountability', isReversed: false },
-  { number: 25, text: 'My manager avoids difficult conversations about performance', categoryName: 'Accountability', isReversed: true },
-  { number: 31, text: 'My manager sets clear expectations for quality and results', categoryName: 'Accountability', isReversed: false },
+  {
+    number: 4,
+    text: 'My manager holds team members accountable for their responsibilities',
+    categoryName: 'Accountability',
+    isReversed: false,
+  },
+  {
+    number: 11,
+    text: 'My manager follows through on commitments and promises',
+    categoryName: 'Accountability',
+    isReversed: false,
+  },
+  {
+    number: 18,
+    text: 'My manager addresses performance issues promptly and fairly',
+    categoryName: 'Accountability',
+    isReversed: false,
+  },
+  {
+    number: 25,
+    text: 'My manager avoids difficult conversations about performance',
+    categoryName: 'Accountability',
+    isReversed: true,
+  },
+  {
+    number: 31,
+    text: 'My manager sets clear expectations for quality and results',
+    categoryName: 'Accountability',
+    isReversed: false,
+  },
 
   // Execution (5, 12, 19, 26, 32) - Category weight: 1.4
-  { number: 5, text: 'My manager ensures projects are completed on time and within scope', categoryName: 'Execution', isReversed: false },
-  { number: 12, text: 'My manager effectively prioritizes tasks and manages resources', categoryName: 'Execution', isReversed: false },
-  { number: 19, text: 'My manager removes obstacles that prevent the team from succeeding', categoryName: 'Execution', isReversed: false },
-  { number: 26, text: 'My manager fails to follow through on action items', categoryName: 'Execution', isReversed: true },
-  { number: 32, text: 'My manager monitors progress and adjusts plans as needed', categoryName: 'Execution', isReversed: false },
+  {
+    number: 5,
+    text: 'My manager ensures projects are completed on time and within scope',
+    categoryName: 'Execution',
+    isReversed: false,
+  },
+  {
+    number: 12,
+    text: 'My manager effectively prioritizes tasks and manages resources',
+    categoryName: 'Execution',
+    isReversed: false,
+  },
+  {
+    number: 19,
+    text: 'My manager removes obstacles that prevent the team from succeeding',
+    categoryName: 'Execution',
+    isReversed: false,
+  },
+  {
+    number: 26,
+    text: 'My manager fails to follow through on action items',
+    categoryName: 'Execution',
+    isReversed: true,
+  },
+  {
+    number: 32,
+    text: 'My manager monitors progress and adjusts plans as needed',
+    categoryName: 'Execution',
+    isReversed: false,
+  },
 
   // Associate (6, 13, 20, 27, 33) - Category weight: 1.4
-  { number: 6, text: 'My manager supports my professional development and growth', categoryName: 'Associate', isReversed: false },
-  { number: 13, text: 'My manager provides opportunities for learning and skill development', categoryName: 'Associate', isReversed: false },
-  { number: 20, text: 'My manager shows genuine interest in my career goals', categoryName: 'Associate', isReversed: false },
-  { number: 27, text: 'My manager invests time in coaching and mentoring team members', categoryName: 'Associate', isReversed: false },
-  { number: 33, text: 'My manager encourages work-life balance and well-being', categoryName: 'Associate', isReversed: false },
+  {
+    number: 6,
+    text: 'My manager supports my professional development and growth',
+    categoryName: 'Associate',
+    isReversed: false,
+  },
+  {
+    number: 13,
+    text: 'My manager provides opportunities for learning and skill development',
+    categoryName: 'Associate',
+    isReversed: false,
+  },
+  {
+    number: 20,
+    text: 'My manager shows genuine interest in my career goals',
+    categoryName: 'Associate',
+    isReversed: false,
+  },
+  {
+    number: 27,
+    text: 'My manager invests time in coaching and mentoring team members',
+    categoryName: 'Associate',
+    isReversed: false,
+  },
+  {
+    number: 33,
+    text: 'My manager encourages work-life balance and well-being',
+    categoryName: 'Associate',
+    isReversed: false,
+  },
 
   // Team Dynamics (7, 14, 21, 28, 35) - Category weight: 1.4
-  { number: 7, text: 'My manager effectively resolves conflicts within the team', categoryName: 'Team Dynamics', isReversed: false },
-  { number: 14, text: 'My manager builds trust and strong relationships with team members', categoryName: 'Team Dynamics', isReversed: false },
-  { number: 21, text: 'My manager promotes collaboration across different teams', categoryName: 'Team Dynamics', isReversed: false },
-  { number: 28, text: 'My manager creates unnecessary tension or conflict in the team', categoryName: 'Team Dynamics', isReversed: true },
-  { number: 35, text: 'My manager facilitates effective team meetings and discussions', categoryName: 'Team Dynamics', isReversed: false },
+  {
+    number: 7,
+    text: 'My manager effectively resolves conflicts within the team',
+    categoryName: 'Team Dynamics',
+    isReversed: false,
+  },
+  {
+    number: 14,
+    text: 'My manager builds trust and strong relationships with team members',
+    categoryName: 'Team Dynamics',
+    isReversed: false,
+  },
+  {
+    number: 21,
+    text: 'My manager promotes collaboration across different teams',
+    categoryName: 'Team Dynamics',
+    isReversed: false,
+  },
+  {
+    number: 28,
+    text: 'My manager creates unnecessary tension or conflict in the team',
+    categoryName: 'Team Dynamics',
+    isReversed: true,
+  },
+  {
+    number: 35,
+    text: 'My manager facilitates effective team meetings and discussions',
+    categoryName: 'Team Dynamics',
+    isReversed: false,
+  },
 ];
 
 async function createAssociate180Survey() {
   console.log('🚀 Starting Associate 180° Assessment survey creation...\n');
 
-  console.log('📡 Connecting to Sanity project:', process.env.NEXT_PUBLIC_SANITY_PROJECT_ID);
-  console.log('📦 Dataset:', process.env.NEXT_PUBLIC_SANITY_DATASET || 'production');
+  console.log(
+    '📡 Connecting to Sanity project:',
+    process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+  );
+  console.log(
+    '📦 Dataset:',
+    process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
+  );
   console.log('');
 
   try {
@@ -144,7 +325,9 @@ async function createAssociate180Survey() {
 
     if (categories.length < 7) {
       console.error('   ❌ Error: Not all 7 categories found in Sanity!');
-      console.log('   Expected: Communication, Leadership, Culture, Accountability, Execution, Associate, Team Dynamics');
+      console.log(
+        '   Expected: Communication, Leadership, Culture, Accountability, Execution, Associate, Team Dynamics'
+      );
       console.log('   Found:', categories.map((c: any) => c.name).join(', '));
       return;
     }
@@ -170,12 +353,14 @@ async function createAssociate180Survey() {
         title: 'Associate 180° Assessment',
         surveyType: 'associate_180',
         surveyNumber: 7,
-        description: 'Confidential 180-degree feedback assessment for evaluating manager effectiveness. Responses are completely anonymous and aggregated to protect individual privacy.',
+        description:
+          'Confidential 180-degree feedback assessment for evaluating manager effectiveness. Responses are completely anonymous and aggregated to protect individual privacy.',
         estimatedMinutes: 10,
         requiresManagerName: true,
         anonymityRequired: true,
         minimumRespondents: 5,
-        instructions: 'Please rate your manager on the following behaviors and activities using the scale provided. Your responses are completely anonymous and will only be shared as aggregated team averages.',
+        instructions:
+          'Please rate your manager on the following behaviors and activities using the scale provided. Your responses are completely anonymous and will only be shared as aggregated team averages.',
       });
       console.log('   ✅ Associate 180 survey created');
     } else {
@@ -196,7 +381,8 @@ async function createAssociate180Survey() {
         _type: 'section',
         _id: sectionId,
         title: 'Manager Assessment',
-        description: 'Rate your manager on the following aspects of leadership and management.',
+        description:
+          'Rate your manager on the following aspects of leadership and management.',
         order: 1,
       });
       console.log('   ✅ Section created');
@@ -205,7 +391,9 @@ async function createAssociate180Survey() {
     }
 
     // Step 5: Create questions
-    console.log('\n❓ Step 5: Creating questions (this may take a minute)...\n');
+    console.log(
+      '\n❓ Step 5: Creating questions (this may take a minute)...\n'
+    );
 
     const createdQuestions: any[] = [];
 
@@ -219,7 +407,9 @@ async function createAssociate180Survey() {
       );
 
       if (existing) {
-        console.log(`   ⏭️  Question ${q.number.toString().padStart(2, '0')} | Already exists`);
+        console.log(
+          `   ⏭️  Question ${q.number.toString().padStart(2, '0')} | Already exists`
+        );
         createdQuestions.push(existing);
         continue;
       }
@@ -252,7 +442,9 @@ async function createAssociate180Survey() {
 
       createdQuestions.push(question);
       const reversedLabel = q.isReversed ? ' [REVERSED]' : '';
-      console.log(`   ✅ Question ${q.number.toString().padStart(2, '0')} | ${q.categoryName}${reversedLabel}`);
+      console.log(
+        `   ✅ Question ${q.number.toString().padStart(2, '0')} | ${q.categoryName}${reversedLabel}`
+      );
     }
 
     // Step 6: Link questions to section
@@ -286,32 +478,50 @@ async function createAssociate180Survey() {
     console.log('   ✅ Section linked to survey');
 
     // Count reverse-scored questions
-    const reversedCount = QUESTIONS.filter(q => q.isReversed).length;
+    const reversedCount = QUESTIONS.filter((q) => q.isReversed).length;
 
-    console.log('\n══════════════════════════════════════════════════════════════════════');
+    console.log(
+      '\n══════════════════════════════════════════════════════════════════════'
+    );
     console.log('📊 CREATION SUMMARY');
-    console.log('══════════════════════════════════════════════════════════════════════');
+    console.log(
+      '══════════════════════════════════════════════════════════════════════'
+    );
     console.log(`✅ Survey: Associate 180° Assessment (Survey 7)`);
-    console.log(`✅ Scale: 3-point Likert (1=Rarely, 2=Sometimes, 3=Frequently)`);
+    console.log(
+      `✅ Scale: 3-point Likert (1=Rarely, 2=Sometimes, 3=Frequently)`
+    );
     console.log(`✅ Sections: 1`);
     console.log(`✅ Questions created: ${createdQuestions.length}`);
     console.log(`📦 Total questions: ${QUESTIONS.length}`);
     console.log(`🔄 Reverse-scored questions: ${reversedCount}`);
     console.log(`🔒 Anonymity: REQUIRED (minimum 5 respondents)`);
-    console.log('══════════════════════════════════════════════════════════════════════\n');
+    console.log(
+      '══════════════════════════════════════════════════════════════════════\n'
+    );
 
     console.log('🔐 ANONYMITY REQUIREMENTS');
-    console.log('──────────────────────────────────────────────────────────────────────');
-    console.log('⚠️  CRITICAL: This survey requires strict anonymity enforcement:');
+    console.log(
+      '──────────────────────────────────────────────────────────────────────'
+    );
+    console.log(
+      '⚠️  CRITICAL: This survey requires strict anonymity enforcement:'
+    );
     console.log('   - Individual responses are NEVER visible in admin views');
     console.log('   - Reports require minimum 5 respondents before generating');
     console.log('   - All data is aggregated and rounded to protect privacy');
     console.log('   - Demographic filtering disabled when < 5 respondents');
-    console.log('──────────────────────────────────────────────────────────────────────\n');
+    console.log(
+      '──────────────────────────────────────────────────────────────────────\n'
+    );
 
     console.log('⚠️  IMPORTANT: Next Steps');
-    console.log('──────────────────────────────────────────────────────────────────────');
-    console.log('1. Replace placeholder questions with actual survey questions');
+    console.log(
+      '──────────────────────────────────────────────────────────────────────'
+    );
+    console.log(
+      '1. Replace placeholder questions with actual survey questions'
+    );
     console.log('   - Edit questions in Sanity Studio');
     console.log('   - Verify reverse-scoring flags are correct');
     console.log('');
@@ -322,11 +532,14 @@ async function createAssociate180Survey() {
     console.log('   - Create a campaign in admin dashboard');
     console.log('   - Complete survey as test respondent');
     console.log('   - Verify anonymity enforcement (need 5 respondents)');
-    console.log('──────────────────────────────────────────────────────────────────────\n');
+    console.log(
+      '──────────────────────────────────────────────────────────────────────\n'
+    );
 
     console.log('✨ Associate 180° Assessment created successfully!');
-    console.log('🔗 Sanity Studio: http://localhost:3333 (run: npm run sanity:dev)\n');
-
+    console.log(
+      '🔗 Sanity Studio: http://localhost:3333 (run: npm run sanity:dev)\n'
+    );
   } catch (error) {
     console.error('❌ Error creating Associate 180 survey:', error);
     throw error;

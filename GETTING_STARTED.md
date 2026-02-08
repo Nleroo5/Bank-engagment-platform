@@ -1,4 +1,5 @@
 # Getting Started Guide
+
 ## Bank Engagement Survey Platform
 
 This guide will walk you through everything you need to know to use your survey platform.
@@ -8,6 +9,7 @@ This guide will walk you through everything you need to know to use your survey 
 ## 📱 What This Platform Does
 
 Your platform allows you to:
+
 1. **Create surveys** for bank employees
 2. **Send survey links** via email to employees
 3. **Collect responses** through unique, secure links
@@ -21,6 +23,7 @@ Your platform allows you to:
 **Your live website:** https://bank-engagment-platform.vercel.app
 
 **Three ways to access:**
+
 1. **Homepage** - https://bank-engagment-platform.vercel.app/
 2. **Admin Login** - https://bank-engagment-platform.vercel.app/admin/login
 3. **Survey Link** - Unique link sent to each employee (example: `/s/abc123`)
@@ -50,6 +53,7 @@ npm run db:seed
 ```
 
 **What this does:**
+
 - Creates all the database tables your platform needs
 - Optionally adds some test organizations and users
 
@@ -60,16 +64,18 @@ npm run db:seed
 Sanity is where you'll create and manage your survey questions.
 
 **To access Sanity:**
+
 1. Go to https://sanity.io/manage
 2. Log in with your Sanity account
 3. Click on your project (ID: `4z8cbios`)
 
 **What you need to do in Sanity:**
+
 - Upload your survey schemas (the questions and structure)
 - Create your first survey
 - Add questions to the survey
 
-*Note: For now, your surveys are stored in the `sanity/schemas/` folder in your project. You'll need to configure Sanity Studio to manage them through a web interface.*
+_Note: For now, your surveys are stored in the `sanity/schemas/` folder in your project. You'll need to configure Sanity Studio to manage them through a web interface._
 
 ---
 
@@ -143,6 +149,7 @@ VALUES (
 ### How Employees Take Surveys
 
 1. **They receive an email** with a unique link like:
+
    ```
    https://bank-engagment-platform.vercel.app/s/abc123-unique-token
    ```
@@ -198,21 +205,25 @@ VALUES (
 ## 🆘 Common Issues & Solutions
 
 ### "Can't log in"
+
 - Make sure you created an admin user (Step 3)
 - Check that your email is correct
 - Password functionality may need to be set up
 
 ### "Survey link doesn't work"
+
 - Check if the campaign is ACTIVE
 - Make sure the link hasn't been used already
 - Verify the campaign hasn't expired
 
 ### "No data showing in reports"
+
 - At least one person must complete the survey
 - For anonymous surveys, need minimum 5 respondents
 - Check that campaign status is not DRAFT
 
 ### "Can't create surveys in Sanity"
+
 - Schemas need to be uploaded to your Sanity project
 - You may need to deploy Sanity Studio first
 - Check that API token has Editor permissions

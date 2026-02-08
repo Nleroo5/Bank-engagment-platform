@@ -5,7 +5,11 @@ import { CategoryBarChart } from '@/components/charts/CategoryBarChart';
 import { CategoryRadarChart } from '@/components/charts/CategoryRadarChart';
 import { DemographicFilters } from './DemographicFilters';
 import { AlertCircle, Users, TrendingUp } from 'lucide-react';
-import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
+import {
+  SkeletonCard,
+  SkeletonChart,
+  SkeletonTable,
+} from '@/components/ui/Skeleton';
 
 interface ReportData {
   campaign: {
@@ -43,10 +47,30 @@ interface ReportData {
   filters: {
     applied: Record<string, string>;
     available: {
-      divisions: Array<{ field: string; label: string; value: string; count: number }>;
-      jobRoles: Array<{ field: string; label: string; value: string; count: number }>;
-      genders: Array<{ field: string; label: string; value: string; count: number }>;
-      timeAtBank: Array<{ field: string; label: string; value: string; count: number }>;
+      divisions: Array<{
+        field: string;
+        label: string;
+        value: string;
+        count: number;
+      }>;
+      jobRoles: Array<{
+        field: string;
+        label: string;
+        value: string;
+        count: number;
+      }>;
+      genders: Array<{
+        field: string;
+        label: string;
+        value: string;
+        count: number;
+      }>;
+      timeAtBank: Array<{
+        field: string;
+        label: string;
+        value: string;
+        count: number;
+      }>;
     };
   };
 }
@@ -73,7 +97,9 @@ export function ReportView({ campaignId }: ReportViewProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || errorData.error || 'Failed to load report');
+        throw new Error(
+          errorData.message || errorData.error || 'Failed to load report'
+        );
       }
 
       const reportData = await response.json();
@@ -96,7 +122,9 @@ export function ReportView({ campaignId }: ReportViewProps) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="sr-only" role="status" aria-live="polite">Loading report data...</div>
+        <div className="sr-only" role="status" aria-live="polite">
+          Loading report data...
+        </div>
         {/* Summary cards skeleton */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
@@ -162,12 +190,15 @@ export function ReportView({ campaignId }: ReportViewProps) {
             <div className="flex items-center">
               <TrendingUp className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Response Rate</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Response Rate
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {data.metrics.completionRate}%
                 </p>
                 <p className="text-xs text-gray-500">
-                  {data.metrics.completedCount} / {data.metrics.totalInvitations}
+                  {data.metrics.completedCount} /{' '}
+                  {data.metrics.totalInvitations}
                 </p>
               </div>
             </div>
@@ -176,10 +207,14 @@ export function ReportView({ campaignId }: ReportViewProps) {
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <div className="flex items-center">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                <span className="text-xl font-bold">{data.scores.overall.toFixed(1)}</span>
+                <span className="text-xl font-bold">
+                  {data.scores.overall.toFixed(1)}
+                </span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Overall Score</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Overall Score
+                </p>
                 <p className="text-lg font-semibold text-gray-900">
                   out of {scaleMax}.0
                 </p>
@@ -190,7 +225,9 @@ export function ReportView({ campaignId }: ReportViewProps) {
 
         {/* Overall Score Display */}
         <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="mb-4 text-xl font-bold text-gray-900">Overall Score</h2>
+          <h2 className="mb-4 text-xl font-bold text-gray-900">
+            Overall Score
+          </h2>
           <div className="flex items-center">
             <div className="text-6xl font-bold text-primary-600">
               {data.scores.overall.toFixed(1)}
@@ -200,7 +237,9 @@ export function ReportView({ campaignId }: ReportViewProps) {
               <div className="mt-2 h-2 w-48 overflow-hidden rounded-full bg-gray-200">
                 <div
                   className="h-full bg-primary-600"
-                  style={{ width: `${(data.scores.overall / scaleMax) * 100}%` }}
+                  style={{
+                    width: `${(data.scores.overall / scaleMax) * 100}%`,
+                  }}
                 ></div>
               </div>
             </div>
@@ -272,7 +311,10 @@ export function ReportView({ campaignId }: ReportViewProps) {
           <h2 className="mb-4 text-xl font-bold text-gray-900">
             Category Comparison
           </h2>
-          <CategoryRadarChart data={data.scores.categories} scaleMax={scaleMax} />
+          <CategoryRadarChart
+            data={data.scores.categories}
+            scaleMax={scaleMax}
+          />
         </div>
       </div>
 

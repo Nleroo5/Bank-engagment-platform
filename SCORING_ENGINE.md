@@ -1,30 +1,36 @@
 # Scoring Engine Documentation ✅
 
 ## Overview
+
 Built a comprehensive scoring engine that calculates survey scores at multiple levels (question, category, section, survey, campaign) with support for reverse scoring and anonymity protection for Survey 7 (Associate 180).
 
 ## Created Files
 
 ### Core Scoring Functions
+
 1. **[src/lib/scoring/calculate.ts](src/lib/scoring/calculate.ts)** - Core scoring calculations
 2. **[src/lib/scoring/anonymity.ts](src/lib/scoring/anonymity.ts)** - Anonymity threshold enforcement
 
 ### Configuration
+
 3. **[vitest.config.ts](vitest.config.ts)** - Vitest test configuration
 
 ### Tests
-4. **[src/lib/scoring/__tests__/calculate.test.ts](src/lib/scoring/__tests__/calculate.test.ts)** - Comprehensive unit tests (31 tests, all passing)
+
+4. **[src/lib/scoring/**tests**/calculate.test.ts](src/lib/scoring/__tests__/calculate.test.ts)** - Comprehensive unit tests (31 tests, all passing)
 
 ## Core Functions
 
 ### calculate.ts
 
 #### `calculateQuestionScore(rawValue, isReversed, scaleMax)`
+
 Calculates the adjusted score for a single question response.
 
 **Reverse Scoring Formula:** `adjustedScore = (scaleMax + 1) - rawValue`
 
 **Examples:**
+
 - **5-point scale (1-5):**
   - Normal: raw 1 → adjusted 1, raw 5 → adjusted 5
   - Reversed: raw 1 → adjusted 5, raw 5 → adjusted 1
@@ -33,6 +39,7 @@ Calculates the adjusted score for a single question response.
   - Reversed: raw 1 → adjusted 3, raw 3 → adjusted 1
 
 **Usage:**
+
 ```typescript
 // Normal scoring
 const score = calculateQuestionScore(5, false, 5); // Returns 5
@@ -42,7 +49,9 @@ const score = calculateQuestionScore(1, true, 3); // Returns 3
 ```
 
 #### `calculateCategoryScores(responses, questions, scaleMax)`
+
 Calculates average scores grouped by the 7 categories:
+
 - Communication
 - Leadership
 - Culture
@@ -52,6 +61,7 @@ Calculates average scores grouped by the 7 categories:
 - Team Dynamics
 
 **CRITICAL Rules:**
+
 - ✅ Never averages averages — always aggregates from individual response values
 - ✅ Applies reverse scoring before averaging
 - ✅ Rounds all averages to 1 decimal place: `Math.round(score * 10) / 10`
@@ -59,34 +69,41 @@ Calculates average scores grouped by the 7 categories:
 - ✅ Sorts categories alphabetically by name
 
 **Returns:**
+
 ```typescript
 {
   categoryId: string;
   categoryName: string;
-  averageScore: number;      // Rounded to 1 decimal
-  questionCount: number;     // Unique questions in category
-  responseCount: number;     // Total responses (can be > questionCount)
-}[]
+  averageScore: number; // Rounded to 1 decimal
+  questionCount: number; // Unique questions in category
+  responseCount: number; // Total responses (can be > questionCount)
+}
+[];
 ```
 
 #### `calculateSectionScores(responses, questions, scaleMax)`
+
 Calculates average scores grouped by survey sections (e.g., Goal Setting, Roles, Interpersonal Relationships).
 
 **Returns:**
+
 ```typescript
 {
   sectionId: string;
   sectionTitle: string;
-  averageScore: number;      // Rounded to 1 decimal
+  averageScore: number; // Rounded to 1 decimal
   questionCount: number;
   responseCount: number;
-}[]
+}
+[];
 ```
 
 #### `calculateSurveyScore(responses, questions, scaleMax)`
+
 Calculates the overall survey score with category and section breakdowns.
 
 **Returns:**
+
 ```typescript
 {
   averageScore: number;           // Rounded to 1 decimal
@@ -98,39 +115,39 @@ Calculates the overall survey score with category and section breakdowns.
 ```
 
 #### `calculateCampaignScores(campaignId, questions, scaleMax)`
+
 Aggregates scores for an entire campaign across all completed respondents.
 
 **CRITICAL:** Fetches all individual responses from completed invitations and aggregates from raw values — never averages pre-calculated averages.
 
 **Returns:**
+
 ```typescript
 {
   campaignId: string;
-  respondentCount: number;        // Completed invitations
-  completionRate: number;         // Rounded to 1 decimal
-  surveyScore: SurveyScore;       // Full breakdown
+  respondentCount: number; // Completed invitations
+  completionRate: number; // Rounded to 1 decimal
+  surveyScore: SurveyScore; // Full breakdown
 }
 ```
 
 **Usage:**
+
 ```typescript
 import { getSurveyById } from '@/lib/sanity';
 import { calculateCampaignScores } from '@/lib/scoring/calculate';
 
 const survey = await getSurveyById(campaign.sanitysurveyId);
-const questions = survey.sections.flatMap(s => s.questions);
+const questions = survey.sections.flatMap((s) => s.questions);
 const scaleMax = survey.surveyType === 'managerial' ? 3 : 5;
 
-const scores = await calculateCampaignScores(
-  campaign.id,
-  questions,
-  scaleMax
-);
+const scores = await calculateCampaignScores(campaign.id, questions, scaleMax);
 ```
 
 ### anonymity.ts
 
 #### `checkAnonymityThreshold(campaignId, surveyType)`
+
 Checks if a campaign has enough completed respondents to meet the anonymity threshold.
 
 **CRITICAL:** For Survey 7 (Associate 180), individual responses are NEVER visible. Reports require a minimum of 5 respondents before generating any aggregated data.
@@ -138,6 +155,7 @@ Checks if a campaign has enough completed respondents to meet the anonymity thre
 **Returns:** `true` if campaign meets threshold (or doesn't require it)
 
 **Usage:**
+
 ```typescript
 const meetsThreshold = await checkAnonymityThreshold(
   campaign.id,
@@ -150,11 +168,13 @@ if (!meetsThreshold) {
 ```
 
 #### `getFilterableOptions(campaignId, surveyType, currentFilters)`
+
 Gets demographic filter options that maintain the anonymity threshold.
 
 **CRITICAL:** When filtering demographics, ensure the resulting pool never drops below 5 respondents. Only returns filter options where the count >= 5.
 
 **Returns:**
+
 ```typescript
 {
   divisions: DemographicFilter[];
@@ -172,11 +192,9 @@ interface DemographicFilter {
 ```
 
 **Usage:**
+
 ```typescript
-const filterOptions = await getFilterableOptions(
-  campaign.id,
-  'associate-180'
-);
+const filterOptions = await getFilterableOptions(campaign.id, 'associate-180');
 
 // Only shows divisions with >= 5 respondents
 console.log(filterOptions.divisions);
@@ -187,26 +205,30 @@ console.log(filterOptions.divisions);
 ```
 
 #### `validateFilteredAnonymity(campaignId, surveyType, filters)`
+
 Validates that applying a set of filters maintains the anonymity threshold.
 
 **Returns:**
+
 ```typescript
 {
-  valid: boolean;   // True if filtered pool meets threshold
-  count: number;    // Actual count after filtering
+  valid: boolean; // True if filtered pool meets threshold
+  count: number; // Actual count after filtering
 }
 ```
 
 **Usage:**
+
 ```typescript
-const result = await validateFilteredAnonymity(
-  campaign.id,
-  'associate-180',
-  { division: 'Technology', gender: 'FEMALE' }
-);
+const result = await validateFilteredAnonymity(campaign.id, 'associate-180', {
+  division: 'Technology',
+  gender: 'FEMALE',
+});
 
 if (!result.valid) {
-  return { error: `Only ${result.count} respondents match these filters. Minimum 5 required.` };
+  return {
+    error: `Only ${result.count} respondents match these filters. Minimum 5 required.`,
+  };
 }
 ```
 
@@ -220,6 +242,7 @@ export const ANONYMOUS_SURVEY_TYPES = ['associate-180', 'survey-7'];
 ## Reverse Scoring Implementation
 
 ### Which Surveys Use Reverse Scoring?
+
 - ✅ **Survey 6** (Managerial Assessment) - 3-point scale
 - ✅ **Survey 7** (Associate 180) - 3-point scale
 - ❌ **Survey 4** (Leadership Team Effectiveness) - 5-point scale, no reverse
@@ -260,6 +283,7 @@ When creating questions in Sanity, add a boolean field `isReversed`:
 ### 31 Unit Tests, All Passing ✅
 
 **calculateQuestionScore:**
+
 - ✅ 5-point scale normal scoring (5 tests)
 - ✅ 5-point scale reverse scoring (6 tests)
 - ✅ 3-point scale normal scoring (3 tests)
@@ -267,6 +291,7 @@ When creating questions in Sanity, add a boolean field `isReversed`:
 - ✅ Edge cases and custom scale values (2 tests)
 
 **calculateCategoryScores:**
+
 - ✅ Basic category grouping and averaging (1 test)
 - ✅ Reverse scoring application (1 test)
 - ✅ Decimal rounding to 1 place (1 test)
@@ -274,10 +299,12 @@ When creating questions in Sanity, add a boolean field `isReversed`:
 - ✅ Alphabetical sorting (1 test)
 
 **calculateSectionScores:**
+
 - ✅ Basic section grouping and averaging (1 test)
 - ✅ Reverse scoring application (1 test)
 
 **calculateSurveyScore:**
+
 - ✅ Overall average calculation (1 test)
 - ✅ Category and section breakdowns (1 test)
 - ✅ Decimal rounding (1 test)
@@ -291,6 +318,7 @@ npm run test:watch          # Watch mode for development
 ```
 
 **Results:**
+
 ```
 ✓ src/lib/scoring/__tests__/calculate.test.ts (31 tests) 20ms
 
@@ -333,20 +361,21 @@ export async function GET(
   const survey = await getSurveyById(campaign.sanitysurveyId);
 
   // Flatten questions from all sections
-  const questions = survey.sections.flatMap(section =>
-    section.questions.map(q => ({
+  const questions = survey.sections.flatMap((section) =>
+    section.questions.map((q) => ({
       _id: q._id,
       questionNumber: q.questionNumber,
       isReversed: q.isReversed,
       category: q.category,
-      section: { _id: section._id, title: section.title }
+      section: { _id: section._id, title: section.title },
     }))
   );
 
   // Determine scale max based on survey type
-  const scaleMax = survey.surveyType === 'managerial' || survey.surveyType === 'associate-180'
-    ? 3
-    : 5;
+  const scaleMax =
+    survey.surveyType === 'managerial' || survey.surveyType === 'associate-180'
+      ? 3
+      : 5;
 
   // Calculate all scores
   const scores = await calculateCampaignScores(
@@ -381,10 +410,14 @@ export async function GET(
   );
 
   if (!meetsThreshold) {
-    return NextResponse.json({
-      error: 'Insufficient respondents for this report',
-      message: 'This survey requires a minimum of 5 completed responses before viewing results to protect respondent anonymity.',
-    }, { status: 403 });
+    return NextResponse.json(
+      {
+        error: 'Insufficient respondents for this report',
+        message:
+          'This survey requires a minimum of 5 completed responses before viewing results to protect respondent anonymity.',
+      },
+      { status: 403 }
+    );
   }
 
   // Proceed with score calculation...
@@ -422,7 +455,9 @@ export async function GET(
 ## Critical Rules Summary
 
 ### ✅ NEVER Average Averages
+
 Always aggregate from individual response values. Never calculate:
+
 ```typescript
 // ❌ WRONG
 const categoryAverage = (respondent1Avg + respondent2Avg) / 2;
@@ -433,11 +468,13 @@ const categoryAverage = sum(allValues) / allValues.length;
 ```
 
 ### ✅ Always Round to 1 Decimal Place
+
 ```typescript
-Math.round(score * 10) / 10
+Math.round(score * 10) / 10;
 ```
 
 ### ✅ Enforce 5 Respondent Minimum for Survey 7
+
 ```typescript
 if (surveyType === 'associate-180' && completedCount < 5) {
   // Block access to individual or aggregated data
@@ -445,24 +482,29 @@ if (surveyType === 'associate-180' && completedCount < 5) {
 ```
 
 ### ✅ Apply Reverse Scoring at Calculation Time
+
 Store raw values in database, apply reverse scoring formula when calculating scores.
 
 ### ✅ Include Both Raw and Adjusted in Admin Views
+
 For transparency, show admins both the raw value (what respondent selected) and adjusted value (used for scoring).
 
 ## Next Steps
 
 ### API Routes to Build
+
 1. **GET `/api/campaigns/[id]/scores`** - Get campaign scores
 2. **GET `/api/reports/[id]`** - Generate detailed report with demographic filters
 3. **GET `/api/reports/[id]/filters`** - Get available demographic filters
 
 ### Admin UI to Build
+
 1. **Campaign Scores Dashboard** - Visual charts with category breakdowns
 2. **Demographic Filter UI** - Dropdowns with counts, disabled if < 5
 3. **Export Reports** - Excel/PDF with full score breakdowns
 
 ### Database Considerations
+
 - Consider caching calculated scores in a `campaign_scores` table for performance
 - Recalculate when new responses are submitted
 - Mark stale if campaign is still active

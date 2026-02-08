@@ -1,18 +1,22 @@
 # Export Functionality Documentation ✅
 
 ## Overview
+
 Added comprehensive export functionality to the reporting dashboard with Excel and PDF generation, including anonymity protection for Survey 7.
 
 ## Created Files
 
 ### API Routes
+
 1. **[src/app/api/reports/[campaignId]/export/route.ts](src/app/api/reports/[campaignId]/export/route.ts)** - Export endpoint for Excel and PDF
 
 ### Components
+
 2. **[src/components/reports/ExportButtons.tsx](src/components/reports/ExportButtons.tsx)** - Export buttons with loading states
 
 ### Updated Files
-3. **[src/app/(admin)/admin/reports/[campaignId]/page.tsx](src/app/(admin)/admin/reports/[campaignId]/page.tsx)** - Added export buttons to header
+
+3. **[src/app/(admin)/admin/reports/[campaignId]/page.tsx](<src/app/(admin)/admin/reports/[campaignId]/page.tsx>)** - Added export buttons to header
 
 ## Features Implemented
 
@@ -21,10 +25,12 @@ Added comprehensive export functionality to the reporting dashboard with Excel a
 **Location:** Report detail page header (`/admin/reports/[campaignId]`)
 
 **Buttons:**
+
 - ✅ **Export Excel** - Green spreadsheet icon
 - ✅ **Export PDF** - Blue document icon
 
 **Features:**
+
 - ✅ Loading states with animated download icon
 - ✅ Disabled during export
 - ✅ Shows "Exporting..." text while processing
@@ -34,6 +40,7 @@ Added comprehensive export functionality to the reporting dashboard with Excel a
 ## Excel Export (SheetJS/xlsx)
 
 ### API Endpoint
+
 ```
 GET /api/reports/[campaignId]/export?format=xlsx
 ```
@@ -41,6 +48,7 @@ GET /api/reports/[campaignId]/export?format=xlsx
 ### File Structure
 
 **Sheet 1: Summary**
+
 - Survey information (title, organization, type)
 - Date range (start date, end date)
 - Status
@@ -48,18 +56,21 @@ GET /api/reports/[campaignId]/export?format=xlsx
 - Overall score (average, scale max, total questions, total responses)
 
 **Sheet 2: Category Scores**
+
 - Category name
 - Average score (1 decimal place)
 - Question count
 - Response count
 
 **Sheet 3: Section Scores**
+
 - Section name
 - Average score (1 decimal place)
 - Item count
 - Response count
 
 **Sheet 4: Raw Data** (NOT INCLUDED for Survey 7)
+
 - Response ID
 - Question number
 - Question text
@@ -72,11 +83,13 @@ GET /api/reports/[campaignId]/export?format=xlsx
 ### Anonymity Protection
 
 For Survey 7 (Associate 180):
+
 - ✅ Sheet 4 (Raw Data) is **completely excluded**
 - ✅ Only aggregated scores in Sheets 1-3
 - ✅ No individual response data exported
 
 For all other surveys:
+
 - ✅ All 4 sheets included
 - ✅ Raw data shows both raw and adjusted values
 - ✅ Reverse scoring clearly indicated
@@ -84,6 +97,7 @@ For all other surveys:
 ### Example Excel Output
 
 **Sheet 1: Summary**
+
 ```
 Survey Report
 
@@ -107,6 +121,7 @@ Total Responses           1680
 ```
 
 **Sheet 2: Category Scores**
+
 ```
 Category Scores
 
@@ -123,6 +138,7 @@ Team Dynamics     4.3           4               168
 ## PDF Export (jsPDF + jsPDF-autotable)
 
 ### API Endpoint
+
 ```
 GET /api/reports/[campaignId]/export?format=pdf
 ```
@@ -130,6 +146,7 @@ GET /api/reports/[campaignId]/export?format=pdf
 ### Document Structure
 
 **Page 1: Cover Page**
+
 - Survey Report (title)
 - Survey title (large)
 - Organization name
@@ -140,6 +157,7 @@ GET /api/reports/[campaignId]/export?format=pdf
 - Generation date
 
 **Page 2: Summary**
+
 - Summary section header
 - Table with metrics:
   - Survey Type
@@ -152,12 +170,14 @@ GET /api/reports/[campaignId]/export?format=pdf
   - Total Responses
 
 **Page 3: Category Scores**
+
 - Category Scores header
 - Striped table with blue header
 - Columns: Category, Average Score, Questions, Responses
 - All 7 categories listed
 
 **Page 3 (continued): Section Scores**
+
 - Section Scores header (same page if space, or new page)
 - Striped table with blue header
 - Columns: Section, Average Score, Items, Responses
@@ -166,11 +186,13 @@ GET /api/reports/[campaignId]/export?format=pdf
 ### Styling
 
 **Colors:**
+
 - Header background: #3b82f6 (blue-500)
 - Error/anonymity notice: #ff0000 (red)
 - Striped rows: Alternating white/light gray
 
 **Tables:**
+
 - Theme: 'grid' for summary
 - Theme: 'striped' for scores
 - Font size: 10pt
@@ -179,6 +201,7 @@ GET /api/reports/[campaignId]/export?format=pdf
 ### Anonymity Notice
 
 For Survey 7, the cover page displays:
+
 ```
 ANONYMITY PROTECTED
 Individual responses are protected. Only aggregated scores are included.
@@ -189,10 +212,12 @@ This ensures anyone reading the PDF understands that individual responses are no
 ## API Route Details
 
 ### Authentication
+
 - ✅ Requires authenticated user
 - ✅ Role-based access (ORG_ADMIN restricted to their org)
 
 ### Anonymity Checks
+
 - ✅ Minimum 5 respondents required
 - ✅ Returns 403 if threshold not met
 - ✅ Raw data excluded for Survey 7
@@ -200,12 +225,14 @@ This ensures anyone reading the PDF understands that individual responses are no
 ### Response Format
 
 **Excel:**
+
 ```
 Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 Content-Disposition: attachment; filename="Survey_Title_Report.xlsx"
 ```
 
 **PDF:**
+
 ```
 Content-Type: application/pdf
 Content-Disposition: attachment; filename="Survey_Title_Report.pdf"
@@ -214,6 +241,7 @@ Content-Disposition: attachment; filename="Survey_Title_Report.pdf"
 ### Error Responses
 
 **401 - Unauthorized:**
+
 ```json
 {
   "error": "Unauthorized"
@@ -221,6 +249,7 @@ Content-Disposition: attachment; filename="Survey_Title_Report.pdf"
 ```
 
 **403 - Insufficient Respondents:**
+
 ```json
 {
   "error": "Insufficient respondents",
@@ -229,6 +258,7 @@ Content-Disposition: attachment; filename="Survey_Title_Report.pdf"
 ```
 
 **404 - Campaign Not Found:**
+
 ```json
 {
   "error": "Campaign not found"
@@ -236,6 +266,7 @@ Content-Disposition: attachment; filename="Survey_Title_Report.pdf"
 ```
 
 **400 - Invalid Format:**
+
 ```json
 {
   "error": "Invalid format. Use xlsx or pdf."
@@ -245,6 +276,7 @@ Content-Disposition: attachment; filename="Survey_Title_Report.pdf"
 ## Client Component (ExportButtons)
 
 ### Features
+
 - ✅ Two buttons: Excel and PDF
 - ✅ Loading states per button
 - ✅ Animated download icon during export
@@ -253,6 +285,7 @@ Content-Disposition: attachment; filename="Survey_Title_Report.pdf"
 - ✅ Error handling with alert
 
 ### Implementation
+
 ```typescript
 const handleExport = async (format: 'xlsx' | 'pdf') => {
   setIsExporting(true);
@@ -291,6 +324,7 @@ const handleExport = async (format: 'xlsx' | 'pdf') => {
 ## File Naming Convention
 
 Both exports use sanitized filenames:
+
 ```
 Original: "Leadership Team Effectiveness - Q1 2024"
 Sanitized: "Leadership_Team_Effectiveness___Q1_2024_Report.xlsx"
@@ -298,7 +332,7 @@ Sanitized: "Leadership_Team_Effectiveness___Q1_2024_Report.xlsx"
 
 - Non-alphanumeric characters replaced with underscores
 - ".xlsx" or ".pdf" extension added
-- "_Report" suffix included
+- "\_Report" suffix included
 
 ## Data Flow
 
@@ -321,7 +355,9 @@ Sanitized: "Leadership_Team_Effectiveness___Q1_2024_Report.xlsx"
 ## Reverse Scoring in Exports
 
 ### Excel Raw Data Sheet
+
 Shows both raw and adjusted values:
+
 ```
 Question Number  Raw Value  Adjusted Value  Is Reversed
 1                1          3               Yes
@@ -332,16 +368,19 @@ Question Number  Raw Value  Adjusted Value  Is Reversed
 This allows admins to see exactly how responses were scored.
 
 ### PDF
+
 Only shows adjusted scores in aggregated tables. Raw data not included in PDF exports.
 
 ## Performance Considerations
 
 ### Excel Generation
+
 - **Average file size**: 20-50 KB
 - **Generation time**: < 1 second for typical surveys
 - **Max responses**: 10,000+ (tested)
 
 ### PDF Generation
+
 - **Average file size**: 50-100 KB
 - **Generation time**: 1-2 seconds for typical surveys
 - **Includes**: Cover page, summary table, score tables
@@ -349,11 +388,13 @@ Only shows adjusted scores in aggregated tables. Raw data not included in PDF ex
 ## Testing the Exports
 
 ### Prerequisites
+
 1. At least one ACTIVE or COMPLETED campaign
 2. At least 5 completed responses (for Survey 7)
 3. Completed responses with valid data
 
 ### Test Flow
+
 1. Navigate to `/admin/reports/[campaignId]`
 2. Click "Export Excel" button
    - Button shows "Exporting..." with animated icon
@@ -373,6 +414,7 @@ Only shows adjusted scores in aggregated tables. Raw data not included in PDF ex
    - Confirm anonymity notice (Survey 7 only)
 
 ### Expected Behavior
+
 - Excel files open correctly in Excel/Google Sheets/LibreOffice
 - PDF files display correctly in all PDF readers
 - Downloads work in Chrome, Firefox, Safari, Edge
@@ -382,23 +424,27 @@ Only shows adjusted scores in aggregated tables. Raw data not included in PDF ex
 ## Future Enhancements
 
 ### Additional Excel Features
+
 - **Charts**: Embed bar charts in Excel workbook
 - **Conditional Formatting**: Color-code scores (red/yellow/green)
 - **Pivot Tables**: Pre-built pivot tables for analysis
 - **Formulas**: Dynamic calculations
 
 ### Advanced PDF Features
+
 - **Charts**: Render Recharts as images, embed in PDF
 - **Page Numbers**: Add page numbers and total pages
 - **Table of Contents**: Auto-generated TOC
 - **Branding**: Organization logo and colors
 
 ### Bulk Export
+
 - **Export All Campaigns**: Download multiple reports as ZIP
 - **Scheduled Exports**: Auto-generate and email reports
 - **Custom Templates**: User-defined export formats
 
 ### Email Integration
+
 - **Email Report**: Send PDF directly to stakeholders
 - **Share Link**: Generate shareable report URLs
 - **Access Control**: Set expiration dates for shared links

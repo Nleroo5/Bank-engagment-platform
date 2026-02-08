@@ -255,9 +255,7 @@ export function NewOrganizationForm() {
                       <li key={email}>{email}</li>
                     ))}
                     {emailValidation.invalid.length > 5 && (
-                      <li>
-                        ...and {emailValidation.invalid.length - 5} more
-                      </li>
+                      <li>...and {emailValidation.invalid.length - 5} more</li>
                     )}
                   </ul>
                 </div>

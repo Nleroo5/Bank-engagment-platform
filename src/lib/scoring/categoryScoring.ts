@@ -51,7 +51,10 @@ const DEFAULT_OPTIONS: ScoringOptions = {
  * @param scaleMax - Maximum value on the scale (3 or 5)
  * @returns The reverse-scored adjusted value
  */
-export function applyReverseScoring(rawValue: number, scaleMax: number): number {
+export function applyReverseScoring(
+  rawValue: number,
+  scaleMax: number
+): number {
   return scaleMax + 1 - rawValue;
 }
 
@@ -122,7 +125,9 @@ export function validateScoringData(
     }
 
     // Check category exists
-    const categoryExists = categories.some((c) => c._id === response.categoryId);
+    const categoryExists = categories.some(
+      (c) => c._id === response.categoryId
+    );
     if (!categoryExists) {
       errors.push({
         type: 'MISSING_CATEGORY',
@@ -246,7 +251,12 @@ export function calculateCategoryScores(
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
   // Validate input data
-  const validation = validateScoringData(responses, categories, scaleMin, scaleMax);
+  const validation = validateScoringData(
+    responses,
+    categories,
+    scaleMin,
+    scaleMax
+  );
   if (!validation.isValid) {
     const errorMessages = validation.errors.map((e) => e.message).join('; ');
     throw new Error(`Scoring validation failed: ${errorMessages}`);
@@ -382,9 +392,7 @@ export function prepareResponsesForScoring(
   return dbResponses.map((response) => {
     const question = questionMap.get(response.sanityQuestionId);
     if (!question) {
-      throw new Error(
-        `Question not found: ${response.sanityQuestionId}`
-      );
+      throw new Error(`Question not found: ${response.sanityQuestionId}`);
     }
 
     return {

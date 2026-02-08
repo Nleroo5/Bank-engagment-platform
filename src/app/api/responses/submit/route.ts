@@ -86,19 +86,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all answered question IDs from responses
-    const answeredQuestionIds = invitation.responses.map(r => r.sanityQuestionId);
+    const answeredQuestionIds = invitation.responses.map(
+      (r) => r.sanityQuestionId
+    );
 
     // Find missing questions
     const missingQuestionIds = allQuestionIds.filter(
-      qId => !answeredQuestionIds.includes(qId)
+      (qId) => !answeredQuestionIds.includes(qId)
     );
 
     if (missingQuestionIds.length > 0) {
       // Get the question numbers for better error message
       const missingQuestions = survey.sections
-        ?.flatMap(s => s.questions || [])
-        .filter(q => missingQuestionIds.includes(q._id))
-        .map(q => q.number)
+        ?.flatMap((s) => s.questions || [])
+        .filter((q) => missingQuestionIds.includes(q._id))
+        .map((q) => q.number)
         .sort((a, b) => a - b);
 
       return NextResponse.json(

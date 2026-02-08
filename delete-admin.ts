@@ -7,7 +7,7 @@ async function deleteAdminUser() {
 
   try {
     console.log('Looking for admin user...');
-    
+
     const user = await prisma.user.findUnique({
       where: { email },
     });

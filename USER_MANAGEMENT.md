@@ -1,20 +1,24 @@
 # User Management System ✅
 
 ## Overview
+
 Built complete user management system with role-based access control, single user creation, and CSV bulk import functionality.
 
 ## Created Files
 
 ### Pages
-1. **[src/app/(admin)/admin/users/page.tsx](src/app/(admin)/admin/users/page.tsx)** - Users list with role-based filtering
-2. **[src/app/(admin)/admin/users/new/page.tsx](src/app/(admin)/admin/users/new/page.tsx)** - Add single user form
-3. **[src/app/(admin)/admin/users/import/page.tsx](src/app/(admin)/admin/users/import/page.tsx)** - CSV bulk import
+
+1. **[src/app/(admin)/admin/users/page.tsx](<src/app/(admin)/admin/users/page.tsx>)** - Users list with role-based filtering
+2. **[src/app/(admin)/admin/users/new/page.tsx](<src/app/(admin)/admin/users/new/page.tsx>)** - Add single user form
+3. **[src/app/(admin)/admin/users/import/page.tsx](<src/app/(admin)/admin/users/import/page.tsx>)** - CSV bulk import
 
 ### Components
+
 4. **[src/components/admin/NewUserForm.tsx](src/components/admin/NewUserForm.tsx)** - Client component for user creation
 5. **[src/components/admin/CSVImportForm.tsx](src/components/admin/CSVImportForm.tsx)** - Client component for CSV import with preview and mapping
 
 ### API Routes
+
 6. **[src/app/api/users/route.ts](src/app/api/users/route.ts)** - GET and POST users
 7. **[src/app/api/users/import/route.ts](src/app/api/users/import/route.ts)** - POST bulk import
 
@@ -23,12 +27,14 @@ Built complete user management system with role-based access control, single use
 ### 1. Users List Page (`/admin/users`)
 
 **Role-Based Access Control:**
+
 - ✅ **SUPER_ADMIN**: Sees all users across all organizations
 - ✅ **ORG_ADMIN**: Sees only users in their organization
 - ✅ **VIEWER**: (inherits ORG_ADMIN filtering)
 - ✅ **RESPONDENT**: No access (middleware blocks)
 
 **Features:**
+
 - ✅ Table view with columns: Name, Email, Role, Organization, Division, Status
 - ✅ Role badges with color coding (SUPER_ADMIN=purple, ORG_ADMIN=blue, VIEWER=gray, RESPONDENT=green)
 - ✅ Status badges (Active=green, Inactive=red)
@@ -38,6 +44,7 @@ Built complete user management system with role-based access control, single use
 - ✅ Server Component with real database queries
 
 **Data Displayed:**
+
 ```typescript
 - Name (or "Unnamed User")
 - Email
@@ -50,17 +57,20 @@ Built complete user management system with role-based access control, single use
 ### 2. Add User Page (`/admin/users/new`)
 
 **Form Fields:**
+
 - ✅ Email (required, validated)
 - ✅ Name (optional)
 - ✅ Role (dropdown with role descriptions)
 - ✅ Organization (dropdown, filtered by permissions)
 
 **Role Permissions:**
+
 - ✅ **SUPER_ADMIN**: Can create any role including SUPER_ADMIN
 - ✅ **ORG_ADMIN**: Can create ORG_ADMIN, VIEWER, RESPONDENT (not SUPER_ADMIN)
 - ✅ Organization selection auto-filtered to current user's org for ORG_ADMIN
 
 **Features:**
+
 - ✅ Client-side validation
 - ✅ Email uniqueness check
 - ✅ Organization existence validation
@@ -73,6 +83,7 @@ Built complete user management system with role-based access control, single use
 ### 3. CSV Import Page (`/admin/users/import`)
 
 **Import Flow:**
+
 1. Upload CSV file
 2. Parse and preview data
 3. Map CSV columns to user fields
@@ -80,6 +91,7 @@ Built complete user management system with role-based access control, single use
 5. Import with progress feedback
 
 **Column Mapping:**
+
 - ✅ **Required**: Email, Name
 - ✅ **Optional**: Division, Job Role
 - ✅ **Auto-mapping**: Attempts to match columns by name (email, name, division, job role)
@@ -87,6 +99,7 @@ Built complete user management system with role-based access control, single use
 - ✅ **Default Organization**: Select which org to assign all imported users
 
 **Features:**
+
 - ✅ CSV file upload with drag-and-drop zone
 - ✅ CSV parsing (splits on comma, trims values)
 - ✅ Automatic column detection
@@ -100,6 +113,7 @@ Built complete user management system with role-based access control, single use
 - ✅ Auto-redirect to users list on full success
 
 **Import Results:**
+
 ```typescript
 {
   success: number,     // Count of successfully created users
@@ -111,7 +125,9 @@ Built complete user management system with role-based access control, single use
 ### 4. API Routes
 
 #### GET `/api/users`
+
 **Features:**
+
 - Requires authentication
 - Role-based filtering (SUPER_ADMIN sees all, ORG_ADMIN sees only their org)
 - Includes organization data
@@ -119,7 +135,9 @@ Built complete user management system with role-based access control, single use
 - Returns: `{ users: User[] }`
 
 #### POST `/api/users`
+
 **Validation:**
+
 - Email format and uniqueness
 - Role enum validation
 - Organization UUID validation
@@ -129,7 +147,9 @@ Built complete user management system with role-based access control, single use
 **Returns:** `{ user: User }`
 
 #### POST `/api/users/import`
+
 **Features:**
+
 - Accepts array of user objects
 - Batch processing (up to 1000 users)
 - Individual error handling (continues on failure)
@@ -138,6 +158,7 @@ Built complete user management system with role-based access control, single use
 - Returns success/fail counts and error details
 
 **Returns:**
+
 ```typescript
 {
   success: number,
@@ -150,31 +171,35 @@ Built complete user management system with role-based access control, single use
 
 ### Permission Matrix
 
-| Action | SUPER_ADMIN | ORG_ADMIN | VIEWER | RESPONDENT |
-|--------|-------------|-----------|--------|------------|
-| View all users | ✅ All orgs | ✅ Own org | ✅ Own org | ❌ |
-| Create SUPER_ADMIN | ✅ | ❌ | ❌ | ❌ |
-| Create ORG_ADMIN | ✅ | ✅ | ❌ | ❌ |
-| Create VIEWER | ✅ | ✅ | ❌ | ❌ |
-| Create RESPONDENT | ✅ | ✅ | ❌ | ❌ |
-| Import CSV | ✅ | ✅ | ❌ | ❌ |
+| Action             | SUPER_ADMIN | ORG_ADMIN  | VIEWER     | RESPONDENT |
+| ------------------ | ----------- | ---------- | ---------- | ---------- |
+| View all users     | ✅ All orgs | ✅ Own org | ✅ Own org | ❌         |
+| Create SUPER_ADMIN | ✅          | ❌         | ❌         | ❌         |
+| Create ORG_ADMIN   | ✅          | ✅         | ❌         | ❌         |
+| Create VIEWER      | ✅          | ✅         | ❌         | ❌         |
+| Create RESPONDENT  | ✅          | ✅         | ❌         | ❌         |
+| Import CSV         | ✅          | ✅         | ❌         | ❌         |
 
 ### Implementation
 
 **Middleware:**
+
 - `/admin/*` routes protected by NextAuth middleware
 - Redirects unauthenticated to `/admin/login`
 - Blocks RESPONDENT role from admin access
 
 **Page Level:**
+
 ```typescript
 const currentUser = await getCurrentUser();
-const where = currentUser.role === 'SUPER_ADMIN'
-  ? {}
-  : { organizationId: currentUser.organizationId };
+const where =
+  currentUser.role === 'SUPER_ADMIN'
+    ? {}
+    : { organizationId: currentUser.organizationId };
 ```
 
 **API Level:**
+
 ```typescript
 if (role === 'SUPER_ADMIN' && currentUser.role !== 'SUPER_ADMIN') {
   return NextResponse.json(
@@ -208,9 +233,9 @@ jane@example.com,Jane Smith,Operations,Operations Manager
 Import continues even if some rows fail. Errors are collected and returned:
 
 ```typescript
-"Row 5: User with email john@example.com already exists"
-"Row 12: Organization not found"
-"Row 18: Invalid email format"
+'Row 5: User with email john@example.com already exists';
+'Row 12: Organization not found';
+'Row 18: Invalid email format';
 ```
 
 ### Validation Per Row
@@ -224,6 +249,7 @@ Import continues even if some rows fail. Errors are collected and returned:
 ## UI/UX Features
 
 **List Page:**
+
 - Clean table layout
 - Role-specific data visibility
 - Status indicators
@@ -231,6 +257,7 @@ Import continues even if some rows fail. Errors are collected and returned:
 - Action buttons
 
 **Add User Form:**
+
 - Clear field labels
 - Role descriptions
 - Inline validation
@@ -238,6 +265,7 @@ Import continues even if some rows fail. Errors are collected and returned:
 - Loading states
 
 **CSV Import:**
+
 - Drag-and-drop upload
 - Progress indicators
 - Preview before import
@@ -274,12 +302,14 @@ New Routes:
 ## Future Enhancements
 
 ### User Editing
+
 - Edit user details page
 - Update role, organization, division
 - Deactivate/activate users
 - Delete users
 
 ### Advanced CSV Import
+
 - Support for more delimiters (tab, semicolon)
 - Custom role assignment per row
 - Organization column mapping
@@ -287,16 +317,19 @@ New Routes:
 - Duplicate handling strategies (skip, update, error)
 
 ### User Search/Filter
+
 - Search by name, email
 - Filter by role, organization, status
 - Bulk actions (activate/deactivate)
 
 ### User Profile
+
 - Self-service profile editing
 - Password reset
 - Email verification
 
 ### Audit Log
+
 - Track user creation
 - Track user modifications
 - Export audit trail

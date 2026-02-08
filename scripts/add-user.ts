@@ -42,8 +42,9 @@ async function addUser() {
     console.log(`Role: ${user.role}`);
     console.log(`Organization: ${testBank.name}`);
     console.log(`Created: ${user.createdAt}`);
-    console.log('═══════════════════════════════════════════════════════════\n');
-
+    console.log(
+      '═══════════════════════════════════════════════════════════\n'
+    );
   } catch (error: any) {
     if (error.code === 'P2002') {
       console.error('❌ Error: User with this email already exists!');
@@ -56,13 +57,17 @@ async function addUser() {
 
       if (existingUser) {
         console.log('✅ Found existing user:');
-        console.log('═══════════════════════════════════════════════════════════');
+        console.log(
+          '═══════════════════════════════════════════════════════════'
+        );
         console.log(`ID: ${existingUser.id}`);
         console.log(`Name: ${existingUser.name}`);
         console.log(`Email: ${existingUser.email}`);
         console.log(`Role: ${existingUser.role}`);
         console.log(`Organization: ${existingUser.organization.name}`);
-        console.log('═══════════════════════════════════════════════════════════\n');
+        console.log(
+          '═══════════════════════════════════════════════════════════\n'
+        );
       }
     } else {
       console.error('❌ Error creating user:', error);

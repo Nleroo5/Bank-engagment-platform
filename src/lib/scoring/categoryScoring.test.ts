@@ -412,15 +412,21 @@ describe('calculateCategoryScores', () => {
     expect(result.categoryScores).toHaveLength(3);
 
     // Communication: 3 × 1.75 = 5.25
-    const comm = result.categoryScores.find((cs) => cs.categoryName === 'Communication');
+    const comm = result.categoryScores.find(
+      (cs) => cs.categoryName === 'Communication'
+    );
     expect(comm!.weightedScore).toBe(5.3); // Rounded to 1 decimal
 
     // Leadership: 2 × 1.0 = 2.0
-    const leader = result.categoryScores.find((cs) => cs.categoryName === 'Leadership');
+    const leader = result.categoryScores.find(
+      (cs) => cs.categoryName === 'Leadership'
+    );
     expect(leader!.weightedScore).toBe(2.0);
 
     // Culture: 1 × 2.3 = 2.3
-    const culture = result.categoryScores.find((cs) => cs.categoryName === 'Culture');
+    const culture = result.categoryScores.find(
+      (cs) => cs.categoryName === 'Culture'
+    );
     expect(culture!.weightedScore).toBe(2.3);
 
     // Total: 5.3 + 2.0 + 2.3 = 9.6 (rounded)
@@ -451,7 +457,9 @@ describe('calculateCategoryScores', () => {
       'likert3'
     );
 
-    const leader = result.categoryScores.find((cs) => cs.categoryName === 'Leadership');
+    const leader = result.categoryScores.find(
+      (cs) => cs.categoryName === 'Leadership'
+    );
 
     // Raw: 2/3 = 66.67%
     expect(leader!.rawPercentage).toBeCloseTo(66.7, 1);

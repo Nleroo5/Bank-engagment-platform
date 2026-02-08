@@ -75,7 +75,8 @@ export function CategoryScoreCard({
         </h3>
         {category.categoryWeight !== 1 && (
           <p className="text-sm text-gray-600">
-            Weight: <span className="font-semibold">×{category.categoryWeight}</span>
+            Weight:{' '}
+            <span className="font-semibold">×{category.categoryWeight}</span>
           </p>
         )}
       </div>
@@ -83,7 +84,9 @@ export function CategoryScoreCard({
       {/* Main score */}
       <div className="mb-4">
         <div className="flex items-baseline gap-2">
-          <span className={`text-4xl font-bold ${scoreLevelTextStyles[scoreLevel]}`}>
+          <span
+            className={`text-4xl font-bold ${scoreLevelTextStyles[scoreLevel]}`}
+          >
             {category.averageWeightedScore.toFixed(1)}
           </span>
           <span className="text-lg text-gray-500">weighted</span>
@@ -95,9 +98,11 @@ export function CategoryScoreCard({
 
       {/* Percentage bar */}
       <div className="mb-4">
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+        <div className="mb-1 flex items-center justify-between text-sm text-gray-600">
           <span>Performance</span>
-          <span className="font-semibold">{category.averagePercentage.toFixed(1)}%</span>
+          <span className="font-semibold">
+            {category.averagePercentage.toFixed(1)}%
+          </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
           <div

@@ -15,11 +15,15 @@ async function testSanityConnection() {
     console.log('📡 Fetching surveys from Sanity...');
     const surveys = await getAllSurveys();
 
-    console.log(`\n✅ Successfully fetched ${surveys.length} surveys from Sanity!\n`);
+    console.log(
+      `\n✅ Successfully fetched ${surveys.length} surveys from Sanity!\n`
+    );
 
     // Display survey details
     console.log('📋 Survey Details:');
-    console.log('═══════════════════════════════════════════════════════════\n');
+    console.log(
+      '═══════════════════════════════════════════════════════════\n'
+    );
 
     surveys.forEach((survey, index) => {
       console.log(`${index + 1}. ${survey.title}`);
@@ -36,7 +40,9 @@ async function testSanityConnection() {
     const activeSurveys = surveys.filter((s) => s.isActive);
 
     console.log('═══════════════════════════════════════════════════════════');
-    console.log(`\n✅ Active Surveys (shown in campaign dropdown): ${activeSurveys.length}`);
+    console.log(
+      `\n✅ Active Surveys (shown in campaign dropdown): ${activeSurveys.length}`
+    );
 
     if (activeSurveys.length === 0) {
       console.log('⚠️  WARNING: No active surveys found!');
@@ -48,10 +54,13 @@ async function testSanityConnection() {
       });
     }
 
-    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log(
+      '\n═══════════════════════════════════════════════════════════'
+    );
     console.log('✅ Sanity connection test PASSED!');
-    console.log('═══════════════════════════════════════════════════════════\n');
-
+    console.log(
+      '═══════════════════════════════════════════════════════════\n'
+    );
   } catch (error) {
     console.error('\n❌ Error connecting to Sanity:', error);
     console.error('\nPossible issues:');

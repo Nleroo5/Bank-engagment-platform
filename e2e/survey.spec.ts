@@ -87,7 +87,9 @@ test.describe('Survey Flow', () => {
     await expect(page.locator('h1')).toBeVisible();
 
     // Should see survey content (questions, Likert scale, etc.)
-    const surveyContent = page.locator('text=/Strongly Agree|Agree|Disagree|Question/i');
+    const surveyContent = page.locator(
+      'text=/Strongly Agree|Agree|Disagree|Question/i'
+    );
     await expect(surveyContent.first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -96,7 +98,9 @@ test.describe('Survey Flow', () => {
     await page.goto(`/s/${invalidToken}`);
 
     // Should see error message
-    await expect(page.locator('text=/Invalid|expired|not found/i')).toBeVisible();
+    await expect(
+      page.locator('text=/Invalid|expired|not found/i')
+    ).toBeVisible();
   });
 
   test('should navigate between survey sections', async ({ page }) => {
@@ -174,7 +178,9 @@ test.describe('Survey Flow', () => {
     await page.goto(`/s/${testToken}`);
 
     // Should see message that survey is already completed
-    await expect(page.locator('text=/already completed|thank you|submitted/i')).toBeVisible();
+    await expect(
+      page.locator('text=/already completed|thank you|submitted/i')
+    ).toBeVisible();
 
     // Reset for other tests
     await prisma.invitation.update({

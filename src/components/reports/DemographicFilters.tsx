@@ -28,7 +28,8 @@ export function DemographicFilters({
   appliedFilters,
   onFilterChange,
 }: DemographicFiltersProps) {
-  const [filters, setFilters] = useState<Record<string, string>>(appliedFilters);
+  const [filters, setFilters] =
+    useState<Record<string, string>>(appliedFilters);
 
   const handleFilterChange = (field: string, value: string) => {
     const newFilters = { ...filters };

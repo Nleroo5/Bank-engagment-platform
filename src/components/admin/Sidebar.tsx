@@ -2,13 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  BarChart3,
-  X,
-} from 'lucide-react';
+import { LayoutDashboard, Users, FileText, BarChart3, X } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;

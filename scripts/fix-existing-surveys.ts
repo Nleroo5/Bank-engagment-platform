@@ -42,8 +42,14 @@ function generateSlug(title: string): string {
 async function fixExistingSurveys() {
   console.log('🔧 Starting survey fix script...\n');
 
-  console.log('📡 Connecting to Sanity project:', process.env.NEXT_PUBLIC_SANITY_PROJECT_ID);
-  console.log('📦 Dataset:', process.env.NEXT_PUBLIC_SANITY_DATASET || 'production');
+  console.log(
+    '📡 Connecting to Sanity project:',
+    process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+  );
+  console.log(
+    '📦 Dataset:',
+    process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
+  );
   console.log('');
 
   try {
@@ -67,7 +73,9 @@ async function fixExistingSurveys() {
 
     // Process each survey
     for (const survey of surveys) {
-      console.log(`\n📝 Processing: ${survey.title} (Survey ${survey.surveyNumber})`);
+      console.log(
+        `\n📝 Processing: ${survey.title} (Survey ${survey.surveyNumber})`
+      );
 
       const updates: any = {};
       let needsUpdate = false;
@@ -104,17 +112,22 @@ async function fixExistingSurveys() {
     }
 
     console.log('\n');
-    console.log('══════════════════════════════════════════════════════════════════════');
+    console.log(
+      '══════════════════════════════════════════════════════════════════════'
+    );
     console.log('✅ SURVEY FIX SUMMARY');
-    console.log('══════════════════════════════════════════════════════════════════════');
+    console.log(
+      '══════════════════════════════════════════════════════════════════════'
+    );
     console.log(`Total surveys processed: ${surveys.length}`);
     console.log('');
     console.log('All surveys should now:');
     console.log('  ✓ Have isActive: true field');
     console.log('  ✓ Have valid slugs');
     console.log('  ✓ Appear in campaign creation dropdown');
-    console.log('══════════════════════════════════════════════════════════════════════\n');
-
+    console.log(
+      '══════════════════════════════════════════════════════════════════════\n'
+    );
   } catch (error) {
     console.error('❌ Error fixing surveys:', error);
     throw error;

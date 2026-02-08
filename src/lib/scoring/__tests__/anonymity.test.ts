@@ -35,7 +35,10 @@ describe('Anonymity Protection', () => {
     it('should return false when Survey 7 has fewer than 5 respondents', async () => {
       vi.mocked(prisma.invitation.count).mockResolvedValue(4);
 
-      const result = await checkAnonymityThreshold('campaign-1', 'associate-180');
+      const result = await checkAnonymityThreshold(
+        'campaign-1',
+        'associate-180'
+      );
       expect(result).toBe(false);
       expect(prisma.invitation.count).toHaveBeenCalledWith({
         where: {
@@ -48,21 +51,30 @@ describe('Anonymity Protection', () => {
     it('should return true when Survey 7 has exactly 5 respondents', async () => {
       vi.mocked(prisma.invitation.count).mockResolvedValue(5);
 
-      const result = await checkAnonymityThreshold('campaign-1', 'associate-180');
+      const result = await checkAnonymityThreshold(
+        'campaign-1',
+        'associate-180'
+      );
       expect(result).toBe(true);
     });
 
     it('should return true when Survey 7 has more than 5 respondents', async () => {
       vi.mocked(prisma.invitation.count).mockResolvedValue(10);
 
-      const result = await checkAnonymityThreshold('campaign-1', 'associate-180');
+      const result = await checkAnonymityThreshold(
+        'campaign-1',
+        'associate-180'
+      );
       expect(result).toBe(true);
     });
 
     it('should be case-insensitive for survey type', async () => {
       vi.mocked(prisma.invitation.count).mockResolvedValue(3);
 
-      const result = await checkAnonymityThreshold('campaign-1', 'ASSOCIATE-180');
+      const result = await checkAnonymityThreshold(
+        'campaign-1',
+        'ASSOCIATE-180'
+      );
       expect(result).toBe(false);
     });
   });
@@ -71,11 +83,9 @@ describe('Anonymity Protection', () => {
     it('should return valid for non-anonymous surveys regardless of count', async () => {
       vi.mocked(prisma.invitation.count).mockResolvedValue(2);
 
-      const result = await validateFilteredAnonymity(
-        'campaign-1',
-        'likert5',
-        { division: 'Technology' }
-      );
+      const result = await validateFilteredAnonymity('campaign-1', 'likert5', {
+        division: 'Technology',
+      });
 
       expect(result.valid).toBe(true);
       expect(result.count).toBe(2);

@@ -78,7 +78,8 @@ export async function GET(
       return NextResponse.json(
         {
           error: 'Survey configuration incomplete',
-          message: 'Survey is missing scale information. Please configure the scale in Sanity Studio.',
+          message:
+            'Survey is missing scale information. Please configure the scale in Sanity Studio.',
         },
         { status: 400 }
       );

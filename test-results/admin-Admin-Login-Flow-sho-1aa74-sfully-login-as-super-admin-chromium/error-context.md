@@ -2,90 +2,90 @@
 
 ```yaml
 - generic [active] [ref=e1]:
-  - alert [ref=e2]
-  - generic [ref=e3]:
-    - generic [ref=e5]:
-      - heading "Bank Survey Admin" [level=1] [ref=e7]
-      - navigation [ref=e8]:
-        - link "Dashboard" [ref=e9] [cursor=pointer]:
-          - /url: /admin/dashboard
-          - img [ref=e10]
-          - text: Dashboard
-        - link "Campaigns" [ref=e15] [cursor=pointer]:
-          - /url: /admin/campaigns
-          - img [ref=e16]
-          - text: Campaigns
-        - link "Users" [ref=e19] [cursor=pointer]:
-          - /url: /admin/users
-          - img [ref=e20]
-          - text: Users
-        - link "Reports" [ref=e25] [cursor=pointer]:
-          - /url: /admin/reports
-          - img [ref=e26]
-          - text: Reports
-      - generic [ref=e28]:
-        - paragraph [ref=e29]: Bank Engagement Survey Platform
-        - paragraph [ref=e30]: v0.1.0
-    - generic [ref=e31]:
-      - banner [ref=e32]:
-        - heading "Admin Dashboard" [level=2] [ref=e35]
-        - generic [ref=e36]:
-          - generic [ref=e37]:
-            - img [ref=e38]
-            - generic [ref=e41]:
-              - paragraph [ref=e42]: Super Admin
-              - paragraph [ref=e43]: SUPER_ADMIN
-          - button "Logout" [ref=e44] [cursor=pointer]:
-            - img [ref=e45]
-            - generic [ref=e48]: Logout
-      - main [ref=e49]:
-        - generic [ref=e50]:
-          - generic [ref=e51]:
-            - heading "Dashboard" [level=1] [ref=e52]
-            - paragraph [ref=e53]: Welcome back, Super Admin
-          - generic [ref=e54]:
-            - generic [ref=e56]:
-              - generic [ref=e57]:
-                - paragraph [ref=e58]: Active Campaigns
-                - paragraph [ref=e59]: "0"
-              - img [ref=e61]
-            - generic [ref=e64]:
-              - generic [ref=e65]:
-                - paragraph [ref=e66]: Total Users
-                - paragraph [ref=e67]: "3"
-              - img [ref=e69]
-            - generic [ref=e75]:
-              - generic [ref=e76]:
-                - paragraph [ref=e77]: Pending Responses
-                - paragraph [ref=e78]: "0"
-              - img [ref=e80]
-            - generic [ref=e84]:
-              - generic [ref=e85]:
-                - paragraph [ref=e86]: Completion Rate
-                - paragraph [ref=e87]: 0%
-              - img [ref=e89]
-          - generic [ref=e92]:
-            - heading "Quick Actions" [level=2] [ref=e93]
-            - generic [ref=e94]:
-              - link "New Campaign" [ref=e95] [cursor=pointer]:
-                - /url: /admin/campaigns/new
-                - img [ref=e96]
-                - text: New Campaign
-              - link "Import Users" [ref=e97] [cursor=pointer]:
-                - /url: /admin/users/import
-                - img [ref=e98]
-                - text: Import Users
-          - generic [ref=e101]:
-            - generic [ref=e102]:
-              - heading "Recent Campaigns" [level=2] [ref=e103]
-              - link "View all →" [ref=e104] [cursor=pointer]:
-                - /url: /admin/campaigns
-            - generic [ref=e105]:
-              - img [ref=e106]
-              - heading "No campaigns yet" [level=3] [ref=e108]
-              - paragraph [ref=e109]: Get started by creating a new campaign.
-              - link "New Campaign" [ref=e111] [cursor=pointer]:
-                - /url: /admin/campaigns/new
-                - img [ref=e112]
-                - text: New Campaign
+    - alert [ref=e2]
+    - generic [ref=e3]:
+        - generic [ref=e5]:
+            - heading "Bank Survey Admin" [level=1] [ref=e7]
+            - navigation [ref=e8]:
+                - link "Dashboard" [ref=e9] [cursor=pointer]:
+                    - /url: /admin/dashboard
+                    - img [ref=e10]
+                    - text: Dashboard
+                - link "Campaigns" [ref=e15] [cursor=pointer]:
+                    - /url: /admin/campaigns
+                    - img [ref=e16]
+                    - text: Campaigns
+                - link "Users" [ref=e19] [cursor=pointer]:
+                    - /url: /admin/users
+                    - img [ref=e20]
+                    - text: Users
+                - link "Reports" [ref=e25] [cursor=pointer]:
+                    - /url: /admin/reports
+                    - img [ref=e26]
+                    - text: Reports
+            - generic [ref=e28]:
+                - paragraph [ref=e29]: Bank Engagement Survey Platform
+                - paragraph [ref=e30]: v0.1.0
+        - generic [ref=e31]:
+            - banner [ref=e32]:
+                - heading "Admin Dashboard" [level=2] [ref=e35]
+                - generic [ref=e36]:
+                    - generic [ref=e37]:
+                        - img [ref=e38]
+                        - generic [ref=e41]:
+                            - paragraph [ref=e42]: Super Admin
+                            - paragraph [ref=e43]: SUPER_ADMIN
+                    - button "Logout" [ref=e44] [cursor=pointer]:
+                        - img [ref=e45]
+                        - generic [ref=e48]: Logout
+            - main [ref=e49]:
+                - generic [ref=e50]:
+                    - generic [ref=e51]:
+                        - heading "Dashboard" [level=1] [ref=e52]
+                        - paragraph [ref=e53]: Welcome back, Super Admin
+                    - generic [ref=e54]:
+                        - generic [ref=e56]:
+                            - generic [ref=e57]:
+                                - paragraph [ref=e58]: Active Campaigns
+                                - paragraph [ref=e59]: '0'
+                            - img [ref=e61]
+                        - generic [ref=e64]:
+                            - generic [ref=e65]:
+                                - paragraph [ref=e66]: Total Users
+                                - paragraph [ref=e67]: '3'
+                            - img [ref=e69]
+                        - generic [ref=e75]:
+                            - generic [ref=e76]:
+                                - paragraph [ref=e77]: Pending Responses
+                                - paragraph [ref=e78]: '0'
+                            - img [ref=e80]
+                        - generic [ref=e84]:
+                            - generic [ref=e85]:
+                                - paragraph [ref=e86]: Completion Rate
+                                - paragraph [ref=e87]: 0%
+                            - img [ref=e89]
+                    - generic [ref=e92]:
+                        - heading "Quick Actions" [level=2] [ref=e93]
+                        - generic [ref=e94]:
+                            - link "New Campaign" [ref=e95] [cursor=pointer]:
+                                - /url: /admin/campaigns/new
+                                - img [ref=e96]
+                                - text: New Campaign
+                            - link "Import Users" [ref=e97] [cursor=pointer]:
+                                - /url: /admin/users/import
+                                - img [ref=e98]
+                                - text: Import Users
+                    - generic [ref=e101]:
+                        - generic [ref=e102]:
+                            - heading "Recent Campaigns" [level=2] [ref=e103]
+                            - link "View all →" [ref=e104] [cursor=pointer]:
+                                - /url: /admin/campaigns
+                        - generic [ref=e105]:
+                            - img [ref=e106]
+                            - heading "No campaigns yet" [level=3] [ref=e108]
+                            - paragraph [ref=e109]: Get started by creating a new campaign.
+                            - link "New Campaign" [ref=e111] [cursor=pointer]:
+                                - /url: /admin/campaigns/new
+                                - img [ref=e112]
+                                - text: New Campaign
 ```

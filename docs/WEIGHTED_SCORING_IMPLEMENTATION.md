@@ -29,6 +29,7 @@ Successfully implemented a production-ready weighted category scoring system for
 ### New Files Created
 
 **Core Implementation**
+
 - `src/types/scoring.ts` - TypeScript interfaces for weighted scoring
 - `src/lib/scoring/categoryScoring.ts` - Core scoring engine (348 lines)
 - `src/lib/scoring/categoryScoring.test.ts` - 24 comprehensive unit tests
@@ -37,12 +38,14 @@ Successfully implemented a production-ready weighted category scoring system for
 - `src/components/reports/index.ts` - Export barrel for report components
 
 **Documentation**
+
 - `docs/SCORING_MATRIX_REFERENCE.md` - Official category-question mappings
 - `docs/API_WEIGHTED_SCORING.md` - Complete API documentation
 - `docs/WEIGHTED_SCORING_IMPLEMENTATION.md` - This file
 - `memory/MEMORY.md` - Key learnings and patterns
 
 **Automation Scripts**
+
 - `scripts/populate-category-weights.ts` - Updates Sanity with correct weights
 - `scripts/verify-question-mappings.ts` - Validates question-category mappings
 - `scripts/backfill-adjusted-values.ts` - Processes existing responses
@@ -50,25 +53,31 @@ Successfully implemented a production-ready weighted category scoring system for
 - `scripts/create-managerial-assessment.ts` - Creates survey structure
 
 **Database**
+
 - `prisma/migrations/add_adjusted_value.sql` - Adds adjustedValue column
 - `setup-database.sql` - Updated with adjusted_value column
 
 ### Files Modified
 
 **Sanity Schemas**
+
 - `sanity/schemas/category.ts` - Added weight field with validation
 - `sanity/schemas/index.ts` - Updated exports
 
 **Types**
+
 - `src/types/survey.ts` - Added weight to Category interface
 
 **Sanity Queries**
+
 - `src/lib/sanity/queries.ts` - Updated CATEGORY_FRAGMENT to include weight
 
 **Database Schema**
+
 - `prisma/schema.prisma` - Added adjustedValue to Response model
 
 **API Routes**
+
 - `src/app/api/reports/[campaignId]/route.ts` - Complete rewrite using weighted scoring
 - `src/app/api/reports/[campaignId]/export/route.ts` - Complete rewrite with weighted exports
 
@@ -116,6 +125,7 @@ Return weighted scores to API/UI/Export
 ### Database Schema Changes
 
 **Response Model** (Prisma)
+
 ```prisma
 model Response {
   id               String     @id @default(uuid())
@@ -135,20 +145,23 @@ model Response {
 ```
 
 **Category Schema** (Sanity)
+
 ```typescript
 defineField({
-  name: "weight",
-  title: "Scoring Weight Multiplier",
-  type: "number",
-  description: "Multiplier applied to category totals in weighted scoring calculations...",
+  name: 'weight',
+  title: 'Scoring Weight Multiplier',
+  type: 'number',
+  description:
+    'Multiplier applied to category totals in weighted scoring calculations...',
   initialValue: 1.0,
   validation: (rule) =>
-    rule.required()
+    rule
+      .required()
       .min(0.1)
       .max(10)
       .precision(2)
-      .error("Weight must be between 0.1 and 10 with max 2 decimal places")
-})
+      .error('Weight must be between 0.1 and 10 with max 2 decimal places'),
+});
 ```
 
 ---
@@ -159,15 +172,15 @@ defineField({
 
 **35 questions, 3-point Likert scale (1=Rarely, 2=Sometimes, 3=Frequently)**
 
-| Category | Weight | Questions | Count | Max Raw | Max Weighted |
-|----------|--------|-----------|-------|---------|--------------|
-| Communication | 1.75 | 6, 13, 20, 26 | 4 | 12 | 21.0 |
-| Leadership | 1.0 | 1, 7, 14, 21, 27, 33, 35 | 7 | 21 | 21.0 |
-| Culture | 2.3 | 8, 15, 28 | 3 | 9 | 20.7 |
-| Accountability | 1.7 | 2, 9, 16, 22, 29, 34 | 6 | 18 | 30.6 |
-| Execution | 1.4 | 3, 10, 17, 23, 30 | 5 | 15 | 21.0 |
-| Associate | 1.4 | 4, 11, 18, 24, 31 | 5 | 15 | 21.0 |
-| Team Dynamics | 1.4 | 5, 12, 19, 25, 32 | 5 | 15 | 21.0 |
+| Category       | Weight | Questions                | Count | Max Raw | Max Weighted |
+| -------------- | ------ | ------------------------ | ----- | ------- | ------------ |
+| Communication  | 1.75   | 6, 13, 20, 26            | 4     | 12      | 21.0         |
+| Leadership     | 1.0    | 1, 7, 14, 21, 27, 33, 35 | 7     | 21      | 21.0         |
+| Culture        | 2.3    | 8, 15, 28                | 3     | 9       | 20.7         |
+| Accountability | 1.7    | 2, 9, 16, 22, 29, 34     | 6     | 18      | 30.6         |
+| Execution      | 1.4    | 3, 10, 17, 23, 30        | 5     | 15      | 21.0         |
+| Associate      | 1.4    | 4, 11, 18, 24, 31        | 5     | 15      | 21.0         |
+| Team Dynamics  | 1.4    | 5, 12, 19, 25, 32        | 5     | 15      | 21.0         |
 
 **Total:** 35 questions | **Max Weighted Score:** 156.3
 
@@ -190,6 +203,7 @@ defineField({
 Returns weighted scoring results in JSON format.
 
 **Response Structure:**
+
 ```typescript
 {
   campaign: { /* metadata */ },
@@ -219,11 +233,13 @@ Returns weighted scoring results in JSON format.
 Downloads weighted scoring report.
 
 **Excel Structure:**
+
 - Sheet 1: Summary (campaign info, completion metrics)
 - Sheet 2: Weighted Category Scores (with legend)
 - Sheet 3: Individual Scores (omitted for anonymous surveys)
 
 **PDF Structure:**
+
 - Title and survey metadata
 - Category weighted scores table
 - Page numbers and generation timestamp
@@ -239,6 +255,7 @@ Downloads weighted scoring report.
 Horizontal bar chart displaying weighted category scores.
 
 **Features:**
+
 - Category-specific colors
 - Weight multipliers in x-axis labels: "Communication (×1.75)"
 - Detailed tooltip showing weighted score, raw score, range, std dev
@@ -246,6 +263,7 @@ Horizontal bar chart displaying weighted category scores.
 - Accessible with ARIA labels and screen-reader table
 
 **Usage:**
+
 ```typescript
 import { CategoryScoresChart } from '@/components/charts/CategoryScoresChart';
 
@@ -264,6 +282,7 @@ import { CategoryScoresChart } from '@/components/charts/CategoryScoresChart';
 Individual category score cards with performance-based color coding.
 
 **Features:**
+
 - Color-coded performance levels (excellent/good/fair/needs-improvement)
 - Large weighted score display
 - Raw score comparison
@@ -272,6 +291,7 @@ Individual category score cards with performance-based color coding.
 - Optional ranking badge
 
 **Usage:**
+
 ```typescript
 import { CategoryScoreCard } from '@/components/reports/CategoryScoreCard';
 
@@ -289,11 +309,13 @@ import { CategoryScoreCard } from '@/components/reports/CategoryScoreCard';
 Responsive grid layout for multiple category cards.
 
 **Features:**
+
 - Responsive grid (1-4 columns based on screen size)
 - Optional ranking
 - Automatic sorting by weighted score
 
 **Usage:**
+
 ```typescript
 import { CategoryScoreGrid } from '@/components/reports/CategoryScoreGrid';
 
@@ -315,6 +337,7 @@ import { CategoryScoreGrid } from '@/components/reports/CategoryScoreGrid';
 **Coverage:** 24 tests across 8 test suites
 
 **Test Categories:**
+
 1. `applyReverseScoring()` - Tests 3-point and 5-point scale reversals
 2. `adjustResponse()` - Tests normal and reversed question handling
 3. `prepareResponsesForScoring()` - Tests response transformation
@@ -325,6 +348,7 @@ import { CategoryScoreGrid } from '@/components/reports/CategoryScoreGrid';
 8. Aggregate statistics - Tests mean, std dev, min/max calculations
 
 **Run Tests:**
+
 ```bash
 npm run test                      # All tests
 npm run test categoryScoring      # Specific file
@@ -336,6 +360,7 @@ npm run test -- --coverage        # With coverage report
 ### Integration Testing
 
 **Manual Testing Checklist:**
+
 - [ ] Create campaign with Managerial Assessment survey
 - [ ] Submit responses (including reverse-scored questions)
 - [ ] Verify raw values stored correctly in database
@@ -360,6 +385,7 @@ npx tsx scripts/populate-category-weights.ts
 ```
 
 **Output:**
+
 - Shows before/after comparison for each category
 - Validates all 7 categories exist
 - Handles errors gracefully
@@ -373,6 +399,7 @@ npx tsx scripts/verify-question-mappings.ts
 ```
 
 **Checks:**
+
 - All 35 questions exist
 - Each question has valid category reference
 - No orphaned or duplicate questions
@@ -387,6 +414,7 @@ npx tsx scripts/backfill-adjusted-values.ts
 ```
 
 **Features:**
+
 - Batch processing (100 responses at a time)
 - Progress indicators
 - Idempotent (safe to run multiple times)
@@ -401,6 +429,7 @@ npx tsx scripts/create-managerial-assessment.ts
 ```
 
 **Creates:**
+
 - 7 categories with weights and colors
 - 3-point Likert scale
 - 35 questions with correct category mappings
@@ -413,6 +442,7 @@ npx tsx scripts/create-managerial-assessment.ts
 ### For Existing Deployments
 
 **Step 1: Backup Data**
+
 ```bash
 # Backup database
 pg_dump $DATABASE_URL > backup_before_weights.sql
@@ -422,6 +452,7 @@ npx sanity dataset export production backup.tar.gz
 ```
 
 **Step 2: Update Sanity Schema**
+
 ```bash
 cd sanity
 npm install
@@ -429,6 +460,7 @@ npx sanity deploy
 ```
 
 **Step 3: Populate Category Weights**
+
 ```bash
 npx tsx scripts/populate-category-weights.ts
 ```
@@ -436,11 +468,13 @@ npx tsx scripts/populate-category-weights.ts
 **Step 4: Update Database Schema**
 
 Option A - Prisma CLI (may timeout on Supabase):
+
 ```bash
 npx prisma migrate dev --name add_adjusted_value
 ```
 
 Option B - Manual SQL (recommended for Supabase):
+
 ```sql
 ALTER TABLE "responses" ADD COLUMN "adjusted_value" INTEGER;
 COMMENT ON COLUMN "responses"."adjusted_value"
@@ -448,17 +482,20 @@ COMMENT ON COLUMN "responses"."adjusted_value"
 ```
 
 **Step 5: Backfill Existing Responses**
+
 ```bash
 npx tsx scripts/backfill-adjusted-values.ts
 ```
 
 **Step 6: Deploy Application**
+
 ```bash
 npm run build
 # Deploy to Vercel or your hosting platform
 ```
 
 **Step 7: Verify**
+
 - Run verification script: `npx tsx scripts/verify-question-mappings.ts`
 - Test API endpoints manually
 - Check sample Excel/PDF exports
@@ -471,12 +508,14 @@ npm run build
 ### Anonymity Protection
 
 **Associate 180 Survey Rules:**
+
 - Minimum 5 completed responses required before generating reports
 - `individualScores` field omitted from API responses
 - Individual Scores sheet omitted from Excel exports
 - Export endpoint returns 403 error if threshold not met
 
 **Implementation:**
+
 ```typescript
 // Check threshold
 const meetsThreshold = await checkAnonymityThreshold(
@@ -488,7 +527,7 @@ if (!meetsThreshold) {
   return NextResponse.json(
     {
       error: 'Insufficient respondents',
-      message: 'This survey requires a minimum of 5 completed responses...'
+      message: 'This survey requires a minimum of 5 completed responses...',
     },
     { status: 403 }
   );
@@ -507,11 +546,13 @@ if (!isAnonymousSurvey) {
 ### Data Integrity
 
 **Raw Value Preservation:**
+
 - Original response values stored in `value` column (never modified)
 - Adjusted values stored in separate `adjustedValue` column
 - Maintains complete audit trail
 
 **Validation:**
+
 - Zod schemas validate all API inputs
 - Sanity validation rules prevent invalid weights
 - Unit tests verify calculation accuracy
@@ -524,6 +565,7 @@ if (!isAnonymousSurvey) {
 ### Database Queries
 
 **Optimized Fetching:**
+
 ```typescript
 const campaign = await prisma.surveyCampaign.findUnique({
   where: { id: campaignId },
@@ -534,15 +576,16 @@ const campaign = await prisma.surveyCampaign.findUnique({
       include: {
         user: true,
         responses: {
-          orderBy: { questionNumber: 'asc' }
-        }
-      }
-    }
-  }
+          orderBy: { questionNumber: 'asc' },
+        },
+      },
+    },
+  },
 });
 ```
 
 **Benefits:**
+
 - Single database query instead of multiple round trips
 - Pre-filtered to completed responses only
 - Pre-sorted responses for efficient processing
@@ -550,6 +593,7 @@ const campaign = await prisma.surveyCampaign.findUnique({
 ### Sanity Queries
 
 **Comprehensive GROQ:**
+
 ```groq
 *[_type == "survey" && _id == $surveyId][0] {
   ...,
@@ -571,6 +615,7 @@ const campaign = await prisma.surveyCampaign.findUnique({
 ```
 
 **Benefits:**
+
 - Single GROQ query fetches entire survey structure
 - Includes all nested relationships (sections, questions, categories)
 - Projection limits returned fields
@@ -578,11 +623,13 @@ const campaign = await prisma.surveyCampaign.findUnique({
 ### Caching Strategy
 
 **Next.js:**
+
 - Static Generation for public pages
 - Incremental Static Regeneration for reports
 - `revalidateTag` for cache invalidation
 
 **React:**
+
 - Server Components for data fetching
 - Client Components only for interactivity
 - Memoization for expensive calculations
@@ -681,11 +728,13 @@ printenv | grep SANITY
 ### Key Files to Monitor
 
 **Critical Code:**
+
 - `src/lib/scoring/categoryScoring.ts` - Core scoring engine
 - `src/app/api/reports/[campaignId]/route.ts` - Main reports API
 - `src/app/api/reports/[campaignId]/export/route.ts` - Export generation
 
 **Configuration:**
+
 - `prisma/schema.prisma` - Database schema
 - `sanity/schemas/category.ts` - Category schema with weights
 - `docs/SCORING_MATRIX_REFERENCE.md` - Official category mappings
@@ -693,16 +742,19 @@ printenv | grep SANITY
 ### Maintenance Tasks
 
 **Regular:**
+
 - Monitor API response times
 - Check error logs for scoring failures
 - Verify export file generation success rate
 
 **Periodic:**
+
 - Review and update category weights if business rules change
 - Run verification scripts after Sanity content updates
 - Update unit tests when adding new survey types
 
 **On Updates:**
+
 - Run full test suite before deploying
 - Verify backfill scripts on staging before production
 - Update documentation when adding features

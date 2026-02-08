@@ -103,7 +103,9 @@ export function ConfirmDialog({
           {/* Content */}
           <div className="p-6">
             {/* Icon */}
-            <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${styles.iconBg}`}>
+            <div
+              className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${styles.iconBg}`}
+            >
               <AlertTriangle className={`h-6 w-6 ${styles.icon}`} />
             </div>
 

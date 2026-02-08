@@ -88,18 +88,13 @@ export function SurveyError({
           <p className="mb-4 text-base text-gray-600">{message}</p>
 
           {/* Optional Details */}
-          {details && (
-            <p className="text-sm text-gray-500">
-              {details}
-            </p>
-          )}
+          {details && <p className="text-sm text-gray-500">{details}</p>}
 
           {/* Help Text */}
           <div className="mt-8 border-t border-gray-200 pt-6">
             <p className="text-sm text-gray-500">
               If you believe this is an error, please contact your survey
-              administrator or check your invitation email for the correct
-              link.
+              administrator or check your invitation email for the correct link.
             </p>
           </div>
         </div>

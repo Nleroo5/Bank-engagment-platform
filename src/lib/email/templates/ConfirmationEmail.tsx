@@ -23,9 +23,7 @@ export function ConfirmationEmail({
   return (
     <Html>
       <Head />
-      <Preview>
-        Thank you for completing: {surveyTitle}
-      </Preview>
+      <Preview>Thank you for completing: {surveyTitle}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={checkmarkContainer}>

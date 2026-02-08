@@ -7,8 +7,8 @@ const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production';
 if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) {
   console.warn(
     'Missing NEXT_PUBLIC_SANITY_PROJECT_ID environment variable. ' +
-    'Using default project ID. ' +
-    'Please add this variable to your Vercel environment variables.'
+      'Using default project ID. ' +
+      'Please add this variable to your Vercel environment variables.'
   );
 }
 

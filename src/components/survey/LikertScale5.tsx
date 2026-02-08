@@ -50,7 +50,10 @@ export function LikertScale5({
           <span className="flex-shrink-0 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
             Q{questionNumber}
           </span>
-          <p className="flex-1 text-base font-medium text-gray-900" id={`question-${questionId}`}>
+          <p
+            className="flex-1 text-base font-medium text-gray-900"
+            id={`question-${questionId}`}
+          >
             {questionText}
           </p>
         </div>
@@ -61,7 +64,11 @@ export function LikertScale5({
 
       {/* Desktop view */}
       <div className="hidden md:block">
-        <div className="flex items-center justify-between gap-2" role="radiogroup" aria-labelledby={`question-${questionId}`}>
+        <div
+          className="flex items-center justify-between gap-2"
+          role="radiogroup"
+          aria-labelledby={`question-${questionId}`}
+        >
           {SCALE_LABELS.map((item) => (
             <label
               key={item.value}
@@ -107,7 +114,11 @@ export function LikertScale5({
 
       {/* Mobile view */}
       <div className="md:hidden">
-        <div className="space-y-2" role="radiogroup" aria-labelledby={`question-${questionId}`}>
+        <div
+          className="space-y-2"
+          role="radiogroup"
+          aria-labelledby={`question-${questionId}`}
+        >
           {SCALE_LABELS.map((item) => (
             <label
               key={item.value}
@@ -129,7 +140,9 @@ export function LikertScale5({
               />
               <div className="flex-1">
                 <span className="font-medium text-gray-900">{item.label}</span>
-                <span className="ml-2 text-sm text-gray-500">({item.value})</span>
+                <span className="ml-2 text-sm text-gray-500">
+                  ({item.value})
+                </span>
               </div>
             </label>
           ))}

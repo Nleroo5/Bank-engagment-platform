@@ -35,9 +35,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         <div className="hidden items-center gap-2 text-sm sm:flex">
           <User className="h-4 w-4 text-gray-500" />
           <div className="text-right">
-            <p className="font-medium text-gray-900">
-              {mockUser.name}
-            </p>
+            <p className="font-medium text-gray-900">{mockUser.name}</p>
             <p className="text-xs text-gray-500">{mockUser.role}</p>
           </div>
         </div>

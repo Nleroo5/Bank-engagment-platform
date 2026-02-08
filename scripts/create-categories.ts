@@ -57,7 +57,8 @@ const CATEGORIES = [
   {
     name: 'Team Dynamics',
     colorCode: '#EC4899',
-    description: 'Interpersonal relationships, collaboration, and group synergy',
+    description:
+      'Interpersonal relationships, collaboration, and group synergy',
     sortOrder: 7,
   },
 ] as const;
@@ -115,7 +116,9 @@ async function main() {
 
     for (const category of CATEGORIES) {
       if (existingNames.has(category.name)) {
-        console.log(`⏭️  ${category.name.padEnd(20)} | Already exists - skipping`);
+        console.log(
+          `⏭️  ${category.name.padEnd(20)} | Already exists - skipping`
+        );
         skippedCount++;
         continue;
       }

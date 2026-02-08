@@ -31,8 +31,14 @@ const client = createClient({
 async function auditSanitySurveys() {
   console.log('🔍 Starting comprehensive Sanity survey audit...\n');
 
-  console.log('📡 Connecting to Sanity project:', process.env.NEXT_PUBLIC_SANITY_PROJECT_ID);
-  console.log('📦 Dataset:', process.env.NEXT_PUBLIC_SANITY_DATASET || 'production');
+  console.log(
+    '📡 Connecting to Sanity project:',
+    process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+  );
+  console.log(
+    '📦 Dataset:',
+    process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
+  );
   console.log('');
 
   const issues: string[] = [];
@@ -44,9 +50,12 @@ async function auditSanitySurveys() {
   try {
     // Audit 1: Check all surveys
     console.log('📋 AUDIT 1: Surveys');
-    console.log('─────────────────────────────────────────────────────────────\n');
+    console.log(
+      '─────────────────────────────────────────────────────────────\n'
+    );
 
-    const surveys = await client.fetch(`*[_type == "survey"] | order(surveyNumber asc) {
+    const surveys =
+      await client.fetch(`*[_type == "survey"] | order(surveyNumber asc) {
       _id,
       title,
       slug,
@@ -84,9 +93,18 @@ async function auditSanitySurveys() {
       }
 
       // Check surveyType
-      const validTypes = ['demographics', 'likert5', 'likert3', 'managerial', 'ote', 'associate_180'];
+      const validTypes = [
+        'demographics',
+        'likert5',
+        'likert3',
+        'managerial',
+        'ote',
+        'associate_180',
+      ];
       if (!validTypes.includes(survey.surveyType)) {
-        issues.push(`${surveyLabel} - Invalid surveyType: ${survey.surveyType}`);
+        issues.push(
+          `${surveyLabel} - Invalid surveyType: ${survey.surveyType}`
+        );
         console.log(`   ❌ Invalid surveyType: ${survey.surveyType}`);
       } else {
         console.log(`   ✅ surveyType: ${survey.surveyType}`);
@@ -105,9 +123,12 @@ async function auditSanitySurveys() {
 
     // Audit 2: Check all sections
     console.log('\n📑 AUDIT 2: Sections');
-    console.log('─────────────────────────────────────────────────────────────\n');
+    console.log(
+      '─────────────────────────────────────────────────────────────\n'
+    );
 
-    const sections = await client.fetch(`*[_type == "section"] | order(_createdAt asc) {
+    const sections =
+      await client.fetch(`*[_type == "section"] | order(_createdAt asc) {
       _id,
       title,
       order,
@@ -144,9 +165,12 @@ async function auditSanitySurveys() {
 
     // Audit 3: Check all questions
     console.log('\n❓ AUDIT 3: Questions');
-    console.log('─────────────────────────────────────────────────────────────\n');
+    console.log(
+      '─────────────────────────────────────────────────────────────\n'
+    );
 
-    const questions = await client.fetch(`*[_type == "question"] | order(questionNumber asc, number asc) {
+    const questions =
+      await client.fetch(`*[_type == "question"] | order(questionNumber asc, number asc) {
       _id,
       questionNumber,
       number,
@@ -166,7 +190,9 @@ async function auditSanitySurveys() {
     for (const question of questions) {
       const qNum = question.questionNumber || question.number;
       const qText = question.questionText || question.text;
-      const truncatedText = qText ? qText.substring(0, 50) + (qText.length > 50 ? '...' : '') : 'NO TEXT';
+      const truncatedText = qText
+        ? qText.substring(0, 50) + (qText.length > 50 ? '...' : '')
+        : 'NO TEXT';
 
       // Check category
       if (!question.categoryId) {
@@ -182,14 +208,19 @@ async function auditSanitySurveys() {
     console.log(`\n   Total questions: ${questionCount}`);
     console.log(`   Reversed questions: ${reversedCount}`);
     if (missingCategoryCount > 0) {
-      console.log(`   ❌ Questions missing categories: ${missingCategoryCount}`);
+      console.log(
+        `   ❌ Questions missing categories: ${missingCategoryCount}`
+      );
     }
 
     // Audit 4: Check categories
     console.log('\n\n📂 AUDIT 4: Categories');
-    console.log('─────────────────────────────────────────────────────────────\n');
+    console.log(
+      '─────────────────────────────────────────────────────────────\n'
+    );
 
-    const categories = await client.fetch(`*[_type == "category"] | order(sortOrder asc, name asc) {
+    const categories =
+      await client.fetch(`*[_type == "category"] | order(sortOrder asc, name asc) {
       _id,
       name,
       weight,
@@ -201,13 +232,19 @@ async function auditSanitySurveys() {
       console.log(`📁 ${category.name}`);
       console.log(`   Weight: ${category.weight || '1.0'}`);
       console.log(`   Color: ${category.colorCode || 'None'}`);
-      console.log(`   Sort Order: ${category.sortOrder !== undefined ? category.sortOrder : 'Not set'}`);
+      console.log(
+        `   Sort Order: ${category.sortOrder !== undefined ? category.sortOrder : 'Not set'}`
+      );
     }
 
     // Final Summary
-    console.log('\n\n══════════════════════════════════════════════════════════════════════');
+    console.log(
+      '\n\n══════════════════════════════════════════════════════════════════════'
+    );
     console.log('📊 AUDIT SUMMARY');
-    console.log('══════════════════════════════════════════════════════════════════════');
+    console.log(
+      '══════════════════════════════════════════════════════════════════════'
+    );
     console.log(`Total Surveys: ${surveyCount}`);
     console.log(`Total Sections: ${sectionCount}`);
     console.log(`Total Questions: ${questionCount}`);
@@ -234,13 +271,18 @@ async function auditSanitySurveys() {
       }
     }
 
-    console.log('══════════════════════════════════════════════════════════════════════');
+    console.log(
+      '══════════════════════════════════════════════════════════════════════'
+    );
 
     // Test campaign creation query
     console.log('\n\n🧪 TEST: Campaign Creation Query');
-    console.log('─────────────────────────────────────────────────────────────\n');
+    console.log(
+      '─────────────────────────────────────────────────────────────\n'
+    );
 
-    const activeSurveys = await client.fetch(`*[_type == "survey" && isActive == true] | order(surveyNumber asc) {
+    const activeSurveys =
+      await client.fetch(`*[_type == "survey" && isActive == true] | order(surveyNumber asc) {
       _id,
       title,
       slug,
@@ -254,9 +296,10 @@ async function auditSanitySurveys() {
     }
 
     if (activeSurveys.length === 0) {
-      console.log('   ❌ No active surveys found! This will prevent campaign creation.');
+      console.log(
+        '   ❌ No active surveys found! This will prevent campaign creation.'
+      );
     }
-
   } catch (error) {
     console.error('\n❌ Audit failed with error:', error);
     throw error;

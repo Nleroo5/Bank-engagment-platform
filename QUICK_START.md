@@ -51,11 +51,13 @@ This opens a database editor in your browser. Then:
 ## ✅ You're Done with Basic Setup!
 
 **What you can do now:**
+
 - Your platform is live on the internet
 - Your database is ready to store data
 - You have an admin user (though login needs to be set up)
 
 **What's NOT working yet:**
+
 - Login (authentication system needs configuration)
 - Survey creation (Sanity CMS needs surveys added)
 - Email sending (needs Resend API setup)
@@ -69,8 +71,9 @@ For a complete guide on how to use everything, open the file:
 **GETTING_STARTED.md**
 
 This has detailed instructions for:
+
 - Creating surveys
-- Sending invitations  
+- Sending invitations
 - Viewing results
 - Everything else you need to know
 

@@ -121,7 +121,9 @@ test.describe('Report Viewing', () => {
     await expect(page.locator('text=Test Bank')).toBeVisible();
 
     // Should see summary cards or metrics
-    await expect(page.locator('text=/Overall Score|Average|Response Rate/i')).toBeVisible();
+    await expect(
+      page.locator('text=/Overall Score|Average|Response Rate/i')
+    ).toBeVisible();
   });
 
   test('should display category scores chart', async ({ page }) => {
@@ -140,7 +142,9 @@ test.describe('Report Viewing', () => {
     if (!hasChart) {
       // At least category names should be visible
       await expect(
-        page.locator('text=/Communication|Leadership|Culture|Accountability|Execution/i')
+        page.locator(
+          'text=/Communication|Leadership|Culture|Accountability|Execution/i'
+        )
       ).toBeVisible();
     }
   });
@@ -160,7 +164,9 @@ test.describe('Report Viewing', () => {
     await page.waitForLoadState('networkidle');
 
     // Look for filter controls
-    const filterPanel = page.locator('text=/Filter|Division|Job Role|Time at Bank/i');
+    const filterPanel = page.locator(
+      'text=/Filter|Division|Job Role|Time at Bank/i'
+    );
     const hasFilters = await filterPanel.isVisible().catch(() => false);
 
     // Filters should be present for non-anonymous surveys
@@ -173,7 +179,9 @@ test.describe('Report Viewing', () => {
     await page.goto(`/admin/reports/${testCampaignId}`);
 
     // Should see export buttons
-    await expect(page.locator('text=/Export.*Excel|Export.*PDF/i')).toBeVisible();
+    await expect(
+      page.locator('text=/Export.*Excel|Export.*PDF/i')
+    ).toBeVisible();
   });
 
   test('should enforce anonymity threshold', async ({ page }) => {
@@ -221,7 +229,9 @@ test.describe('Report Viewing', () => {
     await page.goto(`/admin/reports/${anonymousCampaign.id}`);
 
     // Should see insufficient respondents message
-    await expect(page.locator('text=/minimum.*5|Insufficient.*respondents|Not enough/i')).toBeVisible();
+    await expect(
+      page.locator('text=/minimum.*5|Insufficient.*respondents|Not enough/i')
+    ).toBeVisible();
 
     // Clean up
     await prisma.invitation.deleteMany({
@@ -300,7 +310,9 @@ test.describe('Export Functionality', () => {
 
     // Should show loading state
     const loadingIndicator = page.locator('text=/Exporting|Loading/i');
-    const isLoadingVisible = await loadingIndicator.isVisible().catch(() => false);
+    const isLoadingVisible = await loadingIndicator
+      .isVisible()
+      .catch(() => false);
 
     // Either loading indicator should appear briefly, or button should be disabled
     if (!isLoadingVisible) {
@@ -319,7 +331,9 @@ test.describe('Report Access Control', () => {
     await expect(page).toHaveURL('/admin/login');
   });
 
-  test('should allow ORG_ADMIN to view their organization reports', async ({ page }) => {
+  test('should allow ORG_ADMIN to view their organization reports', async ({
+    page,
+  }) => {
     // Login as ORG_ADMIN
     await page.goto('/admin/login');
     await page.fill('input[name="email"]', 'orgadmin@test.com');

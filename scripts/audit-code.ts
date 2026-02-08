@@ -132,11 +132,16 @@ function checkNullSafety(content: string, filePath: string): void {
     // Check for array access without optional chaining
     // Pattern: array[0].property without checking if array[0] exists
     const unsafeArrayAccess = /\w+\[0\]\.\w+/;
-    if (unsafeArrayAccess.test(line) && !line.includes('?') && !line.includes('if')) {
+    if (
+      unsafeArrayAccess.test(line) &&
+      !line.includes('?') &&
+      !line.includes('if')
+    ) {
       results.push({
         category: 'Null Safety',
         severity: 'warning',
-        message: 'Array access without null check - consider using optional chaining (?)',
+        message:
+          'Array access without null check - consider using optional chaining (?)',
         file: filePath,
         line: index + 1,
       });
@@ -191,11 +196,15 @@ function checkConsoleStatements(content: string, filePath: string): void {
   const lines = content.split('\n');
 
   lines.forEach((line, index) => {
-    if (/console\.(log|debug|info)/.test(line) && !line.includes('console.error')) {
+    if (
+      /console\.(log|debug|info)/.test(line) &&
+      !line.includes('console.error')
+    ) {
       results.push({
         category: 'Console Statement',
         severity: 'info',
-        message: 'console.log detected - consider using proper logging in production',
+        message:
+          'console.log detected - consider using proper logging in production',
         file: filePath,
         line: index + 1,
       });
@@ -214,7 +223,12 @@ function checkUnusedImports(content: string, filePath: string): void {
     // Extract imported names
     const importMatch = line.match(/import\s+(?:type\s+)?\{([^}]+)\}/);
     if (importMatch && importMatch[1]) {
-      const importedNames = importMatch[1].split(',').map((n) => n.trim().split(/\s+as\s+/)[0]!.trim());
+      const importedNames = importMatch[1].split(',').map((n) =>
+        n
+          .trim()
+          .split(/\s+as\s+/)[0]!
+          .trim()
+      );
       importedNames.forEach((name) => imports.add(name));
     }
 
@@ -309,12 +323,16 @@ async function runAudit(): Promise<void> {
   }
 
   console.log('═'.repeat(80));
-  console.log(`Total issues: ${results.length} (${errors.length} errors, ${warnings.length} warnings, ${info.length} info)`);
+  console.log(
+    `Total issues: ${results.length} (${errors.length} errors, ${warnings.length} warnings, ${info.length} info)`
+  );
   console.log('═'.repeat(80));
 
   // Exit with error code if there are errors
   if (errors.length > 0) {
-    console.log('\n❌ Audit failed due to errors. Please fix them before deployment.\n');
+    console.log(
+      '\n❌ Audit failed due to errors. Please fix them before deployment.\n'
+    );
     process.exit(1);
   }
 

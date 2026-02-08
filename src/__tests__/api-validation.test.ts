@@ -259,7 +259,9 @@ describe('API Validation Schemas', () => {
 
       if (!result.success) {
         expect(result.error.issues.length).toBeGreaterThan(0);
-        expect(result.error.issues.some((issue) => issue.path.includes('token'))).toBe(true);
+        expect(
+          result.error.issues.some((issue) => issue.path.includes('token'))
+        ).toBe(true);
       }
     });
 

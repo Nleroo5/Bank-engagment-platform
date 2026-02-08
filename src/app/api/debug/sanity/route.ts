@@ -10,7 +10,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     console.log('[Debug] Testing Sanity connection...');
-    console.log('[Debug] Project ID:', process.env.NEXT_PUBLIC_SANITY_PROJECT_ID);
+    console.log(
+      '[Debug] Project ID:',
+      process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+    );
     console.log('[Debug] Dataset:', process.env.NEXT_PUBLIC_SANITY_DATASET);
     console.log('[Debug] Token exists:', !!process.env.SANITY_API_TOKEN);
 

@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/sanity';
 import { sendInvitation } from '@/lib/email/send';
-import {
-  rateLimit,
-  getRateLimitHeaders,
-  RATE_LIMITS,
-} from '@/lib/rate-limit';
+import { rateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(
   _request: NextRequest,
@@ -23,7 +19,8 @@ export async function POST(
       return NextResponse.json(
         {
           error: 'Rate limit exceeded',
-          message: 'Too many email requests for this campaign. Please try again later.',
+          message:
+            'Too many email requests for this campaign. Please try again later.',
         },
         {
           status: 429,
@@ -115,14 +112,19 @@ export async function POST(
         });
 
         if (!invitationWithUser || !invitationWithUser.user) {
-          emailErrors.push(`Failed to send to invitation ${invitation.id}: User not found`);
+          emailErrors.push(
+            `Failed to send to invitation ${invitation.id}: User not found`
+          );
           continue;
         }
 
         await sendInvitation(invitationWithUser, campaign, survey);
         emailsSent++;
       } catch (error) {
-        console.error(`Failed to send invitation email to ${invitation.userId}:`, error);
+        console.error(
+          `Failed to send invitation email to ${invitation.userId}:`,
+          error
+        );
         emailErrors.push(
           `Failed to send to ${invitation.userId}: ${error instanceof Error ? error.message : 'Unknown error'}`
         );

@@ -46,7 +46,10 @@ export async function GET(
     });
 
     if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Campaign not found' },
+        { status: 404 }
+      );
     }
 
     // Fetch survey from Sanity
@@ -190,13 +193,19 @@ export async function GET(
       const workbook = XLSX.utils.book_new();
 
       // Sheet 1: Summary
-      const totalInvitations = campaign.invitations.length + (await prisma.invitation.count({
-        where: { campaignId: campaign.id }
-      })) - campaign.invitations.length;
+      const totalInvitations =
+        campaign.invitations.length +
+        (await prisma.invitation.count({
+          where: { campaignId: campaign.id },
+        })) -
+        campaign.invitations.length;
 
-      const completionRate = totalInvitations > 0
-        ? Math.round((campaign.invitations.length / totalInvitations) * 100 * 10) / 10
-        : 0;
+      const completionRate =
+        totalInvitations > 0
+          ? Math.round(
+              (campaign.invitations.length / totalInvitations) * 100 * 10
+            ) / 10
+          : 0;
 
       const overallWeightedScore =
         individualResults.reduce(
@@ -212,8 +221,18 @@ export async function GET(
         ['Organization', campaign.organization.name],
         ['Survey Type', survey.surveyType],
         ['Survey Number', survey.surveyNumber || 'N/A'],
-        ['Start Date', campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : 'N/A'],
-        ['End Date', campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : 'N/A'],
+        [
+          'Start Date',
+          campaign.startDate
+            ? new Date(campaign.startDate).toLocaleDateString()
+            : 'N/A',
+        ],
+        [
+          'End Date',
+          campaign.endDate
+            ? new Date(campaign.endDate).toLocaleDateString()
+            : 'N/A',
+        ],
         ['Status', campaign.status],
         [''],
         ['Response Metrics'],
@@ -301,7 +320,11 @@ export async function GET(
         ];
 
         const individualSheet = XLSX.utils.aoa_to_sheet(individualData);
-        XLSX.utils.book_append_sheet(workbook, individualSheet, 'Individual Scores');
+        XLSX.utils.book_append_sheet(
+          workbook,
+          individualSheet,
+          'Individual Scores'
+        );
       }
 
       // Generate buffer
@@ -352,7 +375,9 @@ export async function GET(
 
       autoTable(doc, {
         startY: yPosition,
-        head: [['Category', 'Weight', 'Weighted Score', 'Raw Score', 'Percentage']],
+        head: [
+          ['Category', 'Weight', 'Weighted Score', 'Raw Score', 'Percentage'],
+        ],
         body: aggregateStats.map((cat) => [
           cat.categoryName,
           `×${cat.categoryWeight}`,

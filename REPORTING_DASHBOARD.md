@@ -1,18 +1,22 @@
 # Reporting Dashboard Documentation ✅
 
 ## Overview
+
 Built a comprehensive reporting dashboard with interactive charts, demographic filters, and anonymity protection for Survey 7 (Associate 180).
 
 ## Created Files
 
 ### Pages
-1. **[src/app/(admin)/admin/reports/page.tsx](src/app/(admin)/admin/reports/page.tsx)** - Reports list showing completed campaigns
-2. **[src/app/(admin)/admin/reports/[campaignId]/page.tsx](src/app/(admin)/admin/reports/[campaignId]/page.tsx)** - Detailed report view page
+
+1. **[src/app/(admin)/admin/reports/page.tsx](<src/app/(admin)/admin/reports/page.tsx>)** - Reports list showing completed campaigns
+2. **[src/app/(admin)/admin/reports/[campaignId]/page.tsx](<src/app/(admin)/admin/reports/[campaignId]/page.tsx>)** - Detailed report view page
 
 ### API Routes
+
 3. **[src/app/api/reports/[campaignId]/route.ts](src/app/api/reports/[campaignId]/route.ts)** - GET endpoint for report data with filters
 
 ### Components
+
 4. **[src/components/reports/ReportView.tsx](src/components/reports/ReportView.tsx)** - Main client component for report display
 5. **[src/components/reports/DemographicFilters.tsx](src/components/reports/DemographicFilters.tsx)** - Filter panel with anonymity protection
 6. **[src/components/charts/CategoryBarChart.tsx](src/components/charts/CategoryBarChart.tsx)** - Bar chart for category scores
@@ -23,6 +27,7 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
 ### 1. Reports List Page (`/admin/reports`)
 
 **Features:**
+
 - ✅ Shows campaigns with COMPLETED or ACTIVE status
 - ✅ Role-based filtering (ORG_ADMIN sees only their org)
 - ✅ Grid layout with campaign cards
@@ -37,6 +42,7 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
 ### 2. Detailed Report View (`/admin/reports/[campaignId]`)
 
 **Header:**
+
 - ✅ Campaign title
 - ✅ Organization name
 - ✅ Date range (start - end)
@@ -44,11 +50,13 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
 - ✅ Back button to reports list
 
 **Summary Cards:**
+
 - ✅ **Respondents**: Shows filtered count (updates with filters)
 - ✅ **Response Rate**: Percentage with completed/total counts
 - ✅ **Overall Score**: Large display with visual bar
 
 **Visualizations:**
+
 - ✅ **Overall Score Display**: Large number with progress bar
 - ✅ **Category Bar Chart**: 7 categories with color-coded bars
   - Each category uses a distinct color
@@ -64,6 +72,7 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
   - Blue fill with transparency
 
 **Demographic Filters (Sidebar):**
+
 - ✅ Division filter
 - ✅ Job Role filter
 - ✅ Time at Bank filter
@@ -77,12 +86,14 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
 ### 3. API Route (`GET /api/reports/[campaignId]`)
 
 **Query Parameters:**
+
 - `?division=Technology`
 - `?jobRole=IT Specialist`
 - `?timeAtBank=1-3 years`
 - `?bankExperience=5-10 years`
 
 **Response Structure:**
+
 ```json
 {
   "campaign": {
@@ -139,6 +150,7 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
 ```
 
 **Features:**
+
 - ✅ Role-based access control (ORG_ADMIN restricted to their org)
 - ✅ Anonymity threshold check (min 5 respondents for Survey 7)
 - ✅ Filter validation (ensures filtered pool >= 5 for anonymous surveys)
@@ -150,6 +162,7 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
 **Error Responses:**
 
 **403 - Insufficient Respondents:**
+
 ```json
 {
   "error": "Insufficient respondents",
@@ -160,6 +173,7 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
 ```
 
 **400 - Filter Too Restrictive:**
+
 ```json
 {
   "error": "Filter results in too few respondents",
@@ -171,6 +185,7 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
 ## Chart Features
 
 ### Category Bar Chart
+
 - **Library**: Recharts `<BarChart>`
 - **Features**:
   - Responsive container (100% width, 400px height)
@@ -183,6 +198,7 @@ Built a comprehensive reporting dashboard with interactive charts, demographic f
   - Legend included
 
 **Category Colors:**
+
 ```typescript
 Communication: #3b82f6  (blue)
 Leadership: #8b5cf6     (purple)
@@ -194,6 +210,7 @@ Team Dynamics: #ef4444  (red)
 ```
 
 ### Category Radar Chart
+
 - **Library**: Recharts `<RadarChart>`
 - **Features**:
   - Responsive container (100% width, 400px height)
@@ -206,12 +223,14 @@ Team Dynamics: #ef4444  (red)
 ## Anonymity Protection
 
 ### Survey 7 (Associate 180) Rules
+
 1. **Minimum 5 Respondents**: Report access denied if < 5 completed responses
 2. **Filter Restrictions**: Only show filters where count >= 5
 3. **Combined Filters**: Validate that applying multiple filters maintains threshold
 4. **Error Messages**: Clear messaging when threshold not met
 
 ### Implementation
+
 ```typescript
 // Check threshold before showing report
 const meetsThreshold = await checkAnonymityThreshold(
@@ -301,11 +320,13 @@ Route (app)                              Size     First Load JS
 ## Testing the Reports
 
 ### Prerequisites
+
 1. At least one ACTIVE or COMPLETED campaign
 2. At least 5 completed responses (for Survey 7)
 3. Users with demographic data (division, jobRole, etc.)
 
 ### Test Flow
+
 1. Navigate to `/admin/reports`
 2. Click on a campaign card
 3. View the overall score and charts
@@ -315,6 +336,7 @@ Route (app)                              Size     First Load JS
 7. Clear all filters
 
 ### Expected Behavior
+
 - Scores update immediately when filters change
 - Filters with < 5 respondents are disabled
 - Error shown if filtered pool drops below 5 (Survey 7 only)
@@ -324,21 +346,25 @@ Route (app)                              Size     First Load JS
 ## Future Enhancements
 
 ### Export Features
+
 - **Export to Excel**: Download full report with all scores
 - **Export to PDF**: Generate printable report with charts
 - **Email Report**: Send report link or PDF to stakeholders
 
 ### Advanced Filtering
+
 - **Date Range**: Filter responses by submission date
 - **Multiple Select**: Allow selecting multiple divisions at once
 - **Custom Groups**: Create saved filter combinations
 
 ### Comparative Views
+
 - **Trend Analysis**: Compare scores across multiple campaigns
 - **Benchmark**: Compare organization scores to industry benchmarks
 - **Historical**: Show score changes over time
 
 ### Additional Charts
+
 - **Line Chart**: Score trends over time
 - **Heatmap**: Category x Section score matrix
 - **Distribution**: Show score distribution (how many 1s, 2s, etc.)

@@ -25,28 +25,28 @@ const SECTIONS = [
     sortOrder: 1,
     title: 'Goal Setting',
     directions:
-      'Rate how well your team sets and works toward goals. Please consider each statement carefully and select the number that best reflects your team\'s current practices.',
+      "Rate how well your team sets and works toward goals. Please consider each statement carefully and select the number that best reflects your team's current practices.",
     questionRange: [1, 10], // Questions 1-10
   },
   {
     sortOrder: 2,
     title: 'Roles within the Team',
     directions:
-      'Consider the roles and responsibilities within your team. Rate each statement based on how well it describes your team\'s current situation.',
+      "Consider the roles and responsibilities within your team. Rate each statement based on how well it describes your team's current situation.",
     questionRange: [11, 20], // Questions 11-20
   },
   {
     sortOrder: 3,
     title: 'Interpersonal Relationships',
     directions:
-      'Think about how team members interact with each other. Rate how accurately each statement reflects your team\'s interpersonal dynamics.',
+      "Think about how team members interact with each other. Rate how accurately each statement reflects your team's interpersonal dynamics.",
     questionRange: [21, 30], // Questions 21-30
   },
   {
     sortOrder: 4,
     title: 'Procedures',
     directions:
-      'Consider your team\'s procedures and processes. Rate how well each statement describes your team\'s approach to getting work done.',
+      "Consider your team's procedures and processes. Rate how well each statement describes your team's approach to getting work done.",
     questionRange: [31, 40], // Questions 31-40
   },
 ];
@@ -112,11 +112,13 @@ const QUESTIONS: Record<number, { text: string; anchorText?: string }> = {
   },
   2: {
     text: 'Leaders ensure that team objectives align with organizational priorities',
-    anchorText: 'Objectives are always thoroughly discussed with others on the team',
+    anchorText:
+      'Objectives are always thoroughly discussed with others on the team',
   },
   3: {
     text: 'The team develops action plans to achieve its goals',
-    anchorText: 'Action plans include specific steps, timelines, and responsibilities',
+    anchorText:
+      'Action plans include specific steps, timelines, and responsibilities',
   },
   4: {
     text: 'Team members actively participate in goal-setting discussions',
@@ -128,7 +130,8 @@ const QUESTIONS: Record<number, { text: string; anchorText?: string }> = {
   },
   6: {
     text: 'The team celebrates achievements and learns from setbacks',
-    anchorText: 'Success is acknowledged and failures are treated as learning opportunities',
+    anchorText:
+      'Success is acknowledged and failures are treated as learning opportunities',
   },
   7: {
     text: 'Goals are adjusted when circumstances change',
@@ -280,7 +283,9 @@ interface SanityCategory {
 }
 
 async function main() {
-  console.log('🚀 Starting Leadership Team Effectiveness (LTE) survey creation...\n');
+  console.log(
+    '🚀 Starting Leadership Team Effectiveness (LTE) survey creation...\n'
+  );
 
   // Validate environment
   const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
@@ -289,7 +294,9 @@ async function main() {
 
   if (!projectId || !token) {
     console.error('❌ ERROR: Missing required environment variables');
-    console.error('   Required: NEXT_PUBLIC_SANITY_PROJECT_ID, SANITY_API_TOKEN');
+    console.error(
+      '   Required: NEXT_PUBLIC_SANITY_PROJECT_ID, SANITY_API_TOKEN'
+    );
     process.exit(1);
   }
 
@@ -431,7 +438,9 @@ async function main() {
     // ========================================
     // Step 5: Create all 40 questions
     // ========================================
-    console.log('\n❓ Step 5: Creating questions (this may take a minute)...\n');
+    console.log(
+      '\n❓ Step 5: Creating questions (this may take a minute)...\n'
+    );
 
     let totalCreated = 0;
     let totalSkipped = 0;
@@ -459,7 +468,11 @@ async function main() {
             `*[_type == "question" && number == $num && section._ref == $sectionId][0]._id`,
             { num: i, sectionId: section._id }
           );
-          questionRefs.push({ _type: 'reference', _ref: existing, _key: `q${i}` });
+          questionRefs.push({
+            _type: 'reference',
+            _ref: existing,
+            _key: `q${i}`,
+          });
           continue;
         }
 
@@ -467,7 +480,9 @@ async function main() {
         const categoryId = categoryMap.get(categoryName);
 
         if (!categoryId) {
-          console.error(`   ❌ Category not found for question ${i}: ${categoryName}`);
+          console.error(
+            `   ❌ Category not found for question ${i}: ${categoryName}`
+          );
           continue;
         }
 
@@ -487,7 +502,11 @@ async function main() {
           anchorText: questionData.anchorText,
         });
 
-        questionRefs.push({ _type: 'reference', _ref: question._id, _key: `q${i}` });
+        questionRefs.push({
+          _type: 'reference',
+          _ref: question._id,
+          _key: `q${i}`,
+        });
         console.log(
           `   ✅ Question ${i.toString().padStart(2, '0')} | ${categoryName} | ${questionData.text.substring(0, 50)}...`
         );
@@ -519,10 +538,14 @@ async function main() {
     console.log('📊 CREATION SUMMARY');
     console.log('═'.repeat(70));
     console.log(`✅ Survey: Leadership Team Effectiveness (Survey 4)`);
-    console.log(`✅ Scale: 5-point Likert (Strongly Disagree to Strongly Agree)`);
+    console.log(
+      `✅ Scale: 5-point Likert (Strongly Disagree to Strongly Agree)`
+    );
     console.log(`✅ Sections: ${SECTIONS.length}`);
     SECTIONS.forEach((s) => {
-      console.log(`   - ${s.title} (Questions ${s.questionRange[0]}-${s.questionRange[1]})`);
+      console.log(
+        `   - ${s.title} (Questions ${s.questionRange[0]}-${s.questionRange[1]})`
+      );
     });
     console.log(`✅ Questions created: ${totalCreated}`);
     console.log(`⏭️  Questions skipped: ${totalSkipped}`);
@@ -544,7 +567,9 @@ async function main() {
     console.log('─'.repeat(70));
 
     console.log('\n✨ LTE survey created successfully!');
-    console.log('🔗 Sanity Studio: http://localhost:3333 (run: npm run sanity:dev)\n');
+    console.log(
+      '🔗 Sanity Studio: http://localhost:3333 (run: npm run sanity:dev)\n'
+    );
 
     process.exit(0);
   } catch (error) {

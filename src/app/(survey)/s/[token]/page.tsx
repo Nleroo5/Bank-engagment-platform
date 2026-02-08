@@ -76,8 +76,13 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   const now = new Date();
 
   // Check if not yet started
-  if (invitation.campaign.startDate && new Date(invitation.campaign.startDate) > now) {
-    const startDate = new Date(invitation.campaign.startDate).toLocaleDateString('en-US', {
+  if (
+    invitation.campaign.startDate &&
+    new Date(invitation.campaign.startDate) > now
+  ) {
+    const startDate = new Date(
+      invitation.campaign.startDate
+    ).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -94,12 +99,18 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   }
 
   // Check if expired
-  if (invitation.campaign.endDate && new Date(invitation.campaign.endDate) < now) {
-    const endDate = new Date(invitation.campaign.endDate).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  if (
+    invitation.campaign.endDate &&
+    new Date(invitation.campaign.endDate) < now
+  ) {
+    const endDate = new Date(invitation.campaign.endDate).toLocaleDateString(
+      'en-US',
+      {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }
+    );
 
     return (
       <SurveyError

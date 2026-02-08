@@ -8,7 +8,9 @@ const importUserSchema = z.object({
   division: z.string().optional(),
   jobRole: z.string().optional(),
   organizationId: z.string().uuid(),
-  role: z.enum(['SUPER_ADMIN', 'ORG_ADMIN', 'VIEWER', 'RESPONDENT']).default('RESPONDENT'),
+  role: z
+    .enum(['SUPER_ADMIN', 'ORG_ADMIN', 'VIEWER', 'RESPONDENT'])
+    .default('RESPONDENT'),
 });
 
 const importSchema = z.object({

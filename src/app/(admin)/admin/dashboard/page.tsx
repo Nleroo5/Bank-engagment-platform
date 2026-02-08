@@ -96,7 +96,9 @@ export default async function DashboardPage() {
               <p className="text-sm font-medium text-gray-600">
                 Active Campaigns
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{campaigns}</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">
+                {campaigns}
+              </p>
             </div>
             <div className="rounded-full bg-blue-100 p-3">
               <BarChart3 className="h-6 w-6 text-blue-600" />

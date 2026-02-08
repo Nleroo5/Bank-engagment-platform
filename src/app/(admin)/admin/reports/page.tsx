@@ -129,7 +129,7 @@ export default async function ReportsListPage() {
                   )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="mt-4 border-t border-gray-200 pt-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">View Report</span>
                     <span className="text-primary-600">→</span>

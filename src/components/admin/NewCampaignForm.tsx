@@ -22,7 +22,11 @@ export function NewCampaignForm({
   console.log('[NewCampaignForm] Received props:', {
     organizationsCount: organizations.length,
     surveysCount: surveys.length,
-    surveys: surveys.map((s) => ({ id: s._id, title: s.title, isActive: s.isActive })),
+    surveys: surveys.map((s) => ({
+      id: s._id,
+      title: s.title,
+      isActive: s.isActive,
+    })),
   });
 
   const [formData, setFormData] = useState({
@@ -198,7 +202,8 @@ export function NewCampaignForm({
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
         <p className="mt-1 text-sm text-gray-500">
-          Send reminder emails this many days before the campaign ends (default: 3)
+          Send reminder emails this many days before the campaign ends (default:
+          3)
         </p>
       </div>
 

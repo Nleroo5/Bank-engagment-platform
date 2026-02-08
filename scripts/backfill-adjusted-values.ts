@@ -69,13 +69,19 @@ async function main() {
 
     // Build lookup map
     const questionMap = new Map(
-      questions.map((q: { _id: string; isReversed: boolean; scale?: { min: number; max: number } | null }) => [
-        q._id,
-        {
-          isReversed: q.isReversed,
-          scaleMax: q.scale?.max || 3, // Default to 3 if not found
-        },
-      ])
+      questions.map(
+        (q: {
+          _id: string;
+          isReversed: boolean;
+          scale?: { min: number; max: number } | null;
+        }) => [
+          q._id,
+          {
+            isReversed: q.isReversed,
+            scaleMax: q.scale?.max || 3, // Default to 3 if not found
+          },
+        ]
+      )
     );
 
     console.log('📋 Step 2: Fetching responses from database...');
@@ -109,26 +115,32 @@ async function main() {
     for (let i = 0; i < responses.length; i += batchSize) {
       const batch = responses.slice(i, i + batchSize);
 
-      const updates = batch.map((response: { id: string; sanityQuestionId: string; value: number | null }) => {
-        const questionInfo = questionMap.get(response.sanityQuestionId);
+      const updates = batch.map(
+        (response: {
+          id: string;
+          sanityQuestionId: string;
+          value: number | null;
+        }) => {
+          const questionInfo = questionMap.get(response.sanityQuestionId);
 
-        if (!questionInfo) {
-          console.warn(
-            `   ⚠️  Question not found: ${response.sanityQuestionId} - skipping`
-          );
-          skippedCount++;
-          return null;
+          if (!questionInfo) {
+            console.warn(
+              `   ⚠️  Question not found: ${response.sanityQuestionId} - skipping`
+            );
+            skippedCount++;
+            return null;
+          }
+
+          const adjustedValue = questionInfo.isReversed
+            ? questionInfo.scaleMax + 1 - response.value!
+            : response.value!;
+
+          return prisma.response.update({
+            where: { id: response.id },
+            data: { adjustedValue },
+          });
         }
-
-        const adjustedValue = questionInfo.isReversed
-          ? questionInfo.scaleMax + 1 - response.value!
-          : response.value!;
-
-        return prisma.response.update({
-          where: { id: response.id },
-          data: { adjustedValue },
-        });
-      });
+      );
 
       // Filter out nulls and execute batch
       const validUpdates = updates.filter((u) => u !== null);
@@ -138,7 +150,9 @@ async function main() {
 
       // Progress indicator
       const progress = Math.min(i + batchSize, responses.length);
-      console.log(`   📈 Progress: ${progress}/${responses.length} responses processed`);
+      console.log(
+        `   📈 Progress: ${progress}/${responses.length} responses processed`
+      );
     }
 
     console.log('\n' + '═'.repeat(70));

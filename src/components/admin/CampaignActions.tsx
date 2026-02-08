@@ -16,7 +16,11 @@ export function CampaignActions({ campaign }: CampaignActionsProps) {
   const [success, setSuccess] = useState<string | null>(null);
 
   const handleActivate = async () => {
-    if (!confirm('Activate this campaign? This will make it available to respondents.')) {
+    if (
+      !confirm(
+        'Activate this campaign? This will make it available to respondents.'
+      )
+    ) {
       return;
     }
 
@@ -70,7 +74,8 @@ export function CampaignActions({ campaign }: CampaignActionsProps) {
 
       const data = await response.json();
       setSuccess(
-        data.message || `Sent ${data.invitationsSent} invitation(s) successfully!`
+        data.message ||
+          `Sent ${data.invitationsSent} invitation(s) successfully!`
       );
       router.refresh();
     } catch (err) {
@@ -211,7 +216,8 @@ export function CampaignActions({ campaign }: CampaignActionsProps) {
         )}
 
         {/* No actions for COMPLETED or ARCHIVED campaigns */}
-        {(campaign.status === 'COMPLETED' || campaign.status === 'ARCHIVED') && (
+        {(campaign.status === 'COMPLETED' ||
+          campaign.status === 'ARCHIVED') && (
           <p className="text-sm text-gray-500">
             No actions available for {campaign.status.toLowerCase()} campaigns
           </p>

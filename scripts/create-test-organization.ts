@@ -4,20 +4,20 @@ const prisma = new PrismaClient();
 
 async function createTestOrganization() {
   console.log('🏢 Creating test organization...\n');
-  
+
   try {
     // Check if test org already exists
     const existing = await prisma.organization.findFirst({
-      where: { name: 'Test Bank' }
+      where: { name: 'Test Bank' },
     });
-    
+
     if (existing) {
       console.log('✓ Test organization already exists');
       console.log(`   ID: ${existing.id}`);
       console.log(`   Name: ${existing.name}`);
       return existing;
     }
-    
+
     // Create test organization
     const org = await prisma.organization.create({
       data: {
@@ -29,15 +29,14 @@ async function createTestOrganization() {
         locationCity: 'San Francisco',
       },
     });
-    
+
     console.log('✅ Test organization created successfully!');
     console.log(`   ID: ${org.id}`);
     console.log(`   Name: ${org.name}`);
     console.log(`   Size: ${org.sizeRange}`);
     console.log(`   Location: ${org.locationCity}, ${org.locationState}`);
-    
+
     return org;
-    
   } catch (error) {
     console.error('❌ Error creating test organization:', error);
     throw error;

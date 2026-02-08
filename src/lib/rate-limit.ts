@@ -34,10 +34,7 @@ class RateLimiter {
    * @param config Rate limit configuration
    * @returns Rate limit result with headers data
    */
-  check(
-    identifier: string,
-    config: RateLimitConfig
-  ): RateLimitResult {
+  check(identifier: string, config: RateLimitConfig): RateLimitResult {
     const now = Date.now();
     const windowStart = now - config.interval;
 
@@ -45,7 +42,7 @@ class RateLimiter {
     let timestamps = this.cache.get(identifier) || [];
 
     // Remove expired timestamps (outside current window)
-    timestamps = timestamps.filter(timestamp => timestamp > windowStart);
+    timestamps = timestamps.filter((timestamp) => timestamp > windowStart);
 
     // Check if limit exceeded
     const isAllowed = timestamps.length < config.uniqueTokenPerInterval;
@@ -64,11 +61,15 @@ class RateLimiter {
       }
     }
 
-    const remaining = Math.max(0, config.uniqueTokenPerInterval - timestamps.length);
+    const remaining = Math.max(
+      0,
+      config.uniqueTokenPerInterval - timestamps.length
+    );
     const firstTimestamp = timestamps[0];
-    const reset = firstTimestamp !== undefined
-      ? Math.ceil((firstTimestamp + config.interval) / 1000)
-      : Math.ceil((now + config.interval) / 1000);
+    const reset =
+      firstTimestamp !== undefined
+        ? Math.ceil((firstTimestamp + config.interval) / 1000)
+        : Math.ceil((now + config.interval) / 1000);
 
     return {
       success: isAllowed,

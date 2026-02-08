@@ -1,13 +1,19 @@
 import { Resend } from 'resend';
 import { render } from '@react-email/components';
-import type { Invitation, SurveyCampaign, User, Organization } from '@prisma/client';
+import type {
+  Invitation,
+  SurveyCampaign,
+  User,
+  Organization,
+} from '@prisma/client';
 import type { Survey } from '@/types/survey';
 import { InvitationEmail } from './templates/InvitationEmail';
 import { ReminderEmail } from './templates/ReminderEmail';
 import { ConfirmationEmail } from './templates/ConfirmationEmail';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const IS_DEVELOPMENT = !RESEND_API_KEY || process.env.NODE_ENV === 'development';
+const IS_DEVELOPMENT =
+  !RESEND_API_KEY || process.env.NODE_ENV === 'development';
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@example.com';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';

@@ -13,7 +13,12 @@ export interface ToastProps {
   onClose?: () => void;
 }
 
-export function Toast({ type, message, duration = 5000, onClose }: Omit<ToastProps, 'id'>) {
+export function Toast({
+  type,
+  message,
+  duration = 5000,
+  onClose,
+}: Omit<ToastProps, 'id'>) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -39,9 +44,13 @@ export function Toast({ type, message, duration = 5000, onClose }: Omit<ToastPro
   }, [duration]);
 
   const icons = {
-    success: <CheckCircle className="h-5 w-5 text-green-600" aria-hidden="true" />,
+    success: (
+      <CheckCircle className="h-5 w-5 text-green-600" aria-hidden="true" />
+    ),
     error: <XCircle className="h-5 w-5 text-red-600" aria-hidden="true" />,
-    warning: <AlertTriangle className="h-5 w-5 text-orange-600" aria-hidden="true" />,
+    warning: (
+      <AlertTriangle className="h-5 w-5 text-orange-600" aria-hidden="true" />
+    ),
     info: <Info className="h-5 w-5 text-blue-600" aria-hidden="true" />,
   };
 
@@ -77,7 +86,7 @@ export function Toast({ type, message, duration = 5000, onClose }: Omit<ToastPro
       <button
         type="button"
         onClick={handleClose}
-        className="flex-shrink-0 rounded-md p-1 hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        className="flex-shrink-0 rounded-md p-1 hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         aria-label="Close notification"
       >
         <X className="h-4 w-4" aria-hidden="true" />

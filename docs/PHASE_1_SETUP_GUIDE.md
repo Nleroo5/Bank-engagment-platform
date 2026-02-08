@@ -10,16 +10,19 @@
 ### 1. Schema Updates ✅
 
 #### Sanity Category Schema
+
 - Added `weight` field (number, required, default 1.0)
 - Validation: min 0.1, max 10, precision 2 decimal places
 - Updated preview to show weight in Sanity Studio UI
 - Location: [sanity/schemas/category.ts](../sanity/schemas/category.ts)
 
 #### TypeScript Types
+
 - Added `weight: number` to `Category` interface
 - Location: [src/types/survey.ts](../src/types/survey.ts)
 
 #### GROQ Queries
+
 - Updated `CATEGORY_FRAGMENT` to include weight field
 - Updated `getAllCategories()` query
 - Updated `getCategoriesForSurvey()` query
@@ -30,6 +33,7 @@
 Created definitive reference: [docs/SCORING_MATRIX_REFERENCE.md](./SCORING_MATRIX_REFERENCE.md)
 
 **Exact category weights from client scoring matrix:**
+
 - Communication: **1.75**
 - Leadership: **1.0**
 - Culture: **2.3**
@@ -41,11 +45,13 @@ Created definitive reference: [docs/SCORING_MATRIX_REFERENCE.md](./SCORING_MATRI
 ### 3. Automation Scripts ✅
 
 #### Population Script
+
 - **File:** `scripts/populate-category-weights.ts`
 - **Purpose:** Automatically updates all categories with correct weights
 - **Run with:** `npm run sanity:populate-weights`
 
 #### Verification Script
+
 - **File:** `scripts/verify-question-mappings.ts`
 - **Purpose:** Verifies all 35 questions map to correct categories
 - **Run with:** `npm run sanity:verify-mappings`
@@ -64,11 +70,13 @@ Created definitive reference: [docs/SCORING_MATRIX_REFERENCE.md](./SCORING_MATRI
 ### Prerequisites
 
 1. **Sanity Studio must be running:**
+
    ```bash
    npm run sanity:dev
    ```
 
 2. **Environment variables must be set** (in `.env.local` or `.env`):
+
    ```env
    NEXT_PUBLIC_SANITY_PROJECT_ID=4z8cbios
    NEXT_PUBLIC_SANITY_DATASET=production
@@ -101,10 +109,12 @@ This will install the new `dotenv` dependency.
    - Team Dynamics
 
 **Optional but recommended fields:**
+
 - `colorCode`: Set hex colors matching paper forms
 - `description`: Brief description of category
 
 **Don't set these manually:**
+
 - `weight`: Will be set by populate script
 - `sortOrder`: Will be set by populate script
 
@@ -115,6 +125,7 @@ npm run sanity:populate-weights
 ```
 
 **What this does:**
+
 - Connects to your Sanity project
 - Finds all 7 categories
 - Sets the correct `weight` and `sortOrder` values
@@ -122,6 +133,7 @@ npm run sanity:populate-weights
 - Exits with error if any categories are missing
 
 **Expected output:**
+
 ```
 🚀 Starting category weights population script...
 📡 Connecting to Sanity project: 4z8cbios
@@ -160,12 +172,14 @@ npm run sanity:verify-mappings
 ```
 
 **What this does:**
+
 - Fetches the Managerial Assessment survey from Sanity
 - Compares actual question-category mappings against expected mappings
 - Reports any mismatches, missing questions, or orphaned questions
 - Shows reverse-scored questions summary
 
 **Expected output if all correct:**
+
 ```
 🔍 Starting question-category mapping verification...
 ✅ Found survey: Managerial Assessment (Survey 6)
@@ -210,6 +224,7 @@ The script will show exactly which questions are in the wrong categories, which 
 ### Error: "Survey 'managerial-assessment' not found"
 
 **Solution:** Check the slug in Sanity Studio:
+
 1. Open the survey document
 2. Check the slug field
 3. If different, update `SURVEY_SLUG` constant in `scripts/verify-question-mappings.ts`
@@ -237,12 +252,14 @@ Before moving to Phase 2, verify:
 ## Files Modified/Created in Phase 1
 
 ### Modified
+
 - `sanity/schemas/category.ts` - Added weight field
 - `src/types/survey.ts` - Added weight to Category interface
 - `src/lib/sanity/queries.ts` - Updated queries to fetch weight
 - `package.json` - Added scripts and dotenv dependency
 
 ### Created
+
 - `docs/SCORING_MATRIX_REFERENCE.md` - Official reference document
 - `docs/PHASE_1_SETUP_GUIDE.md` - This file
 - `scripts/populate-category-weights.ts` - Weight population script
@@ -253,6 +270,7 @@ Before moving to Phase 2, verify:
 ## Ready for Phase 2?
 
 Once all validation checks pass, Phase 1 is complete. The foundation is ready for:
+
 - **Phase 2:** Scoring engine implementation
 - **Phase 3:** Database enhancements for adjusted values
 - **Phase 4:** API updates for weighted reports

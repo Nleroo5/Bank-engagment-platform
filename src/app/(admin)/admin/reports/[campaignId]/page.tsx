@@ -24,7 +24,9 @@ export default async function ReportPage({ params }: ReportPageProps) {
     return (
       <div className="p-8">
         <div className="rounded-md bg-red-50 p-4">
-          <h3 className="text-sm font-medium text-red-800">Campaign not found</h3>
+          <h3 className="text-sm font-medium text-red-800">
+            Campaign not found
+          </h3>
           <p className="mt-2 text-sm text-red-700">
             The campaign you are looking for does not exist.
           </p>
@@ -60,39 +62,39 @@ export default async function ReportPage({ params }: ReportPageProps) {
             </h1>
 
             <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center">
-              <Building2 className="mr-2 h-4 w-4" />
-              <span>{campaign.organization.name}</span>
-            </div>
-
-            {campaign.startDate && campaign.endDate && (
               <div className="flex items-center">
-                <Calendar className="mr-2 h-4 w-4" />
-                <span>
-                  {new Date(campaign.startDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}{' '}
-                  -{' '}
-                  {new Date(campaign.endDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
+                <Building2 className="mr-2 h-4 w-4" />
+                <span>{campaign.organization.name}</span>
               </div>
-            )}
 
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                campaign.status === 'COMPLETED'
-                  ? 'bg-gray-100 text-gray-800'
-                  : 'bg-green-100 text-green-800'
-              }`}
-            >
-              {campaign.status}
-            </span>
+              {campaign.startDate && campaign.endDate && (
+                <div className="flex items-center">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  <span>
+                    {new Date(campaign.startDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}{' '}
+                    -{' '}
+                    {new Date(campaign.endDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </span>
+                </div>
+              )}
+
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  campaign.status === 'COMPLETED'
+                    ? 'bg-gray-100 text-gray-800'
+                    : 'bg-green-100 text-green-800'
+                }`}
+              >
+                {campaign.status}
+              </span>
             </div>
           </div>
 

@@ -9,6 +9,7 @@ Updated Sanity CMS schemas to match the survey creation scripts and ensure 100% 
 ### 1. Survey Schema ([sanity/schemas/survey.ts](../sanity/schemas/survey.ts))
 
 **Fixed:**
+
 - ✅ Made `slug` field optional (auto-generated from title)
 - ✅ Added new `surveyType` values: `"managerial"`, `"ote"`, `"associate_180"`
 - ✅ Added `description` field (text)
@@ -24,6 +25,7 @@ Updated Sanity CMS schemas to match the survey creation scripts and ensure 100% 
 ### 2. Question Schema ([sanity/schemas/question.ts](../sanity/schemas/question.ts))
 
 **Fixed:**
+
 - ✅ Added `questionNumber` field (primary) + kept `number` as legacy
 - ✅ Added `questionText` field (primary) + kept `text` as legacy
 - ✅ Added `scale` reference field (links question to rating scale)
@@ -37,6 +39,7 @@ Updated Sanity CMS schemas to match the survey creation scripts and ensure 100% 
 ### 3. Section Schema ([sanity/schemas/section.ts](../sanity/schemas/section.ts))
 
 **Fixed:**
+
 - ✅ Added `order` field (primary) + kept `sortOrder` as legacy
 - ✅ Added `description` field (simple text)
 - ✅ Kept `directions` field (rich text) as optional
@@ -50,6 +53,7 @@ Updated Sanity CMS schemas to match the survey creation scripts and ensure 100% 
 ### 4. Scale Schema ([sanity/schemas/scale.ts](../sanity/schemas/scale.ts))
 
 **Fixed:**
+
 - ✅ Added `title` field (primary) + kept `name` as legacy
 - ✅ Added `minLabel`, `maxLabel`, `midLabel` fields (simple label approach)
 - ✅ Made `labels` array optional (for detailed label definitions)
@@ -62,6 +66,7 @@ Updated Sanity CMS schemas to match the survey creation scripts and ensure 100% 
 ### 5. GROQ Queries ([src/lib/sanity/queries.ts](../src/lib/sanity/queries.ts))
 
 **Fixed:**
+
 - ✅ Updated `QUESTION_FRAGMENT` to use `coalesce(questionNumber, number)`
 - ✅ Updated `QUESTION_FRAGMENT` to use `coalesce(questionText, text)`
 - ✅ Updated `SECTION_FRAGMENT` to use `coalesce(order, sortOrder)`
@@ -76,6 +81,7 @@ Updated Sanity CMS schemas to match the survey creation scripts and ensure 100% 
 ### 6. TypeScript Types ([src/types/survey.ts](../src/types/survey.ts))
 
 **Fixed:**
+
 - ✅ Updated `Scale` interface to include `minLabel`, `maxLabel`, `midLabel`
 - ✅ Made `Scale.labels` optional
 - ✅ Updated `Section` interface to include `description` field
@@ -92,10 +98,12 @@ Updated Sanity CMS schemas to match the survey creation scripts and ensure 100% 
 **Fixed:**
 
 **[WelcomeScreen.tsx](../src/components/survey/WelcomeScreen.tsx):**
+
 - ✅ Updated to render string instructions directly
 - ✅ Maintains backward compatibility with PortableTextBlock[]
 
 **[SectionHeader.tsx](../src/components/survey/SectionHeader.tsx):**
+
 - ✅ Updated to render `description` field (simple text)
 - ✅ Falls back to `directions` (rich text) if description not present
 
@@ -108,6 +116,7 @@ Updated Sanity CMS schemas to match the survey creation scripts and ensure 100% 
 **Script: [fix-existing-surveys.ts](../scripts/fix-existing-surveys.ts)**
 
 **Fixed:**
+
 - ✅ Added `isActive: true` to all existing surveys
 - ✅ Generated slugs for surveys missing them
 - ✅ 3 surveys updated (Associate 180, Managerial Assessment, OTE)
@@ -184,15 +193,16 @@ npm run type-check
 - [x] Campaign creation query returns all active surveys
 - [x] UI components handle both old and new field formats
 - [x] GROQ queries return correct data
-- [ ] **Manual Test:** Create a new campaign in admin dashboard *(user should test)*
-- [ ] **Manual Test:** View campaign creation dropdown *(user should test)*
-- [ ] **Manual Test:** Verify all 6 surveys appear *(user should test)*
+- [ ] **Manual Test:** Create a new campaign in admin dashboard _(user should test)_
+- [ ] **Manual Test:** View campaign creation dropdown _(user should test)_
+- [ ] **Manual Test:** Verify all 6 surveys appear _(user should test)_
 
 ---
 
 ## Next Steps for User
 
 1. **Restart Sanity Studio** (if it's running):
+
    ```bash
    # Stop and restart to load new schema
    cd sanity && sanity dev
@@ -218,22 +228,27 @@ npm run type-check
 ## Files Modified
 
 **Sanity Schemas:**
+
 - `sanity/schemas/survey.ts`
 - `sanity/schemas/question.ts`
 - `sanity/schemas/section.ts`
 - `sanity/schemas/scale.ts`
 
 **TypeScript Types:**
+
 - `src/types/survey.ts`
 
 **GROQ Queries:**
+
 - `src/lib/sanity/queries.ts`
 
 **UI Components:**
+
 - `src/components/survey/WelcomeScreen.tsx`
 - `src/components/survey/SectionHeader.tsx`
 
 **Scripts:**
+
 - `scripts/fix-existing-surveys.ts` (created)
 - `scripts/audit-sanity-surveys.ts` (created)
 

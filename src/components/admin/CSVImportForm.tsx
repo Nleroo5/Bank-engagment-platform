@@ -24,7 +24,9 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [csvData, setCSVData] = useState<CSVRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
-  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>(
+    {}
+  );
   const [defaultOrganization, setDefaultOrganization] = useState(
     organizations[0]?.id || ''
   );
@@ -194,9 +196,7 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
               <p className="text-xs text-gray-500">CSV up to 10MB</p>
             </div>
           </div>
-          {error && (
-            <p className="mt-2 text-sm text-red-600">{error}</p>
-          )}
+          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </div>
       )}
 
@@ -244,7 +244,8 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
               {optionalFields.map((field) => (
                 <div key={field.key}>
                   <label className="block text-sm font-medium text-gray-700">
-                    {field.label} <span className="text-gray-400">(Optional)</span>
+                    {field.label}{' '}
+                    <span className="text-gray-400">(Optional)</span>
                   </label>
                   <select
                     value={columnMapping[field.key] || ''}
@@ -294,19 +295,51 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
               <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    {columnMapping.email && <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Email</th>}
-                    {columnMapping.name && <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Name</th>}
-                    {columnMapping.division && <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Division</th>}
-                    {columnMapping.jobRole && <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Job Role</th>}
+                    {columnMapping.email && (
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                        Email
+                      </th>
+                    )}
+                    {columnMapping.name && (
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                        Name
+                      </th>
+                    )}
+                    {columnMapping.division && (
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                        Division
+                      </th>
+                    )}
+                    {columnMapping.jobRole && (
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                        Job Role
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {csvData.slice(0, 5).map((row, index) => (
                     <tr key={index}>
-                      {columnMapping.email && <td className="px-4 py-2 text-sm text-gray-900">{row[columnMapping.email]}</td>}
-                      {columnMapping.name && <td className="px-4 py-2 text-sm text-gray-900">{row[columnMapping.name]}</td>}
-                      {columnMapping.division && <td className="px-4 py-2 text-sm text-gray-500">{row[columnMapping.division]}</td>}
-                      {columnMapping.jobRole && <td className="px-4 py-2 text-sm text-gray-500">{row[columnMapping.jobRole]}</td>}
+                      {columnMapping.email && (
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                          {row[columnMapping.email]}
+                        </td>
+                      )}
+                      {columnMapping.name && (
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                          {row[columnMapping.name]}
+                        </td>
+                      )}
+                      {columnMapping.division && (
+                        <td className="px-4 py-2 text-sm text-gray-500">
+                          {row[columnMapping.division]}
+                        </td>
+                      )}
+                      {columnMapping.jobRole && (
+                        <td className="px-4 py-2 text-sm text-gray-500">
+                          {row[columnMapping.jobRole]}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -367,7 +400,8 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
                 </h3>
                 <div className="mt-2 text-sm text-green-700">
                   <p>
-                    Successfully imported <strong>{result.success}</strong> users
+                    Successfully imported <strong>{result.success}</strong>{' '}
+                    users
                   </p>
                   {result.failed > 0 && (
                     <p className="mt-1">

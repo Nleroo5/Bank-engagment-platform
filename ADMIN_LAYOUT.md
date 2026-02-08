@@ -27,6 +27,7 @@ src/
 ### 🎨 Layout Features
 
 **1. Sidebar Navigation** ([src/components/admin/Sidebar.tsx](src/components/admin/Sidebar.tsx))
+
 - ✅ Dark gray background (#1f2937)
 - ✅ 4 navigation links with icons:
   - Dashboard (LayoutDashboard icon)
@@ -42,6 +43,7 @@ src/
   - Smooth slide-in animation
 
 **2. Top Bar** ([src/components/admin/TopBar.tsx](src/components/admin/TopBar.tsx))
+
 - ✅ White background with shadow
 - ✅ Hamburger menu button (mobile only)
 - ✅ User information display:
@@ -50,7 +52,8 @@ src/
 - ✅ Logout button with icon
 - ✅ Responsive layout
 
-**3. Layout Wrapper** ([src/app/(admin)/layout.tsx](src/app/(admin)/layout.tsx))
+**3. Layout Wrapper** ([src/app/(admin)/layout.tsx](<src/app/(admin)/layout.tsx>))
+
 - ✅ SessionProvider for client-side auth
 - ✅ Flex layout with sidebar and content
 - ✅ Overflow handling
@@ -58,7 +61,8 @@ src/
 
 ### 📄 Page Components
 
-**Dashboard** ([src/app/(admin)/admin/dashboard/page.tsx](src/app/(admin)/admin/dashboard/page.tsx))
+**Dashboard** ([src/app/(admin)/admin/dashboard/page.tsx](<src/app/(admin)/admin/dashboard/page.tsx>))
+
 - ✅ Welcome message with user name
 - ✅ 4 stat cards:
   - Total Campaigns (0)
@@ -68,12 +72,14 @@ src/
 - ✅ Color-coded icons (blue, green, purple, orange)
 - ✅ Recent activity section (placeholder)
 
-**Campaigns** ([src/app/(admin)/admin/campaigns/page.tsx](src/app/(admin)/admin/campaigns/page.tsx))
+**Campaigns** ([src/app/(admin)/admin/campaigns/page.tsx](<src/app/(admin)/admin/campaigns/page.tsx>))
+
 - ✅ Page header with "New Campaign" button
 - ✅ Empty state with icon
 - ✅ Ready for campaign list implementation
 
-**Users** ([src/app/(admin)/admin/users/page.tsx](src/app/(admin)/admin/users/page.tsx))
+**Users** ([src/app/(admin)/admin/users/page.tsx](<src/app/(admin)/admin/users/page.tsx>))
+
 - ✅ Page header with "Add User" button
 - ✅ Search input placeholder
 - ✅ Table with columns: Name, Email, Role, Status, Actions
@@ -81,7 +87,8 @@ src/
 - ✅ Role badge styling
 - ✅ Status badge (Active/Inactive)
 
-**Reports** ([src/app/(admin)/admin/reports/page.tsx](src/app/(admin)/admin/reports/page.tsx))
+**Reports** ([src/app/(admin)/admin/reports/page.tsx](<src/app/(admin)/admin/reports/page.tsx>))
+
 - ✅ Two card layout for analytics
 - ✅ Survey Analytics card with export button
 - ✅ Response Rates card with date filter
@@ -91,6 +98,7 @@ src/
 ### 🎯 Styling
 
 **Color Scheme:**
+
 - Sidebar: Dark gray (#1f2937)
 - Content area: Light gray background (#f9fafb)
 - Cards: White with shadow
@@ -98,12 +106,14 @@ src/
 - Text: Gray scale for hierarchy
 
 **Responsive Breakpoints:**
+
 - Mobile: < 1024px (hamburger menu)
 - Desktop: >= 1024px (persistent sidebar)
 
 ### 🔒 Authentication
 
 All admin pages are protected:
+
 - ✅ Server-side session check
 - ✅ Redirects to login if not authenticated
 - ✅ SessionProvider wraps admin layout
@@ -113,7 +123,7 @@ All admin pages are protected:
 
 ```json
 {
-  "lucide-react": "^0.469.0"  // Icon library
+  "lucide-react": "^0.469.0" // Icon library
 }
 ```
 
@@ -121,16 +131,19 @@ All admin pages are protected:
 
 **1. Login**
 Visit: http://localhost:3000/admin/login
+
 - Email: `admin@test.com`
 - Password: `password123`
 
 **2. Navigate the Dashboard**
 After login, you'll see:
+
 - Sidebar with 4 navigation links
 - Top bar with your info and logout button
 - Dashboard with stat cards
 
 **3. Test Mobile View**
+
 - Resize browser to < 1024px width
 - Sidebar collapses to hamburger menu
 - Click hamburger to open sidebar
@@ -138,12 +151,14 @@ After login, you'll see:
 
 **4. Test Navigation**
 Click each sidebar link:
+
 - [/admin/dashboard](http://localhost:3000/admin/dashboard) - Stats cards
 - [/admin/campaigns](http://localhost:3000/admin/campaigns) - Campaign management
 - [/admin/users](http://localhost:3000/admin/users) - User table
 - [/admin/reports](http://localhost:3000/admin/reports) - Analytics cards
 
 **5. Test Logout**
+
 - Click "Logout" button in top bar
 - Should redirect to `/admin/login`
 - Try accessing dashboard - should redirect back to login
@@ -155,6 +170,7 @@ npm run build
 ```
 
 Build output:
+
 ```
 Route (app)                              Size     First Load JS
 ┌ ○ /                                    153 B          87.4 kB
@@ -198,6 +214,7 @@ The admin shell is complete. Now you can:
 ### 📚 Component Usage
 
 **Using the Sidebar:**
+
 ```typescript
 // Already integrated in layout
 // Add new navigation items in Sidebar.tsx:
@@ -208,6 +225,7 @@ const navigation = [
 ```
 
 **Protecting New Pages:**
+
 ```typescript
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -223,6 +241,7 @@ export default async function MyPage() {
 ```
 
 **Using Session in Client Components:**
+
 ```typescript
 'use client';
 import { useSession } from 'next-auth/react';

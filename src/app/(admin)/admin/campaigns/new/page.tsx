@@ -22,7 +22,9 @@ export default async function NewCampaignPage() {
     const surveys = await getAllSurveys();
     console.log(`[NewCampaignPage] Got ${surveys.length} total surveys`);
     activeSurveys = surveys.filter((survey) => survey.isActive);
-    console.log(`[NewCampaignPage] Filtered to ${activeSurveys.length} active surveys`);
+    console.log(
+      `[NewCampaignPage] Filtered to ${activeSurveys.length} active surveys`
+    );
   } catch (error) {
     console.error('[NewCampaignPage] Error fetching surveys:', error);
     surveyError = error instanceof Error ? error.message : 'Unknown error';
@@ -31,7 +33,9 @@ export default async function NewCampaignPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Create New Campaign</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Create New Campaign
+        </h1>
         <p className="mt-1 text-sm text-gray-500">
           Set up a new survey campaign for your organization
         </p>

@@ -23,7 +23,10 @@ interface CategoryRadarChartProps {
   scaleMax: number;
 }
 
-export function CategoryRadarChart({ data, scaleMax }: CategoryRadarChartProps) {
+export function CategoryRadarChart({
+  data,
+  scaleMax,
+}: CategoryRadarChartProps) {
   const chartData = data.map((item) => ({
     category: item.categoryName,
     score: item.averageScore,

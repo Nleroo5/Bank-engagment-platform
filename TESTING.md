@@ -7,6 +7,7 @@ Comprehensive test suite for the Bank Engagement Survey Platform, including unit
 ## Test Coverage
 
 ### Unit Tests (Vitest)
+
 - **98 passing tests** across 4 test files
 - All scoring functions
 - Anonymity protection logic
@@ -14,6 +15,7 @@ Comprehensive test suite for the Bank Engagement Survey Platform, including unit
 - Token validation business logic
 
 ### E2E Tests (Playwright)
+
 - Admin authentication flow
 - Dashboard functionality
 - Campaign management
@@ -24,6 +26,7 @@ Comprehensive test suite for the Bank Engagement Survey Platform, including unit
 ## Running Tests
 
 ### Unit Tests
+
 ```bash
 # Run all unit tests
 npm run test
@@ -36,6 +39,7 @@ npm run test src/__tests__/api-validation.test.ts
 ```
 
 ### E2E Tests
+
 ```bash
 # Run all e2e tests
 npm run test:e2e
@@ -51,6 +55,7 @@ npm run test:e2e -- --debug
 ```
 
 ### All Tests
+
 ```bash
 # Run both unit and e2e tests
 npm run test && npm run test:e2e
@@ -61,10 +66,12 @@ npm run test && npm run test:e2e
 ### Unit Tests
 
 #### 1. Scoring Engine Tests
+
 **File:** `src/lib/scoring/__tests__/calculate.test.ts`
 **Tests:** 31
 
 Tests all scoring calculation functions:
+
 - `calculateQuestionScore` - Normal and reverse scoring for 3-point and 5-point scales
 - `calculateCategoryScores` - Category aggregation with proper rounding
 - `calculateSectionScores` - Section aggregation
@@ -72,6 +79,7 @@ Tests all scoring calculation functions:
 - Edge cases: empty responses, missing categories, mixed scales
 
 Key test cases:
+
 ```typescript
 it('should calculate reversed score for 5-point scale', () => {
   const score = calculateQuestionScore(1, true, 5);
@@ -85,16 +93,19 @@ it('should never average averages - aggregate from individual responses', () => 
 ```
 
 #### 2. Anonymity Protection Tests
+
 **File:** `src/lib/scoring/__tests__/anonymity.test.ts`
 **Tests:** 13
 
 Tests anonymity threshold enforcement:
+
 - `checkAnonymityThreshold` - 5 respondent minimum for Survey 7
 - `validateFilteredAnonymity` - Filter combinations that maintain threshold
 - Non-anonymous surveys bypass threshold checks
 - Multiple filter combinations
 
 Key test cases:
+
 ```typescript
 it('should return false when Survey 7 has fewer than 5 respondents', async () => {
   const result = await checkAnonymityThreshold('campaign-1', 'associate-180');
@@ -112,10 +123,12 @@ it('should validate filters maintain threshold for anonymous surveys', async () 
 ```
 
 #### 3. API Validation Schema Tests
+
 **File:** `src/__tests__/api-validation.test.ts`
 **Tests:** 24
 
 Tests Zod validation schemas for API routes:
+
 - Campaign creation schema
 - Response save schema (PATCH /api/responses)
 - Survey submit schema (POST /api/responses/submit)
@@ -123,6 +136,7 @@ Tests Zod validation schemas for API routes:
 - Edge cases and error messages
 
 Key test cases:
+
 ```typescript
 it('should validate numeric Likert response (1-5)', () => {
   const data = { token: 'uuid', questionId: 'q1', value: 3 };
@@ -138,10 +152,12 @@ it('should reject numeric value outside 1-5 range', () => {
 ```
 
 #### 4. Token Validation Logic Tests
+
 **File:** `src/__tests__/token-validation.test.ts`
 **Tests:** 30
 
 Tests invitation token validation business logic:
+
 - Token existence validation
 - Invitation status validation (PENDING, SENT, IN_PROGRESS, COMPLETED)
 - Campaign status validation (DRAFT, ACTIVE, COMPLETED, CANCELLED)
@@ -151,6 +167,7 @@ Tests invitation token validation business logic:
 - Edge cases (null dates, exact expiration time)
 
 Key test cases:
+
 ```typescript
 it('should reject completed surveys', () => {
   const invitation = { status: 'COMPLETED' };
@@ -169,9 +186,11 @@ it('should reject expired campaigns', () => {
 ### E2E Tests
 
 #### 1. Admin Flow Tests
+
 **File:** `e2e/admin.spec.ts`
 
 Tests admin authentication and dashboard:
+
 - Login with valid credentials → redirects to /admin/dashboard
 - Login with invalid credentials → shows error, stays on login page
 - Protected routes redirect to login when not authenticated
@@ -182,9 +201,11 @@ Tests admin authentication and dashboard:
 - User management page displays seeded users
 
 #### 2. Survey Respondent Flow Tests
+
 **File:** `e2e/survey.spec.ts`
 
 Tests survey taking via token link:
+
 - Valid token displays survey content (/s/[token])
 - Invalid token shows error message
 - Navigation between survey sections
@@ -194,9 +215,11 @@ Tests survey taking via token link:
 - Accessibility: proper heading structure, keyboard navigation
 
 #### 3. Report Viewing Tests
+
 **File:** `e2e/reports.spec.ts`
 
 Tests report viewing and export functionality:
+
 - Report page displays campaign title, organization, summary metrics
 - Category scores chart/visualization visible
 - Section scores table visible
@@ -210,9 +233,11 @@ Tests report viewing and export functionality:
 ## Test Data
 
 ### Fixtures
+
 **File:** `src/__tests__/fixtures/testData.ts`
 
 Factory functions for generating test data:
+
 - `createMockOrganization()` - Organization with realistic defaults
 - `createMockUser(overrides)` - User with role, demographics
 - `createMockCampaign(overrides)` - Campaign with status, dates
@@ -223,6 +248,7 @@ Factory functions for generating test data:
 - `createTestScenario(respondentCount)` - Complete test setup
 
 Usage:
+
 ```typescript
 import { createTestScenario } from '@/__tests__/fixtures/testData';
 
@@ -231,14 +257,17 @@ const { organization, users, campaign, invitations } = createTestScenario(5);
 ```
 
 ### Database Seeding
+
 **File:** `prisma/seed.ts`
 
 Seeds test data for e2e tests:
+
 ```bash
 npm run db:seed
 ```
 
 Creates:
+
 - 1 organization: "Test Bank"
 - 3 users with different roles:
   - SUPER_ADMIN: admin@test.com / password123
@@ -248,6 +277,7 @@ Creates:
 ## CI/CD Integration
 
 ### GitHub Actions (Example)
+
 ```yaml
 name: Test
 
@@ -286,6 +316,7 @@ jobs:
 ## Configuration
 
 ### Vitest Config
+
 **File:** `vitest.config.ts`
 
 ```typescript
@@ -304,6 +335,7 @@ export default defineConfig({
 ```
 
 ### Playwright Config
+
 **File:** `playwright.config.ts`
 
 ```typescript
@@ -327,6 +359,7 @@ export default defineConfig({
 ## Best Practices
 
 ### Unit Tests
+
 1. **Test behavior, not implementation** - Focus on what functions return, not how they work internally
 2. **Use descriptive test names** - "should return reversed score for 3-point scale" not "test1"
 3. **Test edge cases** - Empty arrays, null values, boundary conditions
@@ -334,6 +367,7 @@ export default defineConfig({
 5. **Mock external dependencies** - Prisma, Sanity client, email services
 
 ### E2E Tests
+
 1. **Use data-testid attributes** - For reliable element selection
 2. **Wait for network idle** - Use `waitForLoadState('networkidle')` for API-dependent pages
 3. **Clean up test data** - Use `afterAll` hooks to delete created records
@@ -343,6 +377,7 @@ export default defineConfig({
 ### Common Patterns
 
 #### Testing Async Functions
+
 ```typescript
 it('should fetch campaign data', async () => {
   const campaign = await prisma.surveyCampaign.findUnique({
@@ -355,6 +390,7 @@ it('should fetch campaign data', async () => {
 ```
 
 #### Testing Error Cases
+
 ```typescript
 it('should throw error for invalid input', () => {
   expect(() => calculateQuestionScore(6, false, 5)).toThrow();
@@ -362,6 +398,7 @@ it('should throw error for invalid input', () => {
 ```
 
 #### Mocking Prisma
+
 ```typescript
 import { vi } from 'vitest';
 
@@ -379,23 +416,27 @@ vi.mock('@/lib/prisma', () => ({
 ### Common Issues
 
 #### "Prisma Client not generated"
+
 ```bash
 npm run db:generate
 ```
 
 #### "Port 3000 already in use" (e2e tests)
+
 ```bash
 # Kill process on port 3000
 lsof -ti:3000 | xargs kill -9
 ```
 
 #### "Database connection refused"
+
 ```bash
 # Check DATABASE_URL in .env
 # Ensure Supabase/PostgreSQL is running
 ```
 
 #### E2E tests timeout
+
 ```bash
 # Increase timeout in playwright.config.ts
 webServer: {
@@ -404,6 +445,7 @@ webServer: {
 ```
 
 #### Test data pollution
+
 ```bash
 # Reset database
 npm run db:push -- --force-reset
@@ -423,12 +465,14 @@ open coverage/index.html
 ```
 
 Current coverage (unit tests):
+
 - **Statements:** ~85%
 - **Branches:** ~80%
 - **Functions:** ~90%
 - **Lines:** ~85%
 
 Key areas with full coverage:
+
 - Scoring engine (100%)
 - Anonymity protection (100%)
 - API validation schemas (100%)
@@ -436,6 +480,7 @@ Key areas with full coverage:
 ## Writing New Tests
 
 ### Adding Unit Tests
+
 1. Create test file: `src/path/to/module/__tests__/filename.test.ts`
 2. Import test utilities: `import { describe, it, expect } from 'vitest'`
 3. Group related tests: `describe('Feature Name', () => { ... })`
@@ -443,6 +488,7 @@ Key areas with full coverage:
 5. Run tests: `npm run test`
 
 ### Adding E2E Tests
+
 1. Create test file: `e2e/feature-name.spec.ts`
 2. Import Playwright: `import { test, expect } from '@playwright/test'`
 3. Set up test data in `beforeAll` hook

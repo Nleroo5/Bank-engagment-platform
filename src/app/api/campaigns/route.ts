@@ -43,10 +43,7 @@ export async function POST(request: NextRequest) {
     const survey = await getSurveyById(surveyId);
 
     if (!survey) {
-      return NextResponse.json(
-        { error: 'Survey not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Survey not found' }, { status: 404 });
     }
 
     // Validate organization exists

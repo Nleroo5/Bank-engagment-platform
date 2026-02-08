@@ -25,23 +25,23 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // Category weights from scoring matrix reference document
 const CATEGORY_WEIGHTS = {
-  'Communication': 1.75,
-  'Leadership': 1.0,
-  'Culture': 2.3,
-  'Accountability': 1.7,
-  'Execution': 1.4,
-  'Associate': 1.4,
+  Communication: 1.75,
+  Leadership: 1.0,
+  Culture: 2.3,
+  Accountability: 1.7,
+  Execution: 1.4,
+  Associate: 1.4,
   'Team Dynamics': 1.4,
 } as const;
 
 // Expected sort order for reports
 const CATEGORY_SORT_ORDER = {
-  'Communication': 1,
-  'Leadership': 2,
-  'Culture': 3,
-  'Accountability': 4,
-  'Execution': 5,
-  'Associate': 6,
+  Communication: 1,
+  Leadership: 2,
+  Culture: 3,
+  Accountability: 4,
+  Execution: 5,
+  Associate: 6,
   'Team Dynamics': 7,
 } as const;
 
@@ -64,12 +64,16 @@ async function main() {
   const token = process.env.SANITY_API_TOKEN;
 
   if (!projectId) {
-    console.error('❌ ERROR: NEXT_PUBLIC_SANITY_PROJECT_ID not found in environment variables');
+    console.error(
+      '❌ ERROR: NEXT_PUBLIC_SANITY_PROJECT_ID not found in environment variables'
+    );
     process.exit(1);
   }
 
   if (!token) {
-    console.error('❌ ERROR: SANITY_API_TOKEN not found in environment variables');
+    console.error(
+      '❌ ERROR: SANITY_API_TOKEN not found in environment variables'
+    );
     console.error('   This script requires a token with WRITE permissions.');
     process.exit(1);
   }
@@ -103,7 +107,9 @@ async function main() {
 
     if (categories.length === 0) {
       console.error('❌ ERROR: No categories found in Sanity.');
-      console.error('   Please create the 7 categories first, then run this script to set weights.');
+      console.error(
+        '   Please create the 7 categories first, then run this script to set weights.'
+      );
       process.exit(1);
     }
 
@@ -115,7 +121,9 @@ async function main() {
     categories.forEach((cat: SanityCategory) => {
       const currentWeight = cat.weight ? `×${cat.weight}` : 'NOT SET';
       const sortOrder = cat.sortOrder !== undefined ? cat.sortOrder : 'NOT SET';
-      console.log(`  ${cat.name.padEnd(20)} | Weight: ${currentWeight.padEnd(10)} | Sort: ${sortOrder}`);
+      console.log(
+        `  ${cat.name.padEnd(20)} | Weight: ${currentWeight.padEnd(10)} | Sort: ${sortOrder}`
+      );
     });
     console.log('─'.repeat(70));
     console.log();
@@ -127,22 +135,29 @@ async function main() {
     let skippedCount = 0;
     let missingCategories: string[] = [];
 
-    for (const [categoryName, expectedWeight] of Object.entries(CATEGORY_WEIGHTS)) {
+    for (const [categoryName, expectedWeight] of Object.entries(
+      CATEGORY_WEIGHTS
+    )) {
       const category = categories.find((c) => c.name === categoryName);
 
       if (!category) {
-        console.warn(`⚠️  Category "${categoryName}" not found in Sanity - skipping`);
+        console.warn(
+          `⚠️  Category "${categoryName}" not found in Sanity - skipping`
+        );
         missingCategories.push(categoryName);
         continue;
       }
 
-      const expectedSortOrder = CATEGORY_SORT_ORDER[categoryName as keyof typeof CATEGORY_SORT_ORDER];
+      const expectedSortOrder =
+        CATEGORY_SORT_ORDER[categoryName as keyof typeof CATEGORY_SORT_ORDER];
       const needsUpdate =
         category.weight !== expectedWeight ||
         category.sortOrder !== expectedSortOrder;
 
       if (!needsUpdate) {
-        console.log(`✓ ${categoryName.padEnd(20)} | Already correct (×${expectedWeight}, sort: ${expectedSortOrder})`);
+        console.log(
+          `✓ ${categoryName.padEnd(20)} | Already correct (×${expectedWeight}, sort: ${expectedSortOrder})`
+        );
         skippedCount++;
         continue;
       }
@@ -171,24 +186,32 @@ async function main() {
 
     if (missingCategories.length > 0) {
       console.log(`⚠️  Missing categories: ${missingCategories.length}`);
-      console.log('\n   The following categories need to be created in Sanity:');
+      console.log(
+        '\n   The following categories need to be created in Sanity:'
+      );
       missingCategories.forEach((name: string) => {
         const weight = CATEGORY_WEIGHTS[name as keyof typeof CATEGORY_WEIGHTS];
-        const sortOrder = CATEGORY_SORT_ORDER[name as keyof typeof CATEGORY_SORT_ORDER];
-        console.log(`   - ${name} (weight: ${weight}, sortOrder: ${sortOrder})`);
+        const sortOrder =
+          CATEGORY_SORT_ORDER[name as keyof typeof CATEGORY_SORT_ORDER];
+        console.log(
+          `   - ${name} (weight: ${weight}, sortOrder: ${sortOrder})`
+        );
       });
     }
 
     console.log('═'.repeat(70));
 
     if (missingCategories.length > 0) {
-      console.log('\n⚠️  ATTENTION: Some categories are missing. Please create them in Sanity Studio.');
+      console.log(
+        '\n⚠️  ATTENTION: Some categories are missing. Please create them in Sanity Studio.'
+      );
       process.exit(1);
     } else {
-      console.log('\n🎉 SUCCESS! All category weights are now correctly configured.');
+      console.log(
+        '\n🎉 SUCCESS! All category weights are now correctly configured.'
+      );
       process.exit(0);
     }
-
   } catch (error) {
     console.error('\n❌ ERROR:', error);
     if (error instanceof Error) {

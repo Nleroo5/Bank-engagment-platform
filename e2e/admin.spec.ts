@@ -36,13 +36,17 @@ test.describe('Admin Login Flow', () => {
     await page.click('button[type="submit"]');
 
     // Should show error message
-    await expect(page.locator('text=/Invalid credentials|Login failed/i')).toBeVisible();
+    await expect(
+      page.locator('text=/Invalid credentials|Login failed/i')
+    ).toBeVisible();
 
     // Should still be on login page
     await expect(page).toHaveURL(/\/admin\/login/);
   });
 
-  test('should redirect to login when accessing protected routes without auth', async ({ page }) => {
+  test('should redirect to login when accessing protected routes without auth', async ({
+    page,
+  }) => {
     await page.goto('/admin/dashboard');
 
     // Should redirect to login
@@ -104,10 +108,14 @@ test.describe('Campaign Management', () => {
     await page.goto('/admin/campaigns/new');
 
     // Should see the campaign form
-    await expect(page.locator('h1')).toContainText(/Create.*Campaign|New Campaign/i);
+    await expect(page.locator('h1')).toContainText(
+      /Create.*Campaign|New Campaign/i
+    );
   });
 
-  test('should display validation errors when submitting empty campaign form', async ({ page }) => {
+  test('should display validation errors when submitting empty campaign form', async ({
+    page,
+  }) => {
     await page.goto('/admin/campaigns/new');
 
     // Try to submit without filling required fields
@@ -117,7 +125,9 @@ test.describe('Campaign Management', () => {
 
       // Should see validation errors
       // Note: Exact error text depends on implementation
-      await expect(page.locator('text=/required|must be|invalid/i')).toBeVisible();
+      await expect(
+        page.locator('text=/required|must be|invalid/i')
+      ).toBeVisible();
     }
   });
 });
@@ -138,11 +148,15 @@ test.describe('Reports', () => {
     await expect(page.locator('h1')).toContainText('Reports');
   });
 
-  test('should show empty state when no reports available', async ({ page }) => {
+  test('should show empty state when no reports available', async ({
+    page,
+  }) => {
     await page.goto('/admin/reports');
 
     // May see empty state or list of campaigns
-    const emptyState = page.locator('text=/No campaigns|No reports|Get started/i');
+    const emptyState = page.locator(
+      'text=/No campaigns|No reports|Get started/i'
+    );
     const campaignList = page.locator('text=/View Report|Campaign/i');
 
     // Either empty state or campaigns should be visible

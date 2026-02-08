@@ -1,20 +1,24 @@
 # Campaign Management System ✅
 
 ## Overview
+
 Built complete campaign management system for the admin dashboard including campaign creation, list view, detail pages, and invitation management.
 
 ## Created Files
 
 ### Pages
-1. **[src/app/(admin)/admin/campaigns/page.tsx](src/app/(admin)/admin/campaigns/page.tsx)** - Campaigns list page
-2. **[src/app/(admin)/admin/campaigns/new/page.tsx](src/app/(admin)/admin/campaigns/new/page.tsx)** - Create new campaign form
-3. **[src/app/(admin)/admin/campaigns/[id]/page.tsx](src/app/(admin)/admin/campaigns/[id]/page.tsx)** - Campaign detail view
+
+1. **[src/app/(admin)/admin/campaigns/page.tsx](<src/app/(admin)/admin/campaigns/page.tsx>)** - Campaigns list page
+2. **[src/app/(admin)/admin/campaigns/new/page.tsx](<src/app/(admin)/admin/campaigns/new/page.tsx>)** - Create new campaign form
+3. **[src/app/(admin)/admin/campaigns/[id]/page.tsx](<src/app/(admin)/admin/campaigns/[id]/page.tsx>)** - Campaign detail view
 
 ### Components
+
 4. **[src/components/admin/NewCampaignForm.tsx](src/components/admin/NewCampaignForm.tsx)** - Client component for campaign creation
 5. **[src/components/admin/CampaignActions.tsx](src/components/admin/CampaignActions.tsx)** - Client component for campaign actions
 
 ### API Routes
+
 6. **[src/app/api/campaigns/route.ts](src/app/api/campaigns/route.ts)** - GET and POST campaigns
 7. **[src/app/api/campaigns/[id]/route.ts](src/app/api/campaigns/[id]/route.ts)** - GET, PUT, DELETE campaign by ID
 8. **[src/app/api/campaigns/[id]/send/route.ts](src/app/api/campaigns/[id]/send/route.ts)** - POST to send invitations
@@ -24,6 +28,7 @@ Built complete campaign management system for the admin dashboard including camp
 ### 1. Campaign List Page (`/admin/campaigns`)
 
 **Features:**
+
 - ✅ Table view of all campaigns
 - ✅ Columns: Survey Name, Organization, Status, Start Date, End Date, Response Rate
 - ✅ Visual response rate progress bars
@@ -34,6 +39,7 @@ Built complete campaign management system for the admin dashboard including camp
 - ✅ Server Component (no client JS)
 
 **Data Displayed:**
+
 ```typescript
 - Survey Name (clickable link)
 - Organization Name
@@ -47,6 +53,7 @@ Built complete campaign management system for the admin dashboard including camp
 ### 2. New Campaign Form (`/admin/campaigns/new`)
 
 **Form Fields:**
+
 - ✅ Survey selection dropdown (fetches from Sanity)
   - Shows survey title and number
   - Displays type and estimated time below selection
@@ -56,6 +63,7 @@ Built complete campaign management system for the admin dashboard including camp
 - ✅ Reminder Days (number input, default: 3, range: 1-30)
 
 **Features:**
+
 - ✅ Client-side form validation
 - ✅ Error handling with error messages
 - ✅ Loading state during submission
@@ -64,6 +72,7 @@ Built complete campaign management system for the admin dashboard including camp
 - ✅ Created campaigns default to DRAFT status
 
 **API Integration:**
+
 ```typescript
 POST /api/campaigns
 Body: {
@@ -78,16 +87,19 @@ Body: {
 ### 3. Campaign Detail Page (`/admin/campaigns/[id]`)
 
 **Summary Cards:**
+
 - ✅ Start Date
 - ✅ End Date
 - ✅ Total Invitations count
 - ✅ Response Rate percentage
 
 **Progress Section:**
+
 - ✅ Large progress bar showing completion
 - ✅ "X completed • Y pending" text
 
 **Action Buttons (context-aware):**
+
 - ✅ **Activate** - Only for DRAFT campaigns
 - ✅ **Send Invitations** - Only for ACTIVE campaigns
 - ✅ **Send Reminders** - Only for ACTIVE campaigns (placeholder)
@@ -96,6 +108,7 @@ Body: {
 
 **Invitations Table:**
 Shows all invitations with columns:
+
 - ✅ Respondent Name
 - ✅ Email
 - ✅ Status (badge)
@@ -105,6 +118,7 @@ Shows all invitations with columns:
 - ✅ Empty state if no invitations
 
 **Features:**
+
 - ✅ Back link to campaigns list
 - ✅ Status badge in header
 - ✅ Real-time data from database
@@ -114,6 +128,7 @@ Shows all invitations with columns:
 ### 4. Campaign Actions Component
 
 **Client-side interactions:**
+
 - ✅ Activate button with confirmation dialog
 - ✅ Send Invitations button with confirmation
 - ✅ Send Reminders button (placeholder)
@@ -125,32 +140,38 @@ Shows all invitations with columns:
 ### 5. API Routes
 
 #### GET `/api/campaigns`
+
 - Fetches all campaigns with organizations and invitations
 - Ordered by creation date (newest first)
 - Returns: `{ campaigns: Campaign[] }`
 
 #### POST `/api/campaigns`
+
 - Creates new campaign in DRAFT status
 - Validates survey exists in Sanity
 - Validates organization exists in database
 - Returns: `{ campaign: Campaign }`
 
 #### GET `/api/campaigns/[id]`
+
 - Fetches single campaign with full details
 - Includes invitations with user info
 - Returns: `{ campaign: Campaign }`
 
 #### PUT `/api/campaigns/[id]`
+
 - Updates campaign (status, dates, reminderDays)
 - Validates enum values
 - Returns: `{ campaign: Campaign }`
 
 #### DELETE `/api/campaigns/[id]`
+
 - Deletes campaign and all invitations
 - Prevents deletion of ACTIVE campaigns with responses
 - Returns: `{ success: true }`
 
 #### POST `/api/campaigns/[id]/send`
+
 - Creates invitations for all org users
 - Only works for ACTIVE campaigns
 - Skips users who already have invitations
@@ -213,30 +234,35 @@ ARCHIVED
 ## Response Rate Calculation
 
 ```typescript
-const completedCount = invitations.filter(inv => inv.status === 'COMPLETED').length;
+const completedCount = invitations.filter(
+  (inv) => inv.status === 'COMPLETED'
+).length;
 const totalCount = invitations.length;
-const responseRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+const responseRate =
+  totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 ```
 
 ## Invitation Status Badges
 
-| Status | Color | Meaning |
-|--------|-------|---------|
-| PENDING | Yellow | Created but not sent |
-| SENT | Blue | Email sent |
-| OPENED | Purple | User clicked link |
+| Status      | Color  | Meaning                |
+| ----------- | ------ | ---------------------- |
+| PENDING     | Yellow | Created but not sent   |
+| SENT        | Blue   | Email sent             |
+| OPENED      | Purple | User clicked link      |
 | IN_PROGRESS | Orange | User started answering |
-| COMPLETED | Green | Survey submitted |
+| COMPLETED   | Green  | Survey submitted       |
 
 ## UI/UX Features
 
 **List Page:**
+
 - Clean table layout with hover states
 - Visual progress bars for quick scanning
 - Empty state with call-to-action
 - Responsive design
 
 **Detail Page:**
+
 - Summary cards for key metrics
 - Large progress bar for visual impact
 - Context-aware action buttons
@@ -244,6 +270,7 @@ const responseRate = totalCount > 0 ? Math.round((completedCount / totalCount) *
 - Back navigation
 
 **Forms:**
+
 - Clear labels and help text
 - Optional field indicators
 - Client-side validation
@@ -278,34 +305,41 @@ New Routes:
 ## Future Enhancements
 
 ### Email Integration
+
 Currently, invitation sending is a placeholder. To implement:
+
 1. Set up Resend or SendGrid API
 2. Create email templates
 3. Update `POST /api/campaigns/[id]/send` to actually send emails
 4. Add email sending to reminder functionality
 
 ### Reminder Emails
+
 - Implement `POST /api/campaigns/[id]/remind` endpoint
 - Query invitations where status is not COMPLETED
 - Send reminder emails with same link
 - Track reminder count in database
 
 ### Bulk Actions
+
 - Select multiple campaigns
 - Bulk status updates
 - Bulk deletion
 
 ### Advanced Filtering
+
 - Filter by status
 - Filter by organization
 - Filter by date range
 - Search by survey name
 
 ### Campaign Templates
+
 - Save campaign configurations as templates
 - Quick-create from template
 
 ### Analytics Dashboard
+
 - Campaign performance metrics
 - Response time averages
 - Completion funnel

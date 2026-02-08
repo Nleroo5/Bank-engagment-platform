@@ -221,7 +221,10 @@ describe('Token Validation Logic', () => {
       }
 
       if (invitation.status === 'COMPLETED') {
-        return { valid: false, error: 'This survey has already been completed' };
+        return {
+          valid: false,
+          error: 'This survey has already been completed',
+        };
       }
 
       if (invitation.campaign.status !== 'ACTIVE') {

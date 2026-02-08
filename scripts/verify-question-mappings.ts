@@ -20,12 +20,12 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // Expected mappings from scoring matrix reference document
 const EXPECTED_MAPPINGS: { [category: string]: number[] } = {
-  'Communication': [6, 13, 20, 26],
-  'Leadership': [1, 7, 14, 21, 27, 33, 35],
-  'Culture': [8, 15, 28],
-  'Accountability': [2, 9, 16, 22, 29, 34],
-  'Execution': [3, 10, 17, 23, 30],
-  'Associate': [4, 11, 18, 24, 31],
+  Communication: [6, 13, 20, 26],
+  Leadership: [1, 7, 14, 21, 27, 33, 35],
+  Culture: [8, 15, 28],
+  Accountability: [2, 9, 16, 22, 29, 34],
+  Execution: [3, 10, 17, 23, 30],
+  Associate: [4, 11, 18, 24, 31],
   'Team Dynamics': [5, 12, 19, 25, 32],
 };
 
@@ -92,11 +92,15 @@ async function main() {
 
     if (!survey) {
       console.error(`❌ ERROR: Survey "${SURVEY_SLUG}" not found in Sanity.`);
-      console.error('   Please ensure the survey exists or update the SURVEY_SLUG constant.');
+      console.error(
+        '   Please ensure the survey exists or update the SURVEY_SLUG constant.'
+      );
       process.exit(1);
     }
 
-    console.log(`✅ Found survey: ${survey.title} (Survey ${survey.surveyNumber || 'N/A'})`);
+    console.log(
+      `✅ Found survey: ${survey.title} (Survey ${survey.surveyNumber || 'N/A'})`
+    );
     console.log(`📝 Total questions found: ${survey.questions.length}\n`);
 
     if (survey.questions.length !== TOTAL_EXPECTED_QUESTIONS) {
@@ -130,7 +134,9 @@ async function main() {
     let hasErrors = false;
     const categorySummaries: CategorySummary[] = [];
 
-    for (const [categoryName, expectedQuestions] of Object.entries(EXPECTED_MAPPINGS)) {
+    for (const [categoryName, expectedQuestions] of Object.entries(
+      EXPECTED_MAPPINGS
+    )) {
       const actualQuestions = actualMappings[categoryName] || [];
       const isMatch =
         expectedQuestions.length === actualQuestions.length &&
@@ -144,8 +150,12 @@ async function main() {
 
       console.log(`\n${categoryName}`);
       console.log('─'.repeat(80));
-      console.log(`Expected (${expectedQuestions.length}): [${expectedQuestions.join(', ')}]`);
-      console.log(`Actual   (${actualQuestions.length}): [${actualQuestions.join(', ')}]`);
+      console.log(
+        `Expected (${expectedQuestions.length}): [${expectedQuestions.join(', ')}]`
+      );
+      console.log(
+        `Actual   (${actualQuestions.length}): [${actualQuestions.join(', ')}]`
+      );
 
       if (isMatch) {
         console.log('Status: ✅ MATCH');
@@ -154,8 +164,12 @@ async function main() {
         hasErrors = true;
 
         // Show differences
-        const missing = expectedQuestions.filter((q) => !actualQuestions.includes(q));
-        const extra = actualQuestions.filter((q) => !expectedQuestions.includes(q));
+        const missing = expectedQuestions.filter(
+          (q) => !actualQuestions.includes(q)
+        );
+        const extra = actualQuestions.filter(
+          (q) => !expectedQuestions.includes(q)
+        );
 
         if (missing.length > 0) {
           console.log(`  Missing: [${missing.join(', ')}]`);
@@ -187,7 +201,9 @@ async function main() {
     }
 
     // Check for missing questions
-    const actualQuestionNumbers = survey.questions.map((q: Question) => q.number).sort((a, b) => a - b);
+    const actualQuestionNumbers = survey.questions
+      .map((q: Question) => q.number)
+      .sort((a, b) => a - b);
     const missingQuestionNumbers = allExpectedQuestions.filter(
       (num) => !actualQuestionNumbers.includes(num)
     );
@@ -219,12 +235,16 @@ async function main() {
       .sort((a, b) => a.number - b.number);
 
     if (reversedQuestions.length > 0) {
-      console.log(`Found ${reversedQuestions.length} reverse-scored questions:`);
+      console.log(
+        `Found ${reversedQuestions.length} reverse-scored questions:`
+      );
       reversedQuestions.forEach((q: { number: number; category: string }) => {
         console.log(`  - Q${q.number} (${q.category})`);
       });
     } else {
-      console.log('ℹ️  No reverse-scored questions found (verify this is correct for Survey 6)');
+      console.log(
+        'ℹ️  No reverse-scored questions found (verify this is correct for Survey 6)'
+      );
     }
 
     // Final summary
@@ -247,7 +267,6 @@ async function main() {
       console.log('\n🎉 Survey is ready for weighted scoring implementation!');
       process.exit(0);
     }
-
   } catch (error) {
     console.error('\n❌ ERROR:', error);
     if (error instanceof Error) {

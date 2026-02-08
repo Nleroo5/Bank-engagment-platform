@@ -15,6 +15,7 @@ Local Development → Pre-commit → Pre-push → CI/CD → Production
 ### Layer 1: Pre-Commit Hooks (Local)
 
 **Automatically runs before every commit:**
+
 - TypeScript type checking (`tsc --noEmit`)
 - ESLint validation
 - Prevents commits with type errors
@@ -27,6 +28,7 @@ Local Development → Pre-commit → Pre-push → CI/CD → Production
 ### Layer 2: Pre-Push Hooks (Local)
 
 **Automatically runs before every push:**
+
 - Full TypeScript type check
 - ESLint validation
 - **Production build test** (catches build errors before CI)
@@ -39,12 +41,14 @@ Local Development → Pre-commit → Pre-push → CI/CD → Production
 ### Layer 3: Code Audit Script
 
 **Run manually before major changes:**
+
 ```bash
 npm run audit        # Quick code audit
 npm run audit:full   # Full audit + build + tests
 ```
 
 The audit script checks for:
+
 - ✅ Duplicate object properties (common TypeScript error)
 - ✅ Explicit `any` types (anti-pattern)
 - ✅ Unsafe array access without null checks
@@ -55,6 +59,7 @@ The audit script checks for:
 ### Layer 4: GitHub Actions CI/CD
 
 **Runs on every push and PR:**
+
 - Multi-version Node.js testing (18.x, 20.x)
 - Full production build
 - Type checking
@@ -124,6 +129,7 @@ git push --no-verify
 ## 🔧 NPM Scripts Reference
 
 ### Validation Scripts
+
 - `npm run validate` - Type check + lint + format check
 - `npm run validate:build` - Validation + production build
 - `npm run pre-deploy` - Full check: validation + build + tests
@@ -131,6 +137,7 @@ git push --no-verify
 - `npm run audit:full` - Comprehensive audit with build and tests
 
 ### Development Scripts
+
 - `npm run dev` - Start development server
 - `npm run build` - Production build
 - `npm run type-check` - TypeScript validation
@@ -139,6 +146,7 @@ git push --no-verify
 - `npm run format:check` - Check code formatting
 
 ### Testing Scripts
+
 - `npm run test` - Run unit tests
 - `npm run test:watch` - Watch mode for tests
 - `npm run test:e2e` - End-to-end tests
@@ -148,43 +156,49 @@ git push --no-verify
 ### Issue: "Duplicate property" errors
 
 **Problem:**
+
 ```typescript
 return {
-  invitationId: invitation.id,  // ❌ This will be overwritten
-  ...scoringResult,              // Contains invitationId
+  invitationId: invitation.id, // ❌ This will be overwritten
+  ...scoringResult, // Contains invitationId
 };
 ```
 
 **Solution:**
+
 ```typescript
 return {
   userName: invitation.user.name,
-  ...scoringResult,  // Put spread first or remove duplicate
+  ...scoringResult, // Put spread first or remove duplicate
 };
 ```
 
 ### Issue: "Object is possibly undefined"
 
 **Problem:**
+
 ```typescript
-const data = payload[0].payload;  // ❌ payload[0] might be undefined
+const data = payload[0].payload; // ❌ payload[0] might be undefined
 ```
 
 **Solution:**
+
 ```typescript
-const data = payload[0]?.payload;  // ✅ Optional chaining
+const data = payload[0]?.payload; // ✅ Optional chaining
 if (!data) return null;
 ```
 
 ### Issue: Build succeeds locally but fails on Vercel
 
 **Root Causes:**
+
 1. Forgot to push latest commit: `git push origin main`
 2. Environment variables missing on Vercel
 3. TypeScript strict mode differences
 4. Node version mismatch
 
 **Prevention:**
+
 - Always use `npm run validate:build` before pushing
 - Use pre-push hook (don't bypass with `--no-verify`)
 - Check Vercel build logs for specific errors
@@ -192,11 +206,13 @@ if (!data) return null;
 ### Issue: next-auth module errors
 
 **Problem:**
+
 ```
 Could not find a declaration file for module 'next-auth'
 ```
 
 **Solution:**
+
 - Ensure `src/types/modules.d.ts` exists
 - Ensure `src/types/next-auth.d.ts` exists
 - Run `npm run type-check` to verify
@@ -243,7 +259,7 @@ function processData(data: ResponseData[]): ProcessedResult {
 // ❌ Bad - duplicate keys
 const result = {
   id: computed.id,
-  ...dbRecord,  // Also has 'id'
+  ...dbRecord, // Also has 'id'
 };
 
 // ✅ Good - let spread provide the value
@@ -259,7 +275,7 @@ const result = {
 ```typescript
 const category = {
   _id: cat._id,
-  _type: 'category' as const,  // ✅ Required
+  _type: 'category' as const, // ✅ Required
   name: cat.name,
   weight: cat.weight,
 };

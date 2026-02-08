@@ -66,11 +66,7 @@ export function CategoryBarChart({ data, scaleMax }: CategoryBarChartProps) {
           labelStyle={{ fontWeight: 'bold' }}
         />
         <Legend />
-        <Bar
-          dataKey="score"
-          name="Average Score"
-          radius={[8, 8, 0, 0]}
-        />
+        <Bar dataKey="score" name="Average Score" radius={[8, 8, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

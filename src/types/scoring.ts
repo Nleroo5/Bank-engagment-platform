@@ -187,9 +187,24 @@ export interface ScoringOptions {
 export type ScoringError =
   | { type: 'MISSING_CATEGORY'; categoryId: string; message: string }
   | { type: 'MISSING_WEIGHT'; categoryId: string; message: string }
-  | { type: 'INVALID_VALUE'; questionId: string; value: number; message: string }
-  | { type: 'INCOMPLETE_RESPONSE'; invitationId: string; missingCount: number; message: string }
-  | { type: 'INSUFFICIENT_RESPONDENTS'; required: number; actual: number; message: string };
+  | {
+      type: 'INVALID_VALUE';
+      questionId: string;
+      value: number;
+      message: string;
+    }
+  | {
+      type: 'INCOMPLETE_RESPONSE';
+      invitationId: string;
+      missingCount: number;
+      message: string;
+    }
+  | {
+      type: 'INSUFFICIENT_RESPONDENTS';
+      required: number;
+      actual: number;
+      message: string;
+    };
 
 /**
  * Validation result

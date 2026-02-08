@@ -61,7 +61,8 @@ function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
           <span className="font-bold">{data.weightedScore.toFixed(1)}</span>
         </p>
         <p className="text-gray-600">
-          <span className="font-medium">Raw Score:</span> {data.rawScore.toFixed(1)}
+          <span className="font-medium">Raw Score:</span>{' '}
+          {data.rawScore.toFixed(1)}
         </p>
         <p className="text-gray-600">
           <span className="font-medium">Weight:</span> ×{data.weight}
@@ -73,10 +74,10 @@ function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
         <p className="text-gray-600">
           <span className="font-medium">Std Dev:</span> {data.stdDev.toFixed(1)}
         </p>
-        <p className="text-blue-600 font-medium">
+        <p className="font-medium text-blue-600">
           {data.percentage.toFixed(1)}% of maximum
         </p>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="mt-2 text-xs text-gray-500">
           {data.respondentCount} respondents • {data.questionCount} questions
         </p>
       </div>
@@ -128,7 +129,11 @@ export function CategoryScoresChart({
   const yAxisMax = Math.ceil(maxScore * 1.1);
 
   return (
-    <div className="w-full" role="img" aria-label="Category weighted scores bar chart">
+    <div
+      className="w-full"
+      role="img"
+      aria-label="Category weighted scores bar chart"
+    >
       <ResponsiveContainer width="100%" height={height}>
         <BarChart
           data={chartData}
@@ -136,7 +141,11 @@ export function CategoryScoresChart({
           layout="horizontal"
         >
           {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#e5e7eb"
+              opacity={0.5}
+            />
           )}
 
           <XAxis
@@ -163,7 +172,10 @@ export function CategoryScoresChart({
             tick={{ fontSize: 12, fill: '#374151' }}
           />
 
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+          />
 
           {showLegend && (
             <Legend
@@ -196,7 +208,11 @@ export function CategoryScoresChart({
       </ResponsiveContainer>
 
       {/* Accessible table alternative */}
-      <div className="sr-only" role="table" aria-label="Category scores data table">
+      <div
+        className="sr-only"
+        role="table"
+        aria-label="Category scores data table"
+      >
         <div role="rowgroup">
           <div role="row">
             <div role="columnheader">Category</div>

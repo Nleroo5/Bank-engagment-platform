@@ -114,12 +114,13 @@ export function calculateCategoryScores(
   scaleMax: number
 ): CategoryScore[] {
   // Create a map of questionId -> question definition
-  const questionMap = new Map(
-    questions.map((q) => [q._id, q])
-  );
+  const questionMap = new Map(questions.map((q) => [q._id, q]));
 
   // Group responses by category
-  const categoryGroups = new Map<string, { name: string; values: number[]; questionIds: Set<string> }>();
+  const categoryGroups = new Map<
+    string,
+    { name: string; values: number[]; questionIds: Set<string> }
+  >();
 
   for (const response of responses) {
     if (response.value === null) continue;
@@ -166,7 +167,9 @@ export function calculateCategoryScores(
     });
   }
 
-  return categoryScores.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+  return categoryScores.sort((a, b) =>
+    a.categoryName.localeCompare(b.categoryName)
+  );
 }
 
 /**
@@ -186,12 +189,13 @@ export function calculateSectionScores(
   scaleMax: number
 ): SectionScore[] {
   // Create a map of questionId -> question definition
-  const questionMap = new Map(
-    questions.map((q) => [q._id, q])
-  );
+  const questionMap = new Map(questions.map((q) => [q._id, q]));
 
   // Group responses by section
-  const sectionGroups = new Map<string, { title: string; values: number[]; questionIds: Set<string> }>();
+  const sectionGroups = new Map<
+    string,
+    { title: string; values: number[]; questionIds: Set<string> }
+  >();
 
   for (const response of responses) {
     if (response.value === null) continue;
@@ -258,9 +262,7 @@ export function calculateSurveyScore(
   scaleMax: number
 ): SurveyScore {
   // Create a map of questionId -> question definition
-  const questionMap = new Map(
-    questions.map((q) => [q._id, q])
-  );
+  const questionMap = new Map(questions.map((q) => [q._id, q]));
 
   // Collect all adjusted values
   const allValues: number[] = [];
@@ -286,7 +288,11 @@ export function calculateSurveyScore(
   const average = allValues.length > 0 ? sum / allValues.length : 0;
 
   // Calculate category and section breakdowns
-  const categoryScores = calculateCategoryScores(responses, questions, scaleMax);
+  const categoryScores = calculateCategoryScores(
+    responses,
+    questions,
+    scaleMax
+  );
   const sectionScores = calculateSectionScores(responses, questions, scaleMax);
 
   return {
@@ -337,9 +343,10 @@ export async function calculateCampaignScores(
 
   const respondentCount = completedInvitations.length;
   const totalInvitations = campaign.invitations.length;
-  const completionRate = totalInvitations > 0
-    ? Math.round((respondentCount / totalInvitations) * 100 * 10) / 10
-    : 0;
+  const completionRate =
+    totalInvitations > 0
+      ? Math.round((respondentCount / totalInvitations) * 100 * 10) / 10
+      : 0;
 
   // Collect all responses from completed invitations
   const allResponses: Response[] = [];

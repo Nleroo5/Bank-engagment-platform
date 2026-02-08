@@ -19,7 +19,9 @@ export default async function CampaignsPage() {
 
   const getResponseRate = (invitations: Invitation[]) => {
     if (invitations.length === 0) return 0;
-    const completed = invitations.filter((inv) => inv.status === 'COMPLETED').length;
+    const completed = invitations.filter(
+      (inv) => inv.status === 'COMPLETED'
+    ).length;
     return Math.round((completed / invitations.length) * 100);
   };
 

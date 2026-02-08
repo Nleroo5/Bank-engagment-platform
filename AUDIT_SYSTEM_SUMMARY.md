@@ -5,6 +5,7 @@
 **Issue**: Recurring TypeScript build errors when deploying to Vercel, even though local builds succeeded.
 
 **Root Causes Identified**:
+
 1. Commits not pushed to remote (`git push` forgotten)
 2. Duplicate object properties before spread operators
 3. Missing type definitions and null safety checks
@@ -17,6 +18,7 @@
 ## 🔬 Research-Backed Approach
 
 This system is based on best practices from:
+
 - **Google TypeScript Style Guide** - Strict typing and null safety
 - **Microsoft TypeScript Handbook** - Type system best practices
 - **Airbnb JavaScript Style Guide** - Code quality standards
@@ -45,6 +47,7 @@ This system is based on best practices from:
 ```
 
 **Each layer catches different issues:**
+
 - Layer 1: Syntax errors, type errors
 - Layer 2: Build errors, integration issues
 - Layer 3: Cross-platform compatibility, environment issues
@@ -57,6 +60,7 @@ This system is based on best practices from:
 ### 1. Git Hooks with Husky
 
 **Pre-Commit Hook** (`.husky/pre-commit`)
+
 - Runs on every `git commit`
 - Validates TypeScript types
 - Runs ESLint
@@ -64,6 +68,7 @@ This system is based on best practices from:
 - **Prevents**: Committing code with type errors
 
 **Pre-Push Hook** (`.husky/pre-push`)
+
 - Runs on every `git push`
 - Full TypeScript validation
 - Full ESLint validation
@@ -74,6 +79,7 @@ This system is based on best practices from:
 ### 2. GitHub Actions CI/CD (`.github/workflows/ci.yml`)
 
 **Runs on every push and pull request:**
+
 - ✅ Multi-version testing (Node 18.x and 20.x)
 - ✅ Full production build
 - ✅ Type checking
@@ -84,6 +90,7 @@ This system is based on best practices from:
 - ✅ Build artifact uploads on failure (for debugging)
 
 **Benefits:**
+
 - Catches environment-specific issues
 - Validates on clean environment (like Vercel)
 - Provides detailed logs for debugging
@@ -94,24 +101,27 @@ This system is based on best practices from:
 **Static analysis for 6 critical categories:**
 
 1. **Duplicate Object Properties** ⭐ (Main cause of recent errors)
+
    ```typescript
    // ❌ Detected and flagged
    return {
-     invitationId: invitation.id,  // Will be overwritten
-     ...scoringResult,              // Also has invitationId
+     invitationId: invitation.id, // Will be overwritten
+     ...scoringResult, // Also has invitationId
    };
    ```
 
 2. **Explicit `any` Types**
+
    ```typescript
    // ⚠️ Flagged as warning
    const data: any = fetchData();
    ```
 
 3. **Unsafe Array Access**
+
    ```typescript
    // ⚠️ Flagged
-   const item = array[0].property;  // array[0] might be undefined
+   const item = array[0].property; // array[0] might be undefined
    ```
 
 4. **Missing `_type` Properties** (Sanity objects)
@@ -119,12 +129,14 @@ This system is based on best practices from:
 6. **Unused Imports**
 
 **Usage:**
+
 ```bash
 npm run audit      # Quick audit (5-10 seconds)
 npm run audit:full # Full audit + build + tests (2-3 minutes)
 ```
 
 **Output Example:**
+
 ```
 🔍 Starting comprehensive code audit...
 📂 Found 81 TypeScript files in src/
@@ -155,6 +167,7 @@ Total issues: 10 (2 errors, 5 warnings, 3 info)
 ### 4. NPM Validation Scripts
 
 Added to `package.json`:
+
 ```json
 {
   "scripts": {
@@ -170,6 +183,7 @@ Added to `package.json`:
 ### 5. Comprehensive Documentation
 
 **CONTRIBUTING.md** (400+ lines)
+
 - Complete development workflow
 - Common issues and solutions
 - TypeScript best practices
@@ -224,12 +238,14 @@ npm run audit:full
 The hooks exist to save you time by catching errors before they reach Vercel.
 
 If you must bypass (NOT recommended):
+
 ```bash
 git commit --no-verify  # Skip pre-commit
 git push --no-verify    # Skip pre-push
 ```
 
 **Better approach:**
+
 ```bash
 # See what's wrong
 npm run type-check
@@ -244,12 +260,14 @@ npm run lint
 ## 📊 Metrics & Results
 
 ### Before Implementation
+
 - ❌ 5+ build failures on Vercel in past week
 - ❌ Manual type checking (often forgotten)
 - ❌ No automated validation
 - ❌ Errors discovered in CI/CD (slow feedback)
 
 ### After Implementation
+
 - ✅ **0 build failures possible** (hooks prevent bad code)
 - ✅ **Automatic validation** (no manual steps)
 - ✅ **Fast feedback** (2-5 seconds for commit, 20-30 seconds for push)
@@ -257,6 +275,7 @@ npm run lint
 - ✅ **Multi-layer validation** (defense-in-depth)
 
 ### Performance
+
 - Pre-commit hook: **2-5 seconds** (type check + lint)
 - Pre-push hook: **20-30 seconds** (full build)
 - Code audit: **5-10 seconds** (81 TypeScript files)
@@ -367,6 +386,7 @@ echo "npm run test" >> .husky/pre-push
 ## 📚 Files Added/Modified
 
 ### New Files (5)
+
 1. `.github/workflows/ci.yml` - GitHub Actions CI/CD pipeline
 2. `.husky/pre-commit` - Pre-commit validation hook
 3. `.husky/pre-push` - Pre-push build test hook
@@ -374,6 +394,7 @@ echo "npm run test" >> .husky/pre-push
 5. `CONTRIBUTING.md` - Development guidelines (400+ lines)
 
 ### Modified Files (3)
+
 1. `package.json` - Added validation scripts
 2. `package-lock.json` - New dependencies (husky, lint-staged)
 3. Test files - Fixed missing adjustedValue and null safety
@@ -385,6 +406,7 @@ echo "npm run test" >> .husky/pre-push
 ## 🎓 Learning Resources
 
 ### Recommended Reading
+
 1. [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html)
 2. [Microsoft TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
 3. [Next.js Production Checklist](https://nextjs.org/docs/going-to-production)
@@ -392,6 +414,7 @@ echo "npm run test" >> .husky/pre-push
 5. [GitHub Actions Best Practices](https://docs.github.com/en/actions/learn-github-actions/best-practices-for-using-github-actions)
 
 ### TypeScript Best Practices
+
 - Always use strict mode (`tsconfig.json`)
 - Avoid explicit `any` types
 - Use optional chaining (`?.`)
@@ -406,11 +429,11 @@ echo "npm run test" >> .husky/pre-push
 
 ### Q: Can I skip the hooks if I'm in a hurry?
 
-**A:** You *can* with `--no-verify`, but it's not recommended. The hooks run in seconds and will save you much more time by catching errors before they reach Vercel. If you're consistently skipping hooks, they might be too slow - let's optimize them instead.
+**A:** You _can_ with `--no-verify`, but it's not recommended. The hooks run in seconds and will save you much more time by catching errors before they reach Vercel. If you're consistently skipping hooks, they might be too slow - let's optimize them instead.
 
 ### Q: Why did my commit take 2 seconds?
 
-**A:** That's the pre-commit hook running! It's validating your code. This is *much* faster than waiting for Vercel to fail the build.
+**A:** That's the pre-commit hook running! It's validating your code. This is _much_ faster than waiting for Vercel to fail the build.
 
 ### Q: Why did my push take 30 seconds?
 
@@ -419,6 +442,7 @@ echo "npm run test" >> .husky/pre-push
 ### Q: What if GitHub Actions fails but local build passed?
 
 **A:** This usually means:
+
 1. Environment variable missing on GitHub
 2. Node version mismatch
 3. Platform-specific issue (rare)
@@ -437,6 +461,7 @@ echo "npm run test:e2e" >> .husky/pre-push
 ### Q: Can I use this system on other projects?
 
 **A:** Absolutely! The system is portable. Copy:
+
 1. `.husky/` directory
 2. `.github/workflows/ci.yml`
 3. `scripts/audit-code.ts`
@@ -449,12 +474,14 @@ echo "npm run test:e2e" >> .husky/pre-push
 ## 🎉 Success Metrics
 
 ### Immediate Impact
+
 - ✅ **100% prevention** of committing type errors
 - ✅ **100% prevention** of pushing build failures
 - ✅ **0 Vercel deployment failures** from TypeScript errors
 - ✅ **Fast feedback** (errors caught in seconds, not minutes)
 
 ### Long-Term Benefits
+
 - 📈 Improved code quality (automated enforcement)
 - 📈 Faster development (catch errors early)
 - 📈 Better team collaboration (consistent standards)
@@ -489,6 +516,6 @@ If you encounter issues:
 
 ---
 
-*Last updated: 2026-02-07*
-*System version: 1.0*
-*Commit: 77ed6ba*
+_Last updated: 2026-02-07_
+_System version: 1.0_
+_Commit: 77ed6ba_

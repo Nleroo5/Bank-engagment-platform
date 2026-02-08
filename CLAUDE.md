@@ -133,6 +133,7 @@ Always use `@db.Uuid` for IDs. Always use `@default(uuid())`. Never use auto-inc
 Sanity manages survey content. Document types: `survey`, `section`, `question`, `category`, `scale`, `surveyConfig`. See `sanity/schemas/` for full definitions.
 
 Key rules:
+
 - Query with GROQ, never GraphQL
 - Use `sanity/lib/client.ts` for the shared client
 - Cache Sanity responses in Next.js with `revalidateTag`
@@ -147,6 +148,7 @@ Key rules:
 ## Email System
 
 Use Resend API. Email types:
+
 - **Invitation**: Contains unique survey link, deadline, estimated time, bank branding
 - **Reminder**: Same link, sent at configurable interval before campaign close
 - **Confirmation**: Thank-you after submission, no response data included
@@ -209,6 +211,7 @@ npm run build                        # Production build
 ## Environment Variables
 
 See `.env.example` for all required variables. NEVER commit `.env` files. Critical vars:
+
 - `DATABASE_URL` — PostgreSQL connection string
 - `NEXT_PUBLIC_SANITY_PROJECT_ID` — Sanity project ID
 - `NEXT_PUBLIC_SANITY_DATASET` — Sanity dataset (usually "production")

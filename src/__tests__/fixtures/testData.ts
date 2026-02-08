@@ -1,4 +1,10 @@
-import type { User, Organization, SurveyCampaign, Invitation, Response } from '@prisma/client';
+import type {
+  User,
+  Organization,
+  SurveyCampaign,
+  Invitation,
+  Response,
+} from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -72,7 +78,9 @@ export const createMockInvitation = (
   ...overrides,
 });
 
-export const createMockResponse = (overrides?: Partial<Response>): Response => ({
+export const createMockResponse = (
+  overrides?: Partial<Response>
+): Response => ({
   id: uuidv4(),
   invitationId: uuidv4(),
   sanityQuestionId: `question-${Date.now()}`,
@@ -87,7 +95,10 @@ export const createMockResponse = (overrides?: Partial<Response>): Response => (
 /**
  * Create multiple users with sequential emails
  */
-export const createMockUsers = (count: number, baseOverrides?: Partial<User>): User[] => {
+export const createMockUsers = (
+  count: number,
+  baseOverrides?: Partial<User>
+): User[] => {
   return Array.from({ length: count }, (_, i) =>
     createMockUser({
       ...baseOverrides,
@@ -118,7 +129,9 @@ export const createMockInvitations = (
  */
 export const createTestScenario = (respondentCount: number = 5) => {
   const organization = createMockOrganization();
-  const users = createMockUsers(respondentCount, { organizationId: organization.id });
+  const users = createMockUsers(respondentCount, {
+    organizationId: organization.id,
+  });
   const campaign = createMockCampaign({ organizationId: organization.id });
   const invitations = users.map((user) =>
     createMockInvitation({

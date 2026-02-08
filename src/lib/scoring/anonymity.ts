@@ -102,7 +102,7 @@ export async function getFilterableOptions(
   }
 
   // Helper function to count respondents for each value of a field
-  const countByField = (field: keyof typeof invitations[0]['user']) => {
+  const countByField = (field: keyof (typeof invitations)[0]['user']) => {
     const counts = new Map<string, number>();
 
     for (const invitation of invitations) {
@@ -166,7 +166,9 @@ export async function validateFilteredAnonymity(
   filters: Record<string, string>
 ): Promise<{ valid: boolean; count: number }> {
   // Only enforce threshold for anonymous survey types
-  const requiresAnonymity = ANONYMOUS_SURVEY_TYPES.includes(surveyType.toLowerCase());
+  const requiresAnonymity = ANONYMOUS_SURVEY_TYPES.includes(
+    surveyType.toLowerCase()
+  );
 
   // Build where clause from filters
   const userFilters: Record<string, string> = {};

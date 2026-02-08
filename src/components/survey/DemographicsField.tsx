@@ -81,12 +81,7 @@ const JOB_ROLES = [
   'Other',
 ];
 
-const COUNTRIES = [
-  'United States',
-  'Canada',
-  'United Kingdom',
-  'Other',
-];
+const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'Other'];
 
 const US_STATES = [
   'Alabama',
@@ -212,7 +207,11 @@ export function DemographicsField({
   };
 
   // Text input for bank name, city, and metro
-  if (fieldType === 'bankName' || fieldType === 'city' || fieldType === 'metro') {
+  if (
+    fieldType === 'bankName' ||
+    fieldType === 'city' ||
+    fieldType === 'metro'
+  ) {
     let placeholder = 'Enter value';
     if (fieldType === 'bankName') placeholder = "Enter your bank's name";
     if (fieldType === 'city') placeholder = 'Enter city name';
@@ -246,7 +245,8 @@ export function DemographicsField({
   // Dropdown for location fields (country and state)
   if (fieldType === 'state' || fieldType === 'country') {
     const options = getOptionsForField(fieldType);
-    const placeholderText = fieldType === 'country' ? 'Select a country' : 'Select a state';
+    const placeholderText =
+      fieldType === 'country' ? 'Select a country' : 'Select a state';
 
     return (
       <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
@@ -303,8 +303,7 @@ export function DemographicsField({
           <label
             key={option}
             className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition-all ${
-              selectedValue === option ||
-              (option === 'Other' && showOther)
+              selectedValue === option || (option === 'Other' && showOther)
                 ? 'border-primary-600 bg-primary-50'
                 : 'border-gray-200 hover:border-gray-300'
             } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
@@ -314,8 +313,7 @@ export function DemographicsField({
               name={questionId}
               value={option}
               checked={
-                selectedValue === option ||
-                (option === 'Other' && showOther)
+                selectedValue === option || (option === 'Other' && showOther)
               }
               onChange={() => handleChange(option)}
               disabled={disabled}

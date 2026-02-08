@@ -16,9 +16,11 @@ The Leadership Team Effectiveness (LTE) survey is Survey #4 in the Bank Engageme
 ## Survey Sections
 
 ### Section 1: Goal Setting (Questions 1-10)
+
 **Focus:** How effectively the team sets and pursues goals
 
 **Categories Covered:**
+
 - Communication (Q1, Q7)
 - Leadership (Q2, Q8)
 - Execution (Q3, Q9)
@@ -28,9 +30,11 @@ The Leadership Team Effectiveness (LTE) survey is Survey #4 in the Bank Engageme
 - Associate (Q10)
 
 ### Section 2: Roles within the Team (Questions 11-20)
+
 **Focus:** Role clarity, accountability, and effectiveness
 
 **Categories Covered:**
+
 - Team Dynamics (Q11, Q18)
 - Accountability (Q12, Q19)
 - Leadership (Q13, Q20)
@@ -40,9 +44,11 @@ The Leadership Team Effectiveness (LTE) survey is Survey #4 in the Bank Engageme
 - Associate (Q17)
 
 ### Section 3: Interpersonal Relationships (Questions 21-30)
+
 **Focus:** Trust, collaboration, and team dynamics
 
 **Categories Covered:**
+
 - Communication (Q21, Q28)
 - Culture (Q22, Q29)
 - Team Dynamics (Q23, Q30)
@@ -52,9 +58,11 @@ The Leadership Team Effectiveness (LTE) survey is Survey #4 in the Bank Engageme
 - Associate (Q27)
 
 ### Section 4: Procedures (Questions 31-40)
+
 **Focus:** Processes, decision-making, and coordination
 
 **Categories Covered:**
+
 - Accountability (Q31, Q38)
 - Leadership (Q32, Q39)
 - Execution (Q33, Q40)
@@ -66,6 +74,7 @@ The Leadership Team Effectiveness (LTE) survey is Survey #4 in the Bank Engageme
 ## Rating Scale
 
 **5-Point Likert Scale:**
+
 1. **Strongly Disagree** - Statement does not describe the team at all
 2. **Disagree** - Statement rarely describes the team
 3. **Neutral** - Statement sometimes describes the team
@@ -87,29 +96,35 @@ All 40 questions are mapped to 7 categories for scoring and analysis:
 ## Sample Questions
 
 ### With Anchor Text
+
 Questions include optional anchor text that provides context about the ideal state:
 
 **Question 2:**
+
 - **Statement:** "Leaders ensure that team objectives align with organizational priorities"
 - **Anchor Text:** "Objectives are always thoroughly discussed with others on the team"
 
 **Question 11:**
+
 - **Statement:** "Each team member understands their role and responsibilities"
 - **Anchor Text:** "Roles are clearly defined and communicated"
 
 ### Category Examples
 
 **Communication (Blue):**
+
 - Q1: Team goals are clearly defined and communicated to all members
 - Q14: Team members communicate about role-related issues
 - Q28: Communication is open and honest
 
 **Leadership (Purple):**
+
 - Q2: Leaders ensure that team objectives align with organizational priorities
 - Q13: Leadership roles are appropriate and effective
 - Q32: Procedures are regularly reviewed and improved
 
 **Culture (Green):**
+
 - Q6: The team celebrates achievements and learns from setbacks
 - Q15: The team has a culture of mutual support
 - Q35: Meetings are productive and well-organized
@@ -119,6 +134,7 @@ Questions include optional anchor text that provides context about the ideal sta
 ### Components Used
 
 **Survey Rendering:**
+
 - [SurveyShell.tsx](../src/components/survey/SurveyShell.tsx) - Main survey container
 - [LikertScale5.tsx](../src/components/survey/LikertScale5.tsx) - 5-point rating component
 - [SectionHeader.tsx](../src/components/survey/SectionHeader.tsx) - Section display
@@ -127,14 +143,15 @@ Questions include optional anchor text that provides context about the ideal sta
 ### Data Storage
 
 **Responses Table:**
+
 ```typescript
 {
   invitationId: string;
   sanityQuestionId: string;
   questionNumber: number;
-  value: number;           // 1-5 for Likert responses
-  adjustedValue: number;   // Same as value (no reverse scoring in LTE)
-  textValue: null;         // Not used for Likert surveys
+  value: number; // 1-5 for Likert responses
+  adjustedValue: number; // Same as value (no reverse scoring in LTE)
+  textValue: null; // Not used for Likert surveys
   submittedAt: DateTime;
 }
 ```
@@ -142,6 +159,7 @@ Questions include optional anchor text that provides context about the ideal sta
 ### Scoring
 
 LTE uses **weighted category scoring**:
+
 - Each category has a weight multiplier (defined in Sanity)
 - Raw scores are calculated by summing response values per category
 - Weighted scores = raw score × category weight
@@ -189,11 +207,13 @@ See [WEIGHTED_SCORING_IMPLEMENTATION.md](./WEIGHTED_SCORING_IMPLEMENTATION.md) f
 ## Viewing Results
 
 ### Individual Reports
+
 - View completed responses per invitation
 - See all 40 answers with category breakdowns
 - Export to PDF or Excel
 
 ### Aggregate Reports
+
 - Category score averages across all respondents
 - Weighted scores by category
 - Comparison charts and trends
@@ -222,11 +242,13 @@ Category mappings are defined in the creation script. To change:
 ### Adding/Removing Questions
 
 **Not Recommended:** The LTE survey is standardized at 40 questions. Changing the structure may affect:
+
 - Score calculations
 - Historical comparisons
 - Benchmark data
 
 If modifications are necessary, update:
+
 1. Creation script question definitions
 2. Category mappings
 3. Section question ranges
@@ -254,6 +276,7 @@ npm run test:e2e -- lte-survey.spec.ts
 ## API Endpoints
 
 ### Save Response (PATCH)
+
 ```typescript
 PATCH /api/responses
 Body: {
@@ -268,6 +291,7 @@ Response: {
 ```
 
 ### Submit Survey (POST)
+
 ```typescript
 POST /api/responses/submit
 Body: {
@@ -280,6 +304,7 @@ Response: {
 ```
 
 ### Get Report (GET)
+
 ```typescript
 GET /api/reports/[campaignId]
 Response: {
@@ -293,18 +318,22 @@ Response: {
 ## Related Files
 
 **Scripts:**
+
 - [create-lte-survey.ts](../scripts/create-lte-survey.ts) - Survey creation
 - [verify-question-mappings.ts](../scripts/verify-question-mappings.ts) - Validate categories
 
 **Components:**
+
 - [SurveyShell.tsx](../src/components/survey/SurveyShell.tsx) - Main container
 - [LikertScale5.tsx](../src/components/survey/LikertScale5.tsx) - 5-point scale widget
 
 **Scoring:**
+
 - [categoryScoring.ts](../src/lib/scoring/categoryScoring.ts) - Score calculation engine
 - [CategoryScoresChart.tsx](../src/components/charts/CategoryScoresChart.tsx) - Visualization
 
 **API:**
+
 - [responses/route.ts](../src/app/api/responses/route.ts) - Save responses
 - [responses/submit/route.ts](../src/app/api/responses/submit/route.ts) - Final submission
 
@@ -315,6 +344,7 @@ Response: {
 **Problem:** Survey loads but questions don't appear.
 
 **Solution:**
+
 1. Check Sanity Studio for question documents
 2. Verify section → question references
 3. Clear Next.js cache: `rm -rf .next && npm run dev`
@@ -324,6 +354,7 @@ Response: {
 **Problem:** Anchor text is missing on some questions.
 
 **Solution:**
+
 1. In Sanity Studio, edit the question
 2. Add text to "Anchor Text (Right Side)" field
 3. Save and republish
@@ -333,6 +364,7 @@ Response: {
 **Problem:** Category colors don't match expected scheme.
 
 **Solution:**
+
 1. Update category color codes in Sanity
 2. Color hex codes are defined in `CategoryScoresChart.tsx`
 3. Ensure consistency between Sanity and component
@@ -342,6 +374,7 @@ Response: {
 **Problem:** Category scores seem incorrect.
 
 **Solution:**
+
 1. Verify all questions have category references
 2. Check category weights in Sanity
 3. Run verification: `npx tsx scripts/verify-question-mappings.ts`

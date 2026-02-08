@@ -3,11 +3,13 @@
 ## ✅ Completed Components
 
 ### 1. Prisma Client (`src/lib/prisma/`)
+
 - **[client.ts](src/lib/prisma/client.ts)** - Singleton pattern with `globalThis` to prevent multiple instances in development
 - **[index.ts](src/lib/prisma/index.ts)** - Clean exports for easy imports
 - Usage: `import { prisma } from '@/lib/prisma'`
 
 ### 2. Sanity CMS Client (`src/lib/sanity/`)
+
 - **[client.ts](src/lib/sanity/client.ts)** - Sanity client configured with environment variables
   - Exports `sanityClient` for direct queries
   - Exports `sanityFetch()` helper with Next.js cache tags support
@@ -23,6 +25,7 @@
 - Usage: `import { getSurveyBySlug } from '@/lib/sanity'`
 
 ### 3. TypeScript Types (`src/types/`)
+
 - **[survey.ts](src/types/survey.ts)** - Complete type definitions for Sanity data:
   - `ScaleLabel` - Individual scale point (value + label)
   - `Scale` - Rating scale definition (5-point Likert, 3-point frequency)
@@ -35,6 +38,7 @@
 - **[index.ts](src/types/index.ts)** - General types (UserRole, SurveyType, ApiResponse, etc.)
 
 ### 4. NextAuth Configuration (`src/lib/auth/`)
+
 - **[config.ts](src/lib/auth/config.ts)** - NextAuth.js setup
   - CredentialsProvider for email + password authentication
   - Password verification with bcryptjs
@@ -56,14 +60,17 @@
 - Usage: `import { requireAdmin, getSession } from '@/lib/auth'`
 
 ### 5. NextAuth API Route (`src/app/api/auth/[...nextauth]/`)
+
 - **[route.ts](src/app/api/auth/[...nextauth]/route.ts)** - NextAuth route handler
   - Handles GET and POST requests
   - Routes: `/api/auth/signin`, `/api/auth/signout`, `/api/auth/session`, etc.
 
 ## 📦 Dependencies Installed
+
 - `@portabletext/types` - For Sanity rich text type definitions
 
 ## 🔒 Security Features
+
 - Password hashing with bcryptjs (compare only, never store plaintext)
 - Email normalization (lowercase)
 - Active user validation
@@ -72,6 +79,7 @@
 - User role validation at database level
 
 ## 🎯 Type Safety
+
 - ✅ Zero `any` types used
 - ✅ Full TypeScript strict mode compliance
 - ✅ Module augmentation for NextAuth types
@@ -82,6 +90,7 @@
 ## 📚 Import Patterns
 
 ### Prisma
+
 ```typescript
 import { prisma } from '@/lib/prisma';
 
@@ -89,6 +98,7 @@ const user = await prisma.user.findUnique({ where: { id: 'uuid' } });
 ```
 
 ### Sanity
+
 ```typescript
 import { getSurveyBySlug } from '@/lib/sanity';
 
@@ -96,6 +106,7 @@ const survey = await getSurveyBySlug('leadership-team-effectiveness');
 ```
 
 ### Auth (Server Components / API Routes)
+
 ```typescript
 import { requireAdmin, getSession } from '@/lib/auth';
 
@@ -107,6 +118,7 @@ const session = await getSession();
 ```
 
 ### Types
+
 ```typescript
 import type { Survey, Question, Category } from '@/types/survey';
 import type { ApiResponse } from '@/types';

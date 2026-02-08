@@ -66,7 +66,13 @@ export interface Survey {
     current: string;
   };
   surveyNumber?: number;
-  surveyType: 'demographics' | 'likert5' | 'likert3' | 'managerial' | 'ote' | 'associate_180';
+  surveyType:
+    | 'demographics'
+    | 'likert5'
+    | 'likert3'
+    | 'managerial'
+    | 'ote'
+    | 'associate_180';
   description?: string;
   instructions?: PortableTextBlock[] | string;
   sections: Section[];

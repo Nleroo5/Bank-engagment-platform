@@ -14,10 +14,7 @@ export function AdminShell({ children }: AdminShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -25,9 +22,7 @@ export function AdminShell({ children }: AdminShellProps) {
         <TopBar onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

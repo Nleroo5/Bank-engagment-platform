@@ -14,25 +14,26 @@ The Demographics survey is Survey #1 in the Bank Engagement Platform. It collect
 
 ## Questions & Field Types
 
-| # | Question | Field Type | Input Type |
-|---|----------|------------|------------|
-| 1 | Name of Bank | `bankName` | Text Input |
-| 2 | Location - Country | `country` | Dropdown |
-| 3 | Location - State | `state` | Dropdown |
-| 4 | Location - Metro City Area | `metro` | Text Input |
-| 5 | Location - City | `city` | Text Input |
-| 6 | Size of Bank | `bankSize` | Radio Buttons (12 options) |
-| 7 | Device Used for Survey | `device` | Radio Buttons (3 options) |
-| 8 | Employment Status | `employmentStatus` | Radio Buttons (3 options) |
-| 9 | Gender | `gender` | Radio Buttons (3 options) |
-| 10 | Time at Bank | `timeAtBank` | Radio Buttons (4 options) |
-| 11 | Bank Experience | `bankExperience` | Radio Buttons (4 options) |
-| 12 | Bank Division | `division` | Radio Buttons (11 options + Other) |
-| 13 | Job Role | `jobRole` | Radio Buttons (16 options + Other) |
+| #   | Question                   | Field Type         | Input Type                         |
+| --- | -------------------------- | ------------------ | ---------------------------------- |
+| 1   | Name of Bank               | `bankName`         | Text Input                         |
+| 2   | Location - Country         | `country`          | Dropdown                           |
+| 3   | Location - State           | `state`            | Dropdown                           |
+| 4   | Location - Metro City Area | `metro`            | Text Input                         |
+| 5   | Location - City            | `city`             | Text Input                         |
+| 6   | Size of Bank               | `bankSize`         | Radio Buttons (12 options)         |
+| 7   | Device Used for Survey     | `device`           | Radio Buttons (3 options)          |
+| 8   | Employment Status          | `employmentStatus` | Radio Buttons (3 options)          |
+| 9   | Gender                     | `gender`           | Radio Buttons (3 options)          |
+| 10  | Time at Bank               | `timeAtBank`       | Radio Buttons (4 options)          |
+| 11  | Bank Experience            | `bankExperience`   | Radio Buttons (4 options)          |
+| 12  | Bank Division              | `division`         | Radio Buttons (11 options + Other) |
+| 13  | Job Role                   | `jobRole`          | Radio Buttons (16 options + Other) |
 
 ## Field Options
 
 ### Bank Size (12 ranges)
+
 - Less than $100M
 - $100M - $250M
 - $250M - $500M
@@ -47,33 +48,39 @@ The Demographics survey is Survey #1 in the Bank Engagement Platform. It collect
 - Greater than $20B
 
 ### Device Used
+
 - Desktop/Laptop
 - Tablet
 - Mobile Phone
 
 ### Employment Status
+
 - Full-Time
 - Part-Time
 - Peak-Time
 
 ### Gender
+
 - Female
 - Male
 - Other
 
 ### Time at Bank
+
 - Less than 1 year
 - 1-5 years
 - 6-10 years
 - More than 10 years
 
 ### Bank Experience
+
 - Less than 1 year
 - 1-10 years
 - 11-20 years
 - More than 20 years
 
 ### Bank Division (11 + Other)
+
 - Administration
 - Commercial Banking
 - Credit Department
@@ -87,6 +94,7 @@ The Demographics survey is Survey #1 in the Bank Engagement Platform. It collect
 - Other (with text input)
 
 ### Job Role (16 + Other)
+
 - Branch Staff
 - Branch Manager
 - Call Center Operations
@@ -111,6 +119,7 @@ The Demographics survey is Survey #1 in the Bank Engagement Platform. It collect
 **Primary Component:** [`DemographicsField.tsx`](../src/components/survey/DemographicsField.tsx)
 
 This component handles all demographics input types:
+
 - Text inputs (bankName, city, metro)
 - Dropdowns (country, state)
 - Radio button groups with "Other" support (division, jobRole)
@@ -119,10 +128,12 @@ This component handles all demographics input types:
 ### Data Storage
 
 Demographics responses are stored in the `responses` table with:
+
 - `textValue` field for all responses (since they're all text-based)
 - `value` field is `null` for demographics (only used for Likert scales)
 
 Some fields automatically update the `users` table:
+
 - `division` → `users.division`
 - `jobRole` → `users.jobRole`
 - `employmentStatus` → `users.employmentStatus`
@@ -133,10 +144,12 @@ Some fields automatically update the `users` table:
 ### Sanity CMS Structure
 
 **Schema Files:**
+
 - [question.ts](../sanity/schemas/question.ts) - Added `fieldType` field
 - [survey.ts](../sanity/schemas/survey.ts) - Supports `demographics` type
 
 **Creation Script:**
+
 - [create-demographics-survey.ts](../scripts/create-demographics-survey.ts)
 
 ## Usage
@@ -165,6 +178,7 @@ Some fields automatically update the `users` table:
 ### API Endpoints
 
 **Save Response (Auto-save):**
+
 ```typescript
 PATCH /api/responses
 Body: {
@@ -175,10 +189,11 @@ Body: {
 ```
 
 **Submit Survey:**
+
 ```typescript
-POST /api/responses/submit
+POST / api / responses / submit;
 Body: {
-  token: string
+  token: string;
 }
 ```
 
@@ -187,12 +202,14 @@ Body: {
 To test the demographics survey:
 
 1. **Create a test campaign:**
+
    ```bash
    # In admin dashboard
    Create Campaign → Select "Employee Demographics"
    ```
 
 2. **Access the survey:**
+
    ```bash
    # Use the generated token URL
    http://localhost:3000/s/[TOKEN]
@@ -226,6 +243,7 @@ To test the demographics survey:
 ### Modifying Options
 
 Edit the constant arrays in [DemographicsField.tsx:15-82](../src/components/survey/DemographicsField.tsx#L15-L82):
+
 - `BANK_SIZES`
 - `DEVICES`
 - `EMPLOYMENT_STATUS`
@@ -239,7 +257,7 @@ Edit the constant arrays in [DemographicsField.tsx:15-82](../src/components/surv
 
 ## Related Files
 
-- Survey Page: [src/app/(survey)/s/[token]/page.tsx](../src/app/(survey)/s/[token]/page.tsx)
+- Survey Page: [src/app/(survey)/s/[token]/page.tsx](<../src/app/(survey)/s/[token]/page.tsx>)
 - Survey Shell: [src/components/survey/SurveyShell.tsx](../src/components/survey/SurveyShell.tsx)
 - Demographics Field Component: [src/components/survey/DemographicsField.tsx](../src/components/survey/DemographicsField.tsx)
 - Response API: [src/app/api/responses/route.ts](../src/app/api/responses/route.ts)
@@ -253,6 +271,7 @@ Edit the constant arrays in [DemographicsField.tsx:15-82](../src/components/surv
 **Problem:** A demographics question isn't showing up in the survey.
 
 **Solution:**
+
 1. Verify question has `fieldType` set in Sanity
 2. Check that section includes the question reference
 3. Verify survey includes the section reference
@@ -263,6 +282,7 @@ Edit the constant arrays in [DemographicsField.tsx:15-82](../src/components/surv
 **Problem:** Text input doesn't appear when selecting "Other".
 
 **Solution:**
+
 1. Ensure field type is `division` or `jobRole`
 2. Check that options array includes `'Other'`
 3. Verify `handleOtherChange` is being called
@@ -272,6 +292,7 @@ Edit the constant arrays in [DemographicsField.tsx:15-82](../src/components/surv
 **Problem:** User demographics aren't being saved to the users table.
 
 **Solution:**
+
 1. Check [route.ts:89-115](../src/app/api/responses/route.ts#L89-L115)
 2. Verify question ID pattern matching
 3. Ensure user is associated with invitation

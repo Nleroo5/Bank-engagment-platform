@@ -7,6 +7,7 @@ The weighted scoring system provides endpoints for retrieving and exporting surv
 ## Authentication
 
 All endpoints require authentication via NextAuth session. Users must have appropriate role permissions:
+
 - `SUPER_ADMIN`: Access to all campaigns across all organizations
 - `ORG_ADMIN`: Access to campaigns within their organization
 - `VIEWER`: Read-only access to campaigns within their organization
@@ -22,6 +23,7 @@ Retrieves weighted scoring results for a specific campaign.
 **Authentication:** Required (Session-based)
 
 **URL Parameters:**
+
 - `campaignId` (string, required): UUID of the survey campaign
 
 **Response Format:**
@@ -204,12 +206,15 @@ Exports weighted scoring results in Excel or PDF format.
 **Authentication:** Required (Session-based)
 
 **URL Parameters:**
+
 - `campaignId` (string, required): UUID of the survey campaign
 
 **Query Parameters:**
+
 - `format` (string, optional): Export format - `xlsx` or `pdf` (default: `xlsx`)
 
 **Response:**
+
 - File download with appropriate MIME type
 - Excel: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
 - PDF: `application/pdf`
@@ -219,6 +224,7 @@ Exports weighted scoring results in Excel or PDF format.
 The Excel file contains multiple sheets:
 
 **Sheet 1: Summary**
+
 - Survey title, organization name, survey type
 - Date range and status
 - Total invitations, completed responses, completion rate
@@ -226,6 +232,7 @@ The Excel file contains multiple sheets:
 - Scale range
 
 **Sheet 2: Category Scores**
+
 - Category name
 - Weight multiplier (×)
 - Average weighted score
@@ -238,6 +245,7 @@ The Excel file contains multiple sheets:
 - Legend explaining formulas
 
 **Sheet 3: Individual Scores** (only for non-anonymous surveys)
+
 - Respondent names
 - Category scores (with weight multipliers in headers)
 - Total weighted score
@@ -299,6 +307,7 @@ Adjusted Value = (Scale Max + 1) - Raw Value
 ```
 
 For a 3-point scale:
+
 - Raw 1 → Adjusted 3
 - Raw 2 → Adjusted 2
 - Raw 3 → Adjusted 1
@@ -307,15 +316,15 @@ For a 3-point scale:
 
 Based on the official scoring matrix:
 
-| Category | Weight | Questions | Max Raw | Max Weighted |
-|----------|--------|-----------|---------|--------------|
-| Communication | 1.75 | 4 | 12 | 21.0 |
-| Leadership | 1.0 | 7 | 21 | 21.0 |
-| Culture | 2.3 | 3 | 9 | 20.7 |
-| Accountability | 1.7 | 6 | 18 | 30.6 |
-| Execution | 1.4 | 5 | 15 | 21.0 |
-| Associate | 1.4 | 5 | 15 | 21.0 |
-| Team Dynamics | 1.4 | 5 | 15 | 21.0 |
+| Category       | Weight | Questions | Max Raw | Max Weighted |
+| -------------- | ------ | --------- | ------- | ------------ |
+| Communication  | 1.75   | 4         | 12      | 21.0         |
+| Leadership     | 1.0    | 7         | 21      | 21.0         |
+| Culture        | 2.3    | 3         | 9       | 20.7         |
+| Accountability | 1.7    | 6         | 18      | 30.6         |
+| Execution      | 1.4    | 5         | 15      | 21.0         |
+| Associate      | 1.4    | 5         | 15      | 21.0         |
+| Team Dynamics  | 1.4    | 5         | 15      | 21.0         |
 
 **Total:** 35 questions, Max Weighted Score: 156.3
 
@@ -362,6 +371,7 @@ API endpoints are rate-limited to prevent abuse:
 - **Export endpoint**: 20 requests per minute per user
 
 Rate limit headers included in responses:
+
 - `X-RateLimit-Limit`: Maximum requests allowed
 - `X-RateLimit-Remaining`: Requests remaining in current window
 - `X-RateLimit-Reset`: Timestamp when limit resets
@@ -465,6 +475,7 @@ export async function downloadReport(
 Scoring engine tests are located at: `src/lib/scoring/categoryScoring.test.ts`
 
 Run tests:
+
 ```bash
 npm run test
 ```
@@ -478,8 +489,8 @@ describe('GET /api/reports/[campaignId]', () => {
   it('returns weighted scoring results', async () => {
     const response = await fetch(`/api/reports/${testCampaignId}`, {
       headers: {
-        'Cookie': `next-auth.session-token=${sessionToken}`
-      }
+        Cookie: `next-auth.session-token=${sessionToken}`,
+      },
     });
 
     expect(response.status).toBe(200);
@@ -501,22 +512,27 @@ describe('GET /api/reports/[campaignId]', () => {
 ### Common Issues
 
 **1. "Insufficient respondents" error**
+
 - **Cause**: Anonymous survey has fewer than 5 completed responses
 - **Solution**: Wait for more respondents to complete the survey
 
 **2. Missing `individualScores` in response**
+
 - **Cause**: Survey type is anonymous (Associate 180)
 - **Solution**: Expected behavior - use `categoryAggregates` instead
 
 **3. Weighted scores seem incorrect**
+
 - **Cause**: May involve reverse-scored questions
 - **Solution**: Check `isReversed` flag on questions - reverse scoring is applied automatically
 
 **4. Export download fails**
+
 - **Cause**: Session expired or insufficient permissions
 - **Solution**: Re-authenticate and verify user role
 
 **5. Category weights don't match expectations**
+
 - **Cause**: Weights may not be set correctly in Sanity
 - **Solution**: Run `npm run populate-category-weights` to update Sanity
 
@@ -529,22 +545,26 @@ describe('GET /api/reports/[campaignId]', () => {
 If upgrading from the previous scoring system:
 
 1. **Database**: Run migration to add `adjustedValue` column
+
    ```sql
    ALTER TABLE "responses" ADD COLUMN "adjusted_value" INTEGER;
    COMMENT ON COLUMN "responses"."adjusted_value" IS 'Value after reverse-scoring applied';
    ```
 
 2. **Backfill**: Run backfill script for existing responses
+
    ```bash
    npx tsx scripts/backfill-adjusted-values.ts
    ```
 
 3. **Sanity**: Update category weights
+
    ```bash
    npx tsx scripts/populate-category-weights.ts
    ```
 
 4. **Code**: Update imports
+
    ```typescript
    // OLD
    import { calculateScores } from '@/lib/scoring/calculate';
@@ -569,6 +589,7 @@ For questions or issues with the weighted scoring system:
 ## Changelog
 
 ### Version 2.0.0 (Current)
+
 - Implemented weighted category scoring system
 - Added reverse-scoring support
 - Created comprehensive scoring engine with 24 unit tests
@@ -577,6 +598,7 @@ For questions or issues with the weighted scoring system:
 - Added anonymity threshold enforcement
 
 ### Version 1.0.0 (Previous)
+
 - Basic scoring without category weights
 - Simple aggregate calculations
 - No reverse-scoring support

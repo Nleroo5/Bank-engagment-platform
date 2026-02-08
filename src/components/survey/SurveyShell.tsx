@@ -30,9 +30,8 @@ export function SurveyShell({
     isCompleted ? 'completed' : 'welcome'
   );
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number | string>>(
-    existingResponses
-  );
+  const [answers, setAnswers] =
+    useState<Record<string, number | string>>(existingResponses);
   const [isSaving, setIsSaving] = useState(false);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
@@ -197,7 +196,8 @@ export function SurveyShell({
           // Check if this is a demographics survey
           if (survey.surveyType === 'demographics') {
             // Extract fieldType from question (could be from question.fieldType or question.slug)
-            const fieldType = question.fieldType || question.slug?.current || '';
+            const fieldType =
+              question.fieldType || question.slug?.current || '';
 
             return (
               <DemographicsField

@@ -17,9 +17,7 @@ export function WelcomeScreen({ survey, onBegin }: WelcomeScreenProps) {
         </h1>
 
         {survey.welcomeMessage && (
-          <p className="mb-6 text-lg text-gray-700">
-            {survey.welcomeMessage}
-          </p>
+          <p className="mb-6 text-lg text-gray-700">{survey.welcomeMessage}</p>
         )}
 
         {survey.estimatedMinutes && (
@@ -36,14 +34,19 @@ export function WelcomeScreen({ survey, onBegin }: WelcomeScreenProps) {
               {typeof survey.instructions === 'string' ? (
                 <p>{survey.instructions}</p>
               ) : (
-                <p>Please read each statement carefully and select the option that best represents your view.</p>
+                <p>
+                  Please read each statement carefully and select the option
+                  that best represents your view.
+                </p>
               )}
             </div>
           </div>
         )}
 
         <div className="mb-6 space-y-2 text-sm text-gray-600">
-          <p>• Your responses are confidential and will be aggregated with others</p>
+          <p>
+            • Your responses are confidential and will be aggregated with others
+          </p>
           <p>• You can save your progress and return later</p>
           <p>• All questions must be answered to complete the survey</p>
         </div>
