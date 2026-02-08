@@ -147,7 +147,6 @@ export async function GET(
       );
 
       return {
-        invitationId: invitation.id,
         userName: invitation.user.name || invitation.user.email,
         ...scoringResult,
       };

@@ -105,7 +105,8 @@ export const authOptions: NextAuthOptions = {
     error: '/admin/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user }: { token: any; user: any }) {
       // Initial sign in
       if (user) {
         token.id = user.id;
@@ -114,7 +115,8 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: { session: any; token: any }) {
       // Add custom fields to session
       if (session.user) {
         session.user.id = token.id;

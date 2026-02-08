@@ -10,6 +10,7 @@ import {
   checkAnonymityThreshold,
   getFilterableOptions,
   validateFilteredAnonymity,
+  ANONYMOUS_SURVEY_TYPES,
 } from '@/lib/scoring/anonymity';
 
 export async function GET(
@@ -226,10 +227,8 @@ export async function GET(
       );
 
       return {
-        invitationId: invitation.id,
         userId: invitation.userId,
         userName: invitation.user.name || invitation.user.email,
-        completedAt: invitation.completedAt,
         ...scoringResult,
       };
     });
@@ -298,7 +297,9 @@ export async function GET(
       ) / individualResults.length;
 
     // Determine if individual scores should be shown (not for Associate 180)
-    const showIndividualScores = survey.surveyType !== 'associate180';
+    const showIndividualScores = !ANONYMOUS_SURVEY_TYPES.includes(
+      survey.surveyType.toLowerCase()
+    );
 
     return NextResponse.json({
       campaign: {

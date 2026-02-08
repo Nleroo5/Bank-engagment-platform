@@ -47,7 +47,10 @@ function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
     return null;
   }
 
-  const data = payload[0].payload;
+  const data = payload[0]?.payload;
+  if (!data) {
+    return null;
+  }
 
   return (
     <div className="rounded-lg border bg-white p-4 shadow-lg">
