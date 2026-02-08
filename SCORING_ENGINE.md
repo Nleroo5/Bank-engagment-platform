@@ -17,7 +17,7 @@ Built a comprehensive scoring engine that calculates survey scores at multiple l
 
 ### Tests
 
-4. **[src/lib/scoring/**tests**/calculate.test.ts](src/lib/scoring/__tests__/calculate.test.ts)** - Comprehensive unit tests (31 tests, all passing)
+4. **[src/lib/scoring/**tests**/calculate.test.ts](src/lib/scoring/**tests**/calculate.test.ts)** - Comprehensive unit tests (31 tests, all passing)
 
 ## Core Functions
 
