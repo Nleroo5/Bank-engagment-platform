@@ -10,6 +10,7 @@ declare module 'next-auth' {
       role: string;
       organizationId?: string | null;
     } & DefaultSession['user'];
+    expires: string;
   }
 
   interface User {
