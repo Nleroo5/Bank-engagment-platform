@@ -12,17 +12,19 @@ interface DemographicsFieldProps {
   disabled?: boolean;
 }
 
-// Field options
+// Field options - 12 ranges as per requirements
 const BANK_SIZES = [
   'Less than $100M',
-  '$100 - $250M',
-  '$250 - $500M',
-  '$500M - $1B',
+  '$100M - $250M',
+  '$250M - $500M',
+  '$500M - $750M',
+  '$750M - $1B',
   '$1B - $2.5B',
   '$2.5B - $5B',
-  '$5B - $10B',
-  '$10B - $15B',
-  '$15B - $20B',
+  '$5B - $7.5B',
+  '$7.5B - $10B',
+  '$10B - $12.5B',
+  '$12.5B - $20B',
   'Greater than $20B',
 ];
 
@@ -47,36 +49,42 @@ const BANK_EXPERIENCE = [
 ];
 
 const DIVISIONS = [
-  'Retail Banking',
+  'Administration',
   'Commercial Banking',
-  'Wealth Management',
+  'Credit Department',
+  'Information Systems / Technology (IS/Tech)',
   'Operations',
-  'Technology',
-  'Risk Management',
-  'Compliance',
-  'Human Resources',
-  'Marketing',
-  'Finance',
-  'Executive',
+  'Retail',
+  'Sales/Marketing',
+  'Special Banking',
+  'Trust',
+  'Wealth Management',
   'Other',
 ];
 
 const JOB_ROLES = [
-  'Teller',
-  'Personal Banker',
+  'Branch Staff',
   'Branch Manager',
-  'Loan Officer',
+  'Call Center Operations',
+  'CEO/Executive',
+  'Coach/Mentor/Trainer',
+  'Executive Management',
+  'Finance',
+  'Human Resources/Trainers',
+  'Loan Administration',
+  'Operations Staff',
+  'Marketing/Sales Manager',
   'Relationship Manager',
-  'Analyst',
-  'Operations Specialist',
-  'IT Specialist',
-  'Compliance Officer',
-  'HR Specialist',
-  'Marketing Specialist',
-  'Executive',
-  'Administrative Assistant',
-  'Security',
-  'Facilities',
+  'Risk',
+  'Supervisory Staff',
+  'Technology Staff',
+  'Other',
+];
+
+const COUNTRIES = [
+  'United States',
+  'Canada',
+  'United Kingdom',
   'Other',
 ];
 
@@ -194,13 +202,22 @@ export function DemographicsField({
         return DIVISIONS;
       case 'jobRole':
         return JOB_ROLES;
+      case 'country':
+        return COUNTRIES;
+      case 'state':
+        return US_STATES;
       default:
         return [];
     }
   };
 
-  // Text input for bank name
-  if (fieldType === 'bankName') {
+  // Text input for bank name, city, and metro
+  if (fieldType === 'bankName' || fieldType === 'city' || fieldType === 'metro') {
+    let placeholder = 'Enter value';
+    if (fieldType === 'bankName') placeholder = "Enter your bank's name";
+    if (fieldType === 'city') placeholder = 'Enter city name';
+    if (fieldType === 'metro') placeholder = 'Enter metro area';
+
     return (
       <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
         <label htmlFor={questionId} className="mb-4 block">
@@ -220,14 +237,17 @@ export function DemographicsField({
           onChange={(e) => handleChange(e.target.value)}
           disabled={disabled}
           className="block w-full rounded-md border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100"
-          placeholder="Enter your bank's name"
+          placeholder={placeholder}
         />
       </div>
     );
   }
 
-  // Dropdown for states (simplified - not cascading yet)
-  if (fieldType === 'state') {
+  // Dropdown for location fields (country and state)
+  if (fieldType === 'state' || fieldType === 'country') {
+    const options = getOptionsForField(fieldType);
+    const placeholderText = fieldType === 'country' ? 'Select a country' : 'Select a state';
+
     return (
       <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
         <label htmlFor={questionId} className="mb-4 block">
@@ -247,10 +267,10 @@ export function DemographicsField({
           disabled={disabled}
           className="block w-full rounded-md border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100"
         >
-          <option value="">Select a state</option>
-          {US_STATES.map((state) => (
-            <option key={state} value={state}>
-              {state}
+          <option value="">{placeholderText}</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
             </option>
           ))}
         </select>

@@ -49,6 +49,30 @@ export const question = defineType({
       description:
         'Optional descriptor shown on the right side of the scale for context. Used primarily in the LTE survey (e.g., "Objectives are always thoroughly discussed with others on the team").',
     }),
+    defineField({
+      name: "fieldType",
+      title: "Demographics Field Type",
+      type: "string",
+      description:
+        "For demographics surveys only. Specifies the type of input field to display.",
+      options: {
+        list: [
+          { title: "Bank Name (text)", value: "bankName" },
+          { title: "Country (dropdown)", value: "country" },
+          { title: "State (dropdown)", value: "state" },
+          { title: "Metro Area (text)", value: "metro" },
+          { title: "City (text)", value: "city" },
+          { title: "Bank Size (radio)", value: "bankSize" },
+          { title: "Device Used (radio)", value: "device" },
+          { title: "Employment Status (radio)", value: "employmentStatus" },
+          { title: "Gender (radio)", value: "gender" },
+          { title: "Time at Bank (radio)", value: "timeAtBank" },
+          { title: "Bank Experience (radio)", value: "bankExperience" },
+          { title: "Division (radio)", value: "division" },
+          { title: "Job Role (radio)", value: "jobRole" },
+        ],
+      },
+    }),
   ],
   orderings: [
     {
