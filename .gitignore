@@ -42,3 +42,4 @@ prisma/migrations/**/*.sql
 # sanity
 sanity/dist
 sanity/.sanity
+.env.production

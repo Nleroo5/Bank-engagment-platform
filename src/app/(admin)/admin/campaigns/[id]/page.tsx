@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { CampaignActions } from '@/components/admin/CampaignActions';
+import { CampaignHeaderActions } from '@/components/admin/CampaignHeaderActions';
 import { ArrowLeft } from 'lucide-react';
 
 // Force dynamic rendering - admin pages need database access at runtime
@@ -83,7 +84,7 @@ export default async function CampaignDetailPage({
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between">
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">
               {campaign.surveyTitle}
             </h1>
@@ -91,13 +92,16 @@ export default async function CampaignDetailPage({
               {campaign.organization.name}
             </p>
           </div>
-          <span
-            className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${getStatusBadgeClass(
-              campaign.status
-            )}`}
-          >
-            {campaign.status}
-          </span>
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${getStatusBadgeClass(
+                campaign.status
+              )}`}
+            >
+              {campaign.status}
+            </span>
+            <CampaignHeaderActions campaign={campaign} />
+          </div>
         </div>
       </div>
 
