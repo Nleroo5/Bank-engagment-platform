@@ -15,6 +15,7 @@ declare module 'next-auth' {
       role: UserRole;
       organizationId?: string | null;
     };
+    expires: string;
   }
 
   interface User {
