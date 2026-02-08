@@ -1,8 +1,9 @@
 import { getServerSession } from 'next-auth';
+import type { Session } from 'next-auth';
 import { authOptions, type UserRole } from './config';
 
 // Get the current session server-side
-export async function getSession() {
+export async function getSession(): Promise<Session | null> {
   return await getServerSession(authOptions);
 }
 
