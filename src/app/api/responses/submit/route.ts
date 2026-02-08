@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { getSurveyById } from '@/lib/sanity';
+import {
+  rateLimit,
+  getClientIp,
+  getRateLimitHeaders,
+  RATE_LIMITS,
+} from '@/lib/rate-limit';
 
 const submitSchema = z.object({
   token: z.string().uuid(),
@@ -8,6 +15,23 @@ const submitSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const clientIp = getClientIp(request);
+    const rateLimitResult = rateLimit(clientIp, RATE_LIMITS.SURVEY_SUBMIT);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: 'Too many requests. Please try again later.',
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+
     const body = await request.json();
     const { token } = submitSchema.parse(body);
 
@@ -43,9 +67,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Validate that all required questions have been answered
-    // This would require fetching the survey from Sanity and comparing
-    // For now, we'll trust the client validation
+    // Validate that all required questions have been answered
+    const survey = await getSurveyById(invitation.campaign.sanitysurveyId);
+
+    if (!survey) {
+      return NextResponse.json(
+        { error: 'Survey configuration not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get all question IDs from the survey
+    const allQuestionIds: string[] = [];
+    for (const section of survey.sections || []) {
+      for (const question of section.questions || []) {
+        allQuestionIds.push(question._id);
+      }
+    }
+
+    // Get all answered question IDs from responses
+    const answeredQuestionIds = invitation.responses.map(r => r.sanityQuestionId);
+
+    // Find missing questions
+    const missingQuestionIds = allQuestionIds.filter(
+      qId => !answeredQuestionIds.includes(qId)
+    );
+
+    if (missingQuestionIds.length > 0) {
+      // Get the question numbers for better error message
+      const missingQuestions = survey.sections
+        ?.flatMap(s => s.questions || [])
+        .filter(q => missingQuestionIds.includes(q._id))
+        .map(q => q.number)
+        .sort((a, b) => a - b);
+
+      return NextResponse.json(
+        {
+          error: 'Survey incomplete',
+          message: `Please answer all questions. Missing: ${missingQuestions?.join(', ')}`,
+          missingQuestions,
+        },
+        { status: 400 }
+      );
+    }
 
     const completedAt = new Date();
 

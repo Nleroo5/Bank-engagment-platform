@@ -2,12 +2,36 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/sanity';
 import { sendInvitation } from '@/lib/email/send';
+import {
+  rateLimit,
+  getRateLimitHeaders,
+  RATE_LIMITS,
+} from '@/lib/rate-limit';
 
 export async function POST(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Apply rate limiting - use campaign ID as identifier to prevent abuse per campaign
+    const rateLimitResult = rateLimit(
+      `email-send-campaign-${params.id}`,
+      RATE_LIMITS.EMAIL_SEND
+    );
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: 'Too many email requests for this campaign. Please try again later.',
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+
     // Fetch the campaign
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.id },

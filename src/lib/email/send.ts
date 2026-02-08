@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import { render } from '@react-email/components';
-import type { Invitation, SurveyCampaign, User } from '@prisma/client';
+import type { Invitation, SurveyCampaign, User, Organization } from '@prisma/client';
 import type { Survey } from '@/types/survey';
 import { InvitationEmail } from './templates/InvitationEmail';
 import { ReminderEmail } from './templates/ReminderEmail';
@@ -39,12 +39,16 @@ interface InvitationWithUser extends Invitation {
   user: User;
 }
 
+interface CampaignWithOrganization extends SurveyCampaign {
+  organization: Organization;
+}
+
 /**
  * Sends a survey invitation email
  */
 export async function sendInvitation(
   invitation: InvitationWithUser,
-  campaign: SurveyCampaign,
+  campaign: CampaignWithOrganization,
   survey: Survey
 ) {
   try {
@@ -61,7 +65,7 @@ export async function sendInvitation(
       InvitationEmail({
         surveyTitle: survey.title,
         surveyLink,
-        organizationName: campaign.organizationId, // This should be organization name
+        organizationName: campaign.organization.name,
         deadline,
         estimatedMinutes: survey.estimatedMinutes,
       })
@@ -102,7 +106,7 @@ export async function sendInvitation(
  */
 export async function sendReminder(
   invitation: InvitationWithUser,
-  campaign: SurveyCampaign,
+  campaign: CampaignWithOrganization,
   survey: Survey
 ) {
   try {
@@ -127,7 +131,7 @@ export async function sendReminder(
       ReminderEmail({
         surveyTitle: survey.title,
         surveyLink,
-        organizationName: campaign.organizationId, // This should be organization name
+        organizationName: campaign.organization.name,
         daysRemaining: Math.max(0, daysRemaining),
         deadline,
       })
@@ -168,7 +172,7 @@ export async function sendReminder(
  */
 export async function sendConfirmation(
   invitation: InvitationWithUser,
-  campaign: SurveyCampaign,
+  campaign: CampaignWithOrganization,
   survey: Survey
 ) {
   try {
@@ -191,7 +195,7 @@ export async function sendConfirmation(
     const html = await render(
       ConfirmationEmail({
         surveyTitle: survey.title,
-        organizationName: campaign.organizationId, // This should be organization name
+        organizationName: campaign.organization.name,
         completedAt,
       })
     );
