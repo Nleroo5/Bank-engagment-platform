@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Survey } from '@/types/survey';
 import { WelcomeScreen } from './WelcomeScreen';
 import { SurveyProgress } from './SurveyProgress';
@@ -34,6 +34,7 @@ export function SurveyShell({
     useState<Record<string, number | string>>(existingResponses);
   const [isSaving, setIsSaving] = useState(false);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const surveyContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-save function
   const saveResponse = useCallback(
@@ -115,14 +116,28 @@ export function SurveyShell({
   const handlePrevious = () => {
     if (currentSectionIndex > 0) {
       setCurrentSectionIndex(currentSectionIndex - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Scroll to survey container top for better mobile UX
+      setTimeout(() => {
+        surveyContainerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest',
+        });
+      }, 0);
     }
   };
 
   const handleNext = () => {
     if (currentSectionIndex < totalSections - 1) {
       setCurrentSectionIndex(currentSectionIndex + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Scroll to survey container top for better mobile UX
+      setTimeout(() => {
+        surveyContainerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest',
+        });
+      }, 0);
     }
   };
 
@@ -145,6 +160,7 @@ export function SurveyShell({
       }
 
       setStage('completed');
+      // Scroll to top for completion screen
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Error submitting survey:', error);
@@ -168,7 +184,7 @@ export function SurveyShell({
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div ref={surveyContainerRef} className="mx-auto max-w-4xl px-4 py-8">
       {/* Progress bar */}
       <SurveyProgress
         totalQuestions={totalQuestions}
