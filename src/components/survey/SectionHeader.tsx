@@ -22,7 +22,7 @@ export function SectionHeader({
       {(section.description ||
         (section.directions && section.directions.length > 0)) && (
         <div className="rounded-md bg-gray-50 p-4">
-          <p className="text-sm text-gray-700">
+          <p className="text-base text-gray-700">
             {section.description ||
               'Please rate each statement using the scale provided.'}
           </p>

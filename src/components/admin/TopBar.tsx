@@ -19,7 +19,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
-          className="rounded-md p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
+          className="rounded-md p-3 text-gray-600 hover:bg-gray-100 lg:hidden"
           aria-label="Open menu"
         >
           <Menu className="h-6 w-6" />

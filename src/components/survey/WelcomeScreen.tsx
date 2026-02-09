@@ -43,7 +43,7 @@ export function WelcomeScreen({ survey, onBegin }: WelcomeScreenProps) {
           </div>
         )}
 
-        <div className="mb-6 space-y-2 text-sm text-gray-600">
+        <div className="mb-6 space-y-2 text-base text-gray-600">
           <p>
             • Your responses are confidential and will be aggregated with others
           </p>

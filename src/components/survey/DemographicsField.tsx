@@ -232,6 +232,7 @@ export function DemographicsField({
         <input
           id={questionId}
           type="text"
+          inputMode="text"
           value={selectedValue}
           onChange={(e) => handleChange(e.target.value)}
           disabled={disabled}
@@ -328,6 +329,7 @@ export function DemographicsField({
           <div className="ml-8 mt-2">
             <input
               type="text"
+              inputMode="text"
               value={otherValue}
               onChange={(e) => handleOtherChange(e.target.value)}
               disabled={disabled}

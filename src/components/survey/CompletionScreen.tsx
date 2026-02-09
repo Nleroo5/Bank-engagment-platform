@@ -29,13 +29,13 @@ export function CompletionScreen({ survey }: CompletionScreenProps) {
         )}
 
         <div className="rounded-md bg-green-50 p-4">
-          <p className="text-sm text-green-800">
+          <p className="text-base text-green-800">
             Your responses are confidential and will be used to improve our
             organization.
           </p>
         </div>
 
-        <div className="mt-8 text-sm text-gray-500">
+        <div className="mt-8 text-base text-gray-500">
           You may now close this window.
         </div>
       </div>
