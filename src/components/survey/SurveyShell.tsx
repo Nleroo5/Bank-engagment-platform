@@ -34,6 +34,7 @@ export function SurveyShell({
     useState<Record<string, number | string>>(existingResponses);
   const [isSaving, setIsSaving] = useState(false);
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
   const surveyContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-save function
@@ -115,6 +116,7 @@ export function SurveyShell({
 
   const handlePrevious = () => {
     if (currentSectionIndex > 0) {
+      setIsNavigating(true);
       setCurrentSectionIndex(currentSectionIndex - 1);
       // Scroll to survey container top for better mobile UX
       setTimeout(() => {
@@ -123,12 +125,15 @@ export function SurveyShell({
           block: 'start',
           inline: 'nearest',
         });
+        // Hide loading indicator after scroll animation (500ms)
+        setTimeout(() => setIsNavigating(false), 500);
       }, 0);
     }
   };
 
   const handleNext = () => {
     if (currentSectionIndex < totalSections - 1) {
+      setIsNavigating(true);
       setCurrentSectionIndex(currentSectionIndex + 1);
       // Scroll to survey container top for better mobile UX
       setTimeout(() => {
@@ -137,6 +142,8 @@ export function SurveyShell({
           block: 'start',
           inline: 'nearest',
         });
+        // Hide loading indicator after scroll animation (500ms)
+        setTimeout(() => setIsNavigating(false), 500);
       }, 0);
     }
   };
@@ -190,6 +197,18 @@ export function SurveyShell({
         totalQuestions={totalQuestions}
         answeredQuestions={answeredCount}
       />
+
+      {/* Navigation loading indicator */}
+      {isNavigating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm transition-opacity">
+          <div className="flex flex-col items-center gap-3 rounded-lg bg-white p-6 shadow-lg">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+            <span className="text-sm font-medium text-gray-700">
+              Loading section...
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Save indicator */}
       {isSaving && (
