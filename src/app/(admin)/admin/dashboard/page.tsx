@@ -7,8 +7,8 @@ import {
   TrendingUp,
   Plus,
   Upload,
-  ArrowRight,
 } from 'lucide-react';
+import { RecentCampaignsTable } from '@/components/admin/RecentCampaignsTable';
 
 // Force dynamic rendering - admin pages need database access at runtime
 export const dynamic = 'force-dynamic';
@@ -48,8 +48,11 @@ export default async function DashboardPage() {
       ? Math.round((completedResponses / invitations.length) * 100)
       : 0;
 
-  // Fetch recent campaigns
+  // Fetch recent campaigns (exclude deleted)
   const recentCampaigns = await prisma.surveyCampaign.findMany({
+    where: {
+      deletedAt: null, // Exclude deleted campaigns
+    },
     include: {
       organization: true,
       _count: {
@@ -71,11 +74,6 @@ export default async function DashboardPage() {
     },
     take: 5,
   });
-
-  const getResponseRate = (completedCount: number, totalCount: number) => {
-    if (totalCount === 0) return 0;
-    return Math.round((completedCount / totalCount) * 100);
-  };
 
   return (
     <div className="p-8">
@@ -211,93 +209,7 @@ export default async function DashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Survey
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Organization
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Response Rate
-                  </th>
-                  <th className="relative px-6 py-3">
-                    <span className="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {recentCampaigns.map((campaign) => {
-                  const totalInvitations = campaign._count.invitations;
-                  const completedCount = campaign.invitations.length;
-                  const responseRate = getResponseRate(
-                    completedCount,
-                    totalInvitations
-                  );
-
-                  return (
-                    <tr key={campaign.id} className="hover:bg-gray-50">
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {campaign.surveyTitle}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <div className="text-sm text-gray-500">
-                          {campaign.organization.name}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                            campaign.status === 'ACTIVE'
-                              ? 'bg-green-100 text-green-800'
-                              : campaign.status === 'COMPLETED'
-                                ? 'bg-gray-100 text-gray-800'
-                                : campaign.status === 'DRAFT'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {campaign.status}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <div className="flex items-center">
-                          <div className="text-sm font-medium text-gray-900">
-                            {responseRate}%
-                          </div>
-                          <div className="ml-2 w-16">
-                            <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-                              <div
-                                className="h-full bg-primary-600"
-                                style={{ width: `${responseRate}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                        <Link
-                          href={`/admin/campaigns/${campaign.id}`}
-                          className="inline-flex items-center text-primary-600 hover:text-primary-900"
-                        >
-                          View
-                          <ArrowRight className="ml-1 h-4 w-4" />
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <RecentCampaignsTable campaigns={recentCampaigns} />
         )}
       </div>
     </div>
