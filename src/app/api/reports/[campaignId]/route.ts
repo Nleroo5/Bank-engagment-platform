@@ -273,11 +273,57 @@ export async function GET(
         ? Math.round((completedCount / totalInvitations) * 100 * 10) / 10
         : 0;
 
-    const overallWeightedScore =
-      individualResults.reduce(
-        (sum, r) => sum + r.overallMetrics.totalWeightedScore,
-        0
-      ) / individualResults.length;
+    // Calculate section-level aggregates
+    const sectionAggregates = survey.sections.map((section) => {
+      const sectionQuestionIds = section.questions.map((q) => q._id);
+
+      // Collect all responses for this section across all invitations
+      const allSectionResponses: number[] = [];
+
+      filteredInvitations.forEach((invitation) => {
+        const sectionResponses = invitation.responses.filter((r) =>
+          sectionQuestionIds.includes(r.sanityQuestionId)
+        );
+
+        sectionResponses.forEach((response) => {
+          // Use adjustedValue if available (for reverse-scored), otherwise use raw value
+          const value = response.adjustedValue ?? response.value ?? 0;
+          allSectionResponses.push(value);
+        });
+      });
+
+      const averageScore =
+        allSectionResponses.length > 0
+          ? allSectionResponses.reduce((sum: number, val: number) => sum + val, 0) /
+            allSectionResponses.length
+          : 0;
+
+      return {
+        sectionId: section._id,
+        sectionTitle: section.title,
+        averageScore: Math.round(averageScore * 10) / 10,
+        questionCount: section.questions.length,
+        responseCount: filteredInvitations.length,
+      };
+    });
+
+    // Map categories to the expected format
+    const categoryScores = aggregateStats.map((cat) => ({
+      categoryId: cat.categoryId,
+      categoryName: cat.categoryName,
+      averageScore: cat.averageWeightedScore,
+      questionCount: cat.questionCount,
+      responseCount: cat.respondentCount,
+    }));
+
+    // Calculate simple overall score (average of all adjusted responses)
+    const allResponses = filteredInvitations.flatMap((inv) =>
+      inv.responses.map((r) => (r.adjustedValue ?? r.value ?? 0) as number)
+    );
+    const overallScore =
+      allResponses.length > 0
+        ? allResponses.reduce((sum: number, val: number) => sum + val, 0) / allResponses.length
+        : 0;
 
     // Determine if individual scores should be shown (not for Associate 180)
     const showIndividualScores = !ANONYMOUS_SURVEY_TYPES.includes(
@@ -300,7 +346,11 @@ export async function GET(
         completedCount,
         completionRate,
         filteredCount: filteredInvitations.length,
-        averageOverallWeightedScore: Math.round(overallWeightedScore * 10) / 10,
+      },
+      scores: {
+        overall: Math.round(overallScore * 10) / 10,
+        categories: categoryScores,
+        sections: sectionAggregates,
       },
       categoryAggregates: aggregateStats,
       individualScores: showIndividualScores ? individualResults : undefined,
