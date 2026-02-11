@@ -14,20 +14,26 @@ import { RecentCampaignsTable } from '@/components/admin/RecentCampaignsTable';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  // Fetch stats (show all data - no role-based filtering)
+  // Fetch stats (exclude deleted campaigns from all metrics)
   const [campaigns, users, invitations] = await Promise.all([
-    // Total campaigns (active ones)
+    // Total campaigns (active ones, not deleted)
     prisma.surveyCampaign.count({
       where: {
         status: 'ACTIVE',
+        deletedAt: null,
       },
     }),
 
     // Total users
     prisma.user.count(),
 
-    // All invitations for completion metrics
+    // Invitations from non-deleted campaigns only
     prisma.invitation.findMany({
+      where: {
+        campaign: {
+          deletedAt: null,
+        },
+      },
       select: {
         status: true,
       },
