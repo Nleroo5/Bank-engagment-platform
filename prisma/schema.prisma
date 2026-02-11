@@ -67,6 +67,8 @@ model SurveyCampaign {
   endDate        DateTime?
   reminderDays   Int      @default(3)
   createdById    String?
+  deletedAt      DateTime?
+  deletedBy      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -74,6 +76,7 @@ model SurveyCampaign {
 
   @@index([organizationId])
   @@index([status])
+  @@index([deletedAt])
   @@map("survey_campaigns")
 }
 

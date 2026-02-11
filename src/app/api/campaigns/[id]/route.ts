@@ -42,6 +42,18 @@ export async function GET(
       );
     }
 
+    // Return 404 if campaign is deleted (unless explicitly requesting deleted campaigns)
+    if (campaign.deletedAt) {
+      return NextResponse.json(
+        {
+          error: 'Campaign has been deleted',
+          deletedAt: campaign.deletedAt,
+          deletedBy: campaign.deletedBy,
+        },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({ campaign });
   } catch (error) {
     console.error('Error fetching campaign:', error);
@@ -108,11 +120,15 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Check if campaign exists
+    // Check if campaign exists and is not already deleted
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.id },
       include: {
-        invitations: true,
+        invitations: {
+          where: {
+            status: 'COMPLETED',
+          },
+        },
       },
     });
 
@@ -123,28 +139,34 @@ export async function DELETE(
       );
     }
 
-    // Don't allow deletion of active campaigns with responses
-    if (campaign.status === 'ACTIVE' && campaign.invitations.length > 0) {
+    if (campaign.deletedAt) {
       return NextResponse.json(
-        {
-          error:
-            'Cannot delete an active campaign with invitations. Archive it instead.',
-        },
+        { error: 'Campaign is already deleted' },
         { status: 400 }
       );
     }
 
-    // Delete all invitations first (cascade should handle this, but being explicit)
-    await prisma.invitation.deleteMany({
-      where: { campaignId: params.id },
-    });
+    // Soft delete: Mark campaign as deleted with timestamp
+    // Note: In production, you'd get the user ID from the auth session
+    // For now, using the createdById as a fallback or 'system'
+    const deletedBy = campaign.createdById || 'system';
 
-    // Delete the campaign
-    await prisma.surveyCampaign.delete({
+    const updatedCampaign = await prisma.surveyCampaign.update({
       where: { id: params.id },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: deletedBy,
+      },
     });
 
-    return NextResponse.json({ success: true });
+    // Return success with deletion metadata
+    return NextResponse.json({
+      success: true,
+      campaignId: updatedCampaign.id,
+      deletedAt: updatedCampaign.deletedAt,
+      deletedBy: updatedCampaign.deletedBy,
+      completedResponses: campaign.invitations.length,
+    });
   } catch (error) {
     console.error('Error deleting campaign:', error);
     return NextResponse.json(

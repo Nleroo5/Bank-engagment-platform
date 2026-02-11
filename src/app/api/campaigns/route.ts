@@ -13,7 +13,11 @@ const createCampaignSchema = z.object({
 
 export async function GET() {
   try {
+    // Fetch only non-deleted campaigns
     const campaigns = await prisma.surveyCampaign.findMany({
+      where: {
+        deletedAt: null,
+      },
       include: {
         organization: true,
         invitations: true,
