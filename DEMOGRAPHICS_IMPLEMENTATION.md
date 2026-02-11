@@ -31,15 +31,17 @@ Created a new component that renders different input types based on field type:
 **Field Types Supported**:
 
 - `bankName` - Text input
+- `country` - Dropdown (United States, Canada)
 - `state` - Dropdown (50 US states)
-- `bankSize` - Radio group (10 size ranges)
-- `device` - Radio group (Desktop/Tablet/Mobile)
-- `employmentStatus` - Radio group (Full-Time/Part-Time/Peak-Time)
-- `gender` - Radio group (Female/Male/Other)
-- `timeAtBank` - Radio group (4 time ranges)
-- `bankExperience` - Radio group (4 experience ranges)
-- `division` - Radio group (12 options + Other with text input)
-- `jobRole` - Radio group (16 options + Other with text input)
+- `city` - Text input
+- `bankSize` - Dropdown (11 size ranges)
+- `device` - Radio group (Desktop/Laptop, Tablet, Mobile Phone)
+- `employmentStatus` - Radio group (Full-time, Part-time, Peak-time)
+- `gender` - Radio group (Female, Male, Other)
+- `timeAtBank` - Radio group (0-5 years, 6-10 years, 11-20 years, >20 years)
+- `bankExperience` - Radio group (0-5 years, 6-10 years, 11-20 years, >20 years)
+- `division` - Dropdown (11 options + Other with text input)
+- `jobRole` - Dropdown (16 options + Other with text input)
 
 **Features**:
 
@@ -161,22 +163,13 @@ Route (app)                              Size     First Load JS
 
 ## Next Steps (Future Enhancements)
 
-### 1. Cascading Location Dropdowns
-
-Currently, the state dropdown is simplified. Future enhancement:
-
-- Country dropdown (default: United States)
-- State dropdown (conditional on country)
-- Metro City Area dropdown (conditional on state)
-- City dropdown (conditional on metro area)
-
-### 2. Enhanced Validation
+### 1. Enhanced Validation
 
 - Required field indicators
 - Email validation for contact fields
 - Custom validation messages
 
-### 3. Sanity Schema
+### 2. Sanity Schema
 
 Create Sanity schema for demographics questions with:
 
@@ -184,7 +177,7 @@ Create Sanity schema for demographics questions with:
 - Field-specific validation rules
 - Custom options arrays
 
-### 4. Testing
+### 3. Testing
 
 - Create test demographics survey in Sanity
 - Create test campaign

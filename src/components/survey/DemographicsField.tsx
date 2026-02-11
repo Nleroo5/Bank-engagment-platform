@@ -12,52 +12,46 @@ interface DemographicsFieldProps {
   disabled?: boolean;
 }
 
-// Field options - 12 ranges as per requirements
+// Field options as per requirements
 const BANK_SIZES = [
-  'Less than $100M',
-  '$100M - $250M',
-  '$250M - $500M',
-  '$500M - $750M',
-  '$750M - $1B',
-  '$1B - $2.5B',
-  '$2.5B - $5B',
-  '$5B - $7.5B',
-  '$7.5B - $10B',
-  '$10B - $12.5B',
-  '$12.5B - $20B',
-  'Greater than $20B',
+  '<$100M',
+  '$100 - $250M',
+  '$250 - $499M',
+  '$500 - $749M',
+  '$750 - $999M',
+  '$1 - $2.99B',
+  '$3 - $4.99B',
+  '$5 - $7.49B',
+  '$7.5 - $9.99B',
+  '$10 - $19.99B',
+  '>$20B',
 ];
 
-const DEVICES = ['Desktop/Laptop', 'Tablet', 'Mobile Phone'];
+const DEVICES = ['Desktop / Laptop', 'Tablet', 'Mobile Phone'];
 
-const EMPLOYMENT_STATUS = ['Full-Time', 'Part-Time', 'Peak-Time'];
+const EMPLOYMENT_STATUS = ['Full-time', 'Part-time', 'Peak-time'];
 
 const GENDERS = ['Female', 'Male', 'Other'];
 
-const TIME_AT_BANK = [
-  'Less than 1 year',
-  '1-5 years',
-  '6-10 years',
-  'More than 10 years',
-];
+const TIME_AT_BANK = ['0-5 years', '6-10 years', '11-20 years', '> 20 years'];
 
 const BANK_EXPERIENCE = [
-  'Less than 1 year',
-  '1-10 years',
+  '0-5 years',
+  '6-10 years',
   '11-20 years',
-  'More than 20 years',
+  '> 20 years',
 ];
 
 const DIVISIONS = [
   'Administration',
+  'Call Center',
   'Commercial Banking',
   'Credit Department',
-  'Information Systems / Technology (IS/Tech)',
+  'Information Systems / Technology',
+  'Loan Administration',
   'Operations',
-  'Retail',
-  'Sales/Marketing',
-  'Special Banking',
-  'Trust',
+  'Retail Banking',
+  'Risk',
   'Wealth Management',
   'Other',
 ];
@@ -66,22 +60,22 @@ const JOB_ROLES = [
   'Branch Staff',
   'Branch Manager',
   'Call Center Operations',
-  'CEO/Executive',
-  'Coach/Mentor/Trainer',
+  'C-Suite Executive',
+  'Credit Underwriting',
   'Executive Management',
   'Finance',
-  'Human Resources/Trainers',
+  'Financial Advisors',
+  'Human Resources',
   'Loan Administration',
   'Operations Staff',
-  'Marketing/Sales Manager',
   'Relationship Manager',
   'Risk',
-  'Supervisory Staff',
+  'Support Staff',
   'Technology Staff',
   'Other',
 ];
 
-const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'Other'];
+const COUNTRIES = ['United States', 'Canada'];
 
 const US_STATES = [
   'Alabama',
@@ -151,14 +145,18 @@ export function DemographicsField({
 
   useEffect(() => {
     setSelectedValue(value);
-    // Check if value is a custom "Other" value
-    if (
-      (fieldType === 'division' || fieldType === 'jobRole') &&
-      value &&
-      !getOptionsForField(fieldType).includes(value)
-    ) {
-      setShowOther(true);
-      setOtherValue(value);
+    // Check if value is "Other" or a custom "Other" value
+    if ((fieldType === 'division' || fieldType === 'jobRole') && value) {
+      const options = getOptionsForField(fieldType);
+      if (value === 'Other' || !options.includes(value)) {
+        setShowOther(true);
+        if (value !== 'Other') {
+          setOtherValue(value);
+        }
+      } else {
+        setShowOther(false);
+        setOtherValue('');
+      }
     }
   }, [value, fieldType]);
 
@@ -206,16 +204,11 @@ export function DemographicsField({
     }
   };
 
-  // Text input for bank name, city, and metro
-  if (
-    fieldType === 'bankName' ||
-    fieldType === 'city' ||
-    fieldType === 'metro'
-  ) {
+  // Text input for bank name and city
+  if (fieldType === 'bankName' || fieldType === 'city') {
     let placeholder = 'Enter value';
     if (fieldType === 'bankName') placeholder = "Enter your bank's name";
     if (fieldType === 'city') placeholder = 'Enter city name';
-    if (fieldType === 'metro') placeholder = 'Enter metro area';
 
     return (
       <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
@@ -243,11 +236,24 @@ export function DemographicsField({
     );
   }
 
-  // Dropdown for location fields (country and state)
-  if (fieldType === 'state' || fieldType === 'country') {
+  // Dropdown for location fields (country, state) and categorical fields (bankSize, division, jobRole)
+  if (
+    fieldType === 'state' ||
+    fieldType === 'country' ||
+    fieldType === 'bankSize' ||
+    fieldType === 'division' ||
+    fieldType === 'jobRole'
+  ) {
     const options = getOptionsForField(fieldType);
-    const placeholderText =
-      fieldType === 'country' ? 'Select a country' : 'Select a state';
+    let placeholderText = 'Select an option';
+    if (fieldType === 'country') placeholderText = 'Select a country';
+    if (fieldType === 'state') placeholderText = 'Select a state';
+    if (fieldType === 'bankSize') placeholderText = 'Select bank size';
+    if (fieldType === 'division') placeholderText = 'Select division';
+    if (fieldType === 'jobRole') placeholderText = 'Select job role';
+
+    // Handle "Other" option for division and jobRole
+    const hasOtherOption = fieldType === 'division' || fieldType === 'jobRole';
 
     return (
       <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
@@ -263,7 +269,7 @@ export function DemographicsField({
         </label>
         <select
           id={questionId}
-          value={selectedValue}
+          value={showOther ? 'Other' : selectedValue}
           onChange={(e) => handleChange(e.target.value)}
           disabled={disabled}
           className="block w-full rounded-md border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100"
@@ -275,6 +281,21 @@ export function DemographicsField({
             </option>
           ))}
         </select>
+
+        {/* Show text input when "Other" is selected for division/jobRole */}
+        {hasOtherOption && showOther && (
+          <div className="mt-3">
+            <input
+              type="text"
+              inputMode="text"
+              value={otherValue}
+              onChange={(e) => handleOtherChange(e.target.value)}
+              disabled={disabled}
+              placeholder="Please specify..."
+              className="block w-full rounded-md border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100"
+            />
+          </div>
+        )}
       </div>
     );
   }

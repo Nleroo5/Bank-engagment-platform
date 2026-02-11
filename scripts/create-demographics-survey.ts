@@ -3,7 +3,7 @@
  *
  * Creates the Demographics survey with all required fields:
  * - Bank Name
- * - Location (Country, State, Metro, City)
+ * - Location (Country, State, City)
  * - Size of Bank
  * - Device Used
  * - Employment Status
@@ -44,51 +44,46 @@ const DEMOGRAPHICS_QUESTIONS = [
   },
   {
     number: 4,
-    text: 'Location - Metro City Area',
-    fieldType: 'metro',
-  },
-  {
-    number: 5,
     text: 'Location - City',
     fieldType: 'city',
   },
   {
-    number: 6,
+    number: 5,
     text: 'Size of Bank',
     fieldType: 'bankSize',
   },
   {
-    number: 7,
+    number: 6,
     text: 'Device Used for Survey',
     fieldType: 'device',
   },
   {
-    number: 8,
+    number: 7,
     text: 'Employment Status',
     fieldType: 'employmentStatus',
   },
   {
-    number: 9,
+    number: 8,
     text: 'Gender',
     fieldType: 'gender',
   },
   {
-    number: 10,
+    number: 9,
     text: 'Time at Bank',
     fieldType: 'timeAtBank',
   },
   {
-    number: 11,
+    number: 10,
     text: 'Bank Experience',
     fieldType: 'bankExperience',
   },
   {
-    number: 12,
+    number: 11,
     text: 'Bank Division',
     fieldType: 'division',
   },
   {
-    number: 13,
+    number: 12,
     text: 'Job Role',
     fieldType: 'jobRole',
   },
