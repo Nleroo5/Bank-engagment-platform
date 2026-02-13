@@ -56,6 +56,14 @@ export default async function EditSurveyPage({
     weight: category.weight.toNumber(),
   }));
 
+  // Transform survey to match expected type (convert null to undefined)
+  const surveyData = survey
+    ? {
+        ...survey,
+        description: survey.description ?? undefined,
+      }
+    : undefined;
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -65,7 +73,7 @@ export default async function EditSurveyPage({
         </p>
       </div>
 
-      <SurveyForm scales={scales} categories={categories} survey={survey} />
+      <SurveyForm scales={scales} categories={categories} survey={surveyData} />
     </div>
   );
 }
