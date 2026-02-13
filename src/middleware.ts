@@ -1,3 +1,22 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(req: NextRequest) {
+  // TEMPORARY: Authentication disabled for development
+  // All routes are now publicly accessible
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    // Match all paths except static files and images
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
+};
+
+/*
+ORIGINAL AUTH MIDDLEWARE (commented out temporarily)
+
 import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 
@@ -80,9 +99,4 @@ export default withAuth(
   }
 );
 
-export const config = {
-  matcher: [
-    // Match all paths except static files and images
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
-};
+*/
