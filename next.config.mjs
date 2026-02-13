@@ -14,12 +14,22 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     // Fix for @sanity/client browser build
     config.resolve.alias = {
       ...config.resolve.alias,
       '@sanity/eventsource': false,
     };
+
+    // Fix for ExcelJS and server-only packages
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'exceljs': 'commonjs exceljs',
+        'archiver': 'commonjs archiver',
+      });
+    }
+
     return config;
   },
 };
