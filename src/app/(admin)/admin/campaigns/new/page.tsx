@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getAllSurveys } from '@/lib/sanity';
+import { getAllSurveys } from '@/lib/surveys/queries';
 import { NewCampaignForm } from '@/components/admin/NewCampaignForm';
 import type { SurveyListItem } from '@/types/survey';
 

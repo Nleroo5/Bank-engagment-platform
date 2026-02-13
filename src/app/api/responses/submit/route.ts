@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { getSurveyById } from '@/lib/sanity';
+import { getSurveyById } from '@/lib/surveys/queries';
 import {
   rateLimit,
   getClientIp,

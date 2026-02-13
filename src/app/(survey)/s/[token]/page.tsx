@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { getSurveyById } from '@/lib/sanity';
+import { getSurveyById } from '@/lib/surveys/queries';
 import { SurveyShell } from '@/components/survey/SurveyShell';
 import { SurveyError } from '@/components/survey/SurveyError';
 

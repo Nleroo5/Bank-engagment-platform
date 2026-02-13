@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSurveyById } from '@/lib/sanity';
+import { getSurveyById } from '@/lib/surveys/queries';
 import { sendInvitation } from '@/lib/email/send';
 import { rateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit';
 

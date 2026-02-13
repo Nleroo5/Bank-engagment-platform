@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSurveyById } from '@/lib/sanity';
+import { getSurveyById } from '@/lib/surveys/queries';
 import {
   calculateCategoryScores,
   prepareResponsesForScoring,
