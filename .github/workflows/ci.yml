@@ -46,6 +46,10 @@ jobs:
       - name: Run tests
         run: npm run test
         continue-on-error: false
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+          NEXTAUTH_SECRET: dummy-secret-for-ci-tests
+          NEXTAUTH_URL: http://localhost:3000
 
       - name: Build production bundle
         run: npm run build

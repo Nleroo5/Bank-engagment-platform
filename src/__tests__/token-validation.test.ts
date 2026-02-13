@@ -161,7 +161,8 @@ describe('Token Validation Logic', () => {
     });
 
     it('should accept campaigns ending today', () => {
-      const today = new Date();
+      const now = new Date();
+      const today = new Date(now); // Use same timestamp
 
       const invitation = {
         id: '123',
@@ -172,7 +173,6 @@ describe('Token Validation Logic', () => {
         } as SurveyCampaign,
       } as InvitationWithCampaign;
 
-      const now = new Date();
       const isExpired =
         invitation.campaign.endDate && invitation.campaign.endDate < now;
       expect(isExpired).toBe(false);
