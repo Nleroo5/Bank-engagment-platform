@@ -131,7 +131,7 @@ model Response {
   id               String     @id @default(uuid())
   invitationId     String
   invitation       Invitation @relation(fields: [invitationId], references: [id])
-  sanityQuestionId String
+  questionId String
   questionNumber   Int
   value            Int?          // RAW value as submitted
   adjustedValue    Int?          // After reverse-scoring
@@ -139,7 +139,7 @@ model Response {
   submittedAt      DateTime   @default(now())
 
   @@index([invitationId])
-  @@index([sanityQuestionId])
+  @@index([questionId])
   @@map("responses")
 }
 ```

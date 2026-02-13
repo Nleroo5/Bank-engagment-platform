@@ -13,11 +13,11 @@ interface AnonymousSurveyShellProps {
   campaign: {
     id: string;
     surveyTitle: string;
-    sanitysurveyId: string;
+    surveyId: string;
     endDate: Date | null;
   };
   existingResponses: Array<{
-    sanityQuestionId: string;
+    questionId: string;
     questionNumber: number;
     value: number | null;
     textValue: string | null;
@@ -54,7 +54,7 @@ export default function AnonymousSurveyShell({
     async function fetchSurvey() {
       try {
         const response = await fetch(
-          `/api/sanity/surveys?surveyId=${campaign.sanitysurveyId}`
+          `/api/sanity/surveys?surveyId=${campaign.surveyId}`
         );
         if (!response.ok) throw new Error('Failed to fetch survey');
 
@@ -65,9 +65,9 @@ export default function AnonymousSurveyShell({
         const responseMap: Record<string, number | string> = {};
         existingResponses.forEach((r) => {
           if (r.value !== null) {
-            responseMap[r.sanityQuestionId] = r.value;
+            responseMap[r.questionId] = r.value;
           } else if (r.textValue !== null) {
-            responseMap[r.sanityQuestionId] = r.textValue;
+            responseMap[r.questionId] = r.textValue;
           }
         });
         setAnswers(responseMap);
@@ -79,7 +79,7 @@ export default function AnonymousSurveyShell({
     }
 
     fetchSurvey();
-  }, [campaign.sanitysurveyId, existingResponses]);
+  }, [campaign.surveyId, existingResponses]);
 
   // Auto-save function
   const saveResponse = useCallback(
@@ -93,7 +93,7 @@ export default function AnonymousSurveyShell({
             sessionToken,
             responses: [
               {
-                sanityQuestionId: questionId,
+                questionId: questionId,
                 questionNumber,
                 ...(typeof value === 'number'
                   ? { value }

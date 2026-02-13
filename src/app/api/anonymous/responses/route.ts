@@ -12,7 +12,7 @@ import { z } from 'zod';
  */
 
 const ResponseItemSchema = z.object({
-  sanityQuestionId: z.string(),
+  questionId: z.string(),
   questionNumber: z.number().int().positive(),
   value: z.number().int().nullable().optional(),
   textValue: z.string().nullable().optional(),
@@ -88,14 +88,14 @@ export async function PATCH(request: NextRequest) {
     const upsertPromises = responses.map((response) =>
       prisma.anonymousResponseItem.upsert({
         where: {
-          anonymousResponseId_sanityQuestionId: {
+          anonymousResponseId_questionId: {
             anonymousResponseId: anonymousResponse.id,
-            sanityQuestionId: response.sanityQuestionId,
+            questionId: response.questionId,
           },
         },
         create: {
           anonymousResponseId: anonymousResponse.id,
-          sanityQuestionId: response.sanityQuestionId,
+          questionId: response.questionId,
           questionNumber: response.questionNumber,
           value: response.value ?? null,
           textValue: response.textValue ?? null,
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             surveyTitle: true,
-            sanitysurveyId: true,
+            surveyId: true,
             status: true,
             endDate: true,
           },

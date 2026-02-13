@@ -125,7 +125,7 @@ export function calculateCategoryScores(
   for (const response of responses) {
     if (response.value === null) continue;
 
-    const question = questionMap.get(response.sanityQuestionId);
+    const question = questionMap.get(response.questionId);
     if (!question || !question.category) continue;
 
     const categoryId = question.category._id;
@@ -200,7 +200,7 @@ export function calculateSectionScores(
   for (const response of responses) {
     if (response.value === null) continue;
 
-    const question = questionMap.get(response.sanityQuestionId);
+    const question = questionMap.get(response.questionId);
     if (!question || !question.section) continue;
 
     const sectionId = question.section._id;
@@ -271,7 +271,7 @@ export function calculateSurveyScore(
   for (const response of responses) {
     if (response.value === null) continue;
 
-    const question = questionMap.get(response.sanityQuestionId);
+    const question = questionMap.get(response.questionId);
     if (!question) continue;
 
     const adjustedValue = calculateQuestionScore(
@@ -280,7 +280,7 @@ export function calculateSurveyScore(
       scaleMax
     );
     allValues.push(adjustedValue);
-    uniqueQuestions.add(response.sanityQuestionId);
+    uniqueQuestions.add(response.questionId);
   }
 
   // Calculate overall average

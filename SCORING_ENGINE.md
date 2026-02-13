@@ -137,7 +137,7 @@ Aggregates scores for an entire campaign across all completed respondents.
 import { getSurveyById } from '@/lib/sanity';
 import { calculateCampaignScores } from '@/lib/scoring/calculate';
 
-const survey = await getSurveyById(campaign.sanitysurveyId);
+const survey = await getSurveyById(campaign.surveyId);
 const questions = survey.sections.flatMap((s) => s.questions);
 const scaleMax = survey.surveyType === 'managerial' ? 3 : 5;
 
@@ -358,7 +358,7 @@ export async function GET(
   }
 
   // Fetch survey structure from Sanity
-  const survey = await getSurveyById(campaign.sanitysurveyId);
+  const survey = await getSurveyById(campaign.surveyId);
 
   // Flatten questions from all sections
   const questions = survey.sections.flatMap((section) =>
@@ -401,7 +401,7 @@ export async function GET(
     where: { id: params.id },
   });
 
-  const survey = await getSurveyById(campaign.sanitysurveyId);
+  const survey = await getSurveyById(campaign.surveyId);
 
   // Check if survey requires anonymity and meets threshold
   const meetsThreshold = await checkAnonymityThreshold(
@@ -437,7 +437,7 @@ export async function GET(
     where: { id: params.id },
   });
 
-  const survey = await getSurveyById(campaign.sanitysurveyId);
+  const survey = await getSurveyById(campaign.surveyId);
 
   // Get only filters that maintain anonymity
   const filterOptions = await getFilterableOptions(

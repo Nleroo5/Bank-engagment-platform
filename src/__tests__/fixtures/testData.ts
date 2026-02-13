@@ -49,7 +49,7 @@ export const createMockCampaign = (
   overrides?: Partial<SurveyCampaign>
 ): SurveyCampaign => ({
   id: uuidv4(),
-  sanitysurveyId: 'test-survey-id',
+  surveyId: 'test-survey-id',
   surveyTitle: 'Test Survey',
   organizationId: uuidv4(),
   status: 'ACTIVE',
@@ -88,7 +88,7 @@ export const createMockResponse = (
 ): Response => ({
   id: uuidv4(),
   invitationId: uuidv4(),
-  sanityQuestionId: `question-${Date.now()}`,
+  questionId: `question-${Date.now()}`,
   questionNumber: 1,
   value: 5,
   adjustedValue: null,

@@ -250,7 +250,7 @@ npm run build
 
 6. **Survey Content Not Found**
    - Use a valid token but delete/unpublish the Sanity survey
-   - Or use an invalid `sanitysurveyId` in the campaign
+   - Or use an invalid `surveyId` in the campaign
 
 ## Security Considerations
 

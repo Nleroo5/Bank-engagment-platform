@@ -147,7 +147,7 @@ Questions include optional anchor text that provides context about the ideal sta
 ```typescript
 {
   invitationId: string;
-  sanityQuestionId: string;
+  questionId: string;
   questionNumber: number;
   value: number; // 1-5 for Likert responses
   adjustedValue: number; // Same as value (no reverse scoring in LTE)

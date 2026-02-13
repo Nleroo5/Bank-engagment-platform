@@ -89,7 +89,7 @@ describe('applyReverseScoring', () => {
 describe('adjustResponse', () => {
   it('should not adjust non-reversed responses', () => {
     const response: ResponseData = {
-      sanityQuestionId: 'q1',
+      questionId: 'q1',
       questionNumber: 1,
       value: 2,
       isReversed: false,
@@ -105,7 +105,7 @@ describe('adjustResponse', () => {
 
   it('should adjust reversed responses', () => {
     const response: ResponseData = {
-      sanityQuestionId: 'q1',
+      questionId: 'q1',
       questionNumber: 1,
       value: 1, // Rarely
       isReversed: true,
@@ -128,7 +128,7 @@ describe('validateScoringData', () => {
   it('should pass validation for valid data', () => {
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 2,
         isReversed: false,
@@ -156,7 +156,7 @@ describe('validateScoringData', () => {
 
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 2,
         isReversed: false,
@@ -175,7 +175,7 @@ describe('validateScoringData', () => {
   it('should fail when response value is out of range', () => {
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5, // Invalid for 3-point scale
         isReversed: false,
@@ -194,7 +194,7 @@ describe('validateScoringData', () => {
   it('should fail when category does not exist', () => {
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 2,
         isReversed: false,
@@ -240,7 +240,7 @@ describe('calculateCategoryScores', () => {
     // 2 Communication questions, both answered with value 3
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 3,
         isReversed: false,
@@ -249,7 +249,7 @@ describe('calculateCategoryScores', () => {
         categoryWeight: 1.75,
       },
       {
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 3,
         isReversed: false,
@@ -287,7 +287,7 @@ describe('calculateCategoryScores', () => {
   it('should apply reverse scoring before calculating totals', () => {
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 1, // Rarely (raw)
         isReversed: true, // Should become 3 (Frequently)
@@ -296,7 +296,7 @@ describe('calculateCategoryScores', () => {
         categoryWeight: 1.0,
       },
       {
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 3, // Frequently (raw)
         isReversed: true, // Should become 1 (Rarely)
@@ -330,7 +330,7 @@ describe('calculateCategoryScores', () => {
   it('should calculate overall metrics correctly', () => {
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 2,
         isReversed: false,
@@ -339,7 +339,7 @@ describe('calculateCategoryScores', () => {
         categoryWeight: 1.75,
       },
       {
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 3,
         isReversed: false,
@@ -370,7 +370,7 @@ describe('calculateCategoryScores', () => {
   it('should handle multiple categories', () => {
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 3,
         isReversed: false,
@@ -379,7 +379,7 @@ describe('calculateCategoryScores', () => {
         categoryWeight: 1.75,
       },
       {
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 2,
         isReversed: false,
@@ -388,7 +388,7 @@ describe('calculateCategoryScores', () => {
         categoryWeight: 1.0,
       },
       {
-        sanityQuestionId: 'q3',
+        questionId: 'q3',
         questionNumber: 3,
         value: 1,
         isReversed: false,
@@ -436,7 +436,7 @@ describe('calculateCategoryScores', () => {
   it('should calculate percentages correctly', () => {
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 2, // 2 out of 3
         isReversed: false,
@@ -468,7 +468,7 @@ describe('calculateCategoryScores', () => {
   it('should throw error for invalid data', () => {
     const responses: ResponseData[] = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 10, // Invalid
         isReversed: false,
@@ -501,7 +501,7 @@ describe('prepareResponsesForScoring', () => {
   it('should transform database responses correctly', () => {
     const dbResponses = [
       {
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 3,
       },
@@ -523,7 +523,7 @@ describe('prepareResponsesForScoring', () => {
     const prepared = prepareResponsesForScoring(dbResponses, questions);
 
     expect(prepared).toHaveLength(1);
-    expect(prepared[0]!.sanityQuestionId).toBe('q1');
+    expect(prepared[0]!.questionId).toBe('q1');
     expect(prepared[0]!.value).toBe(3);
     expect(prepared[0]!.isReversed).toBe(true);
     expect(prepared[0]!.categoryName).toBe('Test Category');
@@ -533,7 +533,7 @@ describe('prepareResponsesForScoring', () => {
   it('should throw error for missing question', () => {
     const dbResponses = [
       {
-        sanityQuestionId: 'q-missing',
+        questionId: 'q-missing',
         questionNumber: 1,
         value: 3,
       },

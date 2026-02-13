@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     // Create the campaign
     const campaign = await prisma.surveyCampaign.create({
       data: {
-        sanitysurveyId: surveyId,
+        surveyId: surveyId,
         surveyTitle: survey.title,
         organizationId,
         status: 'DRAFT',

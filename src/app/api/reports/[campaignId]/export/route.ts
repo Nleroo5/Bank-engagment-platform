@@ -53,7 +53,7 @@ export async function GET(
     }
 
     // Fetch survey from Sanity
-    const survey = await getSurveyById(campaign.sanitysurveyId);
+    const survey = await getSurveyById(campaign.surveyId);
 
     if (!survey || !survey.scale) {
       return NextResponse.json(
@@ -113,7 +113,7 @@ export async function GET(
     const individualResults = campaign.invitations.map((invitation) => {
       const preparedResponses = prepareResponsesForScoring(
         invitation.responses.map((r) => ({
-          sanityQuestionId: r.sanityQuestionId,
+          questionId: r.questionId,
           questionNumber: r.questionNumber,
           value: r.value!,
         })),

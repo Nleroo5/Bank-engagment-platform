@@ -94,7 +94,7 @@ async function main() {
       },
       select: {
         id: true,
-        sanityQuestionId: true,
+        questionId: true,
         value: true,
       },
     });
@@ -118,14 +118,14 @@ async function main() {
       const updates = batch.map(
         (response: {
           id: string;
-          sanityQuestionId: string;
+          questionId: string;
           value: number | null;
         }) => {
-          const questionInfo = questionMap.get(response.sanityQuestionId);
+          const questionInfo = questionMap.get(response.questionId);
 
           if (!questionInfo) {
             console.warn(
-              `   ⚠️  Question not found: ${response.sanityQuestionId} - skipping`
+              `   ⚠️  Question not found: ${response.questionId} - skipping`
             );
             skippedCount++;
             return null;

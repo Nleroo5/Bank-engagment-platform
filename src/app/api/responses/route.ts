@@ -67,9 +67,9 @@ export async function PATCH(request: NextRequest) {
     // Upsert the response
     const response = await prisma.response.upsert({
       where: {
-        invitationId_sanityQuestionId: {
+        invitationId_questionId: {
           invitationId: invitation.id,
-          sanityQuestionId: questionId,
+          questionId: questionId,
         },
       },
       update: {
@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest) {
       },
       create: {
         invitationId: invitation.id,
-        sanityQuestionId: questionId,
+        questionId: questionId,
         questionNumber,
         value: isNumeric ? value : null,
         textValue: !isNumeric ? value : null,

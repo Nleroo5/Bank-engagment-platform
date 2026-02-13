@@ -12,7 +12,7 @@
  * Raw response from database
  */
 export interface ResponseData {
-  sanityQuestionId: string;
+  questionId: string;
   questionNumber: number;
   value: number; // Raw value as submitted by respondent (1-3 or 1-5)
   isReversed: boolean; // Whether this question uses reverse scoring

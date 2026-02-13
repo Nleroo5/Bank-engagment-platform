@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
         campaign: {
           id: campaign.id,
           surveyTitle: campaign.surveyTitle,
-          sanitysurveyId: campaign.sanitysurveyId,
+          surveyId: campaign.surveyId,
           endDate: campaign.endDate,
         },
         anonymousResponseId: anonymousResponse.id,

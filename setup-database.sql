@@ -40,7 +40,7 @@ CREATE TABLE "users" (
 -- CreateTable
 CREATE TABLE "survey_campaigns" (
     "id" TEXT NOT NULL,
-    "sanitysurveyId" TEXT NOT NULL,
+    "surveyId" TEXT NOT NULL,
     "surveyTitle" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'DRAFT',
@@ -88,7 +88,7 @@ CREATE TABLE "response_sessions" (
 CREATE TABLE "responses" (
     "id" TEXT NOT NULL,
     "invitationId" TEXT NOT NULL,
-    "sanityQuestionId" TEXT NOT NULL,
+    "questionId" TEXT NOT NULL,
     "questionNumber" INTEGER NOT NULL,
     "value" INTEGER,
     "adjustedValue" INTEGER,
@@ -135,10 +135,10 @@ CREATE UNIQUE INDEX "response_sessions_invitationId_key" ON "response_sessions"(
 CREATE INDEX "responses_invitationId_idx" ON "responses"("invitationId");
 
 -- CreateIndex
-CREATE INDEX "responses_sanityQuestionId_idx" ON "responses"("sanityQuestionId");
+CREATE INDEX "responses_questionId_idx" ON "responses"("questionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "responses_invitationId_sanityQuestionId_key" ON "responses"("invitationId", "sanityQuestionId");
+CREATE UNIQUE INDEX "responses_invitationId_questionId_key" ON "responses"("invitationId", "questionId");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;

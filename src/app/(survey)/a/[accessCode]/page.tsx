@@ -37,7 +37,7 @@ export default async function AnonymousSurveyPage({
     select: {
       id: true,
       surveyTitle: true,
-      sanitysurveyId: true,
+      surveyId: true,
       isAnonymous: true,
       status: true,
       startDate: true,

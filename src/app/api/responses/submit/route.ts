@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate that all required questions have been answered
-    const survey = await getSurveyById(invitation.campaign.sanitysurveyId);
+    const survey = await getSurveyById(invitation.campaign.surveyId);
 
     if (!survey) {
       return NextResponse.json(
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     // Get all answered question IDs from responses
     const answeredQuestionIds = invitation.responses.map(
-      (r) => r.sanityQuestionId
+      (r) => r.questionId
     );
 
     // Find missing questions

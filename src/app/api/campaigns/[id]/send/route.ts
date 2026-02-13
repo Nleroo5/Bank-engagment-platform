@@ -90,7 +90,7 @@ export async function POST(
     );
 
     // Fetch survey details from Sanity
-    const survey = await getSurveyById(campaign.sanitysurveyId);
+    const survey = await getSurveyById(campaign.surveyId);
 
     if (!survey) {
       return NextResponse.json(

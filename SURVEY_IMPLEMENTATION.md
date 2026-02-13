@@ -209,7 +209,7 @@ npm run build
 ```typescript
 // In Prisma Studio or seed script:
 // 1. Create an organization
-// 2. Create a campaign (ACTIVE status, with sanitysurveyId)
+// 2. Create a campaign (ACTIVE status, with surveyId)
 // 3. Create an invitation with a token
 ```
 

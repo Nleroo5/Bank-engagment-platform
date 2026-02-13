@@ -67,7 +67,7 @@ async function main() {
 
     // Check if there are any campaigns using this survey
     const campaigns = await client.fetch(
-      `*[_type == "surveyCampaign" && sanitysurveyId == $surveyId]`,
+      `*[_type == "surveyCampaign" && surveyId == $surveyId]`,
       { surveyId }
     );
 

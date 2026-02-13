@@ -25,7 +25,7 @@ test.describe('Survey Flow', () => {
     // Note: This assumes Survey 4 (LTE) exists in Sanity with ID 'survey-4'
     const campaign = await prisma.surveyCampaign.create({
       data: {
-        sanitysurveyId: 'survey-4',
+        surveyId: 'survey-4',
         surveyTitle: 'Test Survey Campaign',
         organizationId: organization.id,
         status: 'ACTIVE',

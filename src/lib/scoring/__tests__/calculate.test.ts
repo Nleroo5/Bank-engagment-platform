@@ -123,7 +123,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5,
         adjustedValue: null,
@@ -133,7 +133,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 4,
         adjustedValue: null,
@@ -143,7 +143,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '3',
         invitationId: 'inv1',
-        sanityQuestionId: 'q3',
+        questionId: 'q3',
         questionNumber: 3,
         value: 3,
         adjustedValue: null,
@@ -192,7 +192,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 1, // Will be reversed to 5
         adjustedValue: null,
@@ -202,7 +202,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 3, // Will be reversed to 3
         adjustedValue: null,
@@ -237,7 +237,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5,
         adjustedValue: null,
@@ -247,7 +247,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 4,
         adjustedValue: null,
@@ -257,7 +257,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '3',
         invitationId: 'inv1',
-        sanityQuestionId: 'q3',
+        questionId: 'q3',
         questionNumber: 3,
         value: 4,
         adjustedValue: null,
@@ -295,7 +295,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5,
         adjustedValue: null,
@@ -305,7 +305,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: null,
         adjustedValue: null,
@@ -338,7 +338,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5,
         adjustedValue: null,
@@ -348,7 +348,7 @@ describe('calculateCategoryScores', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 4,
         adjustedValue: null,
@@ -385,7 +385,7 @@ describe('calculateSectionScores', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5,
         adjustedValue: null,
@@ -395,7 +395,7 @@ describe('calculateSectionScores', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 4,
         adjustedValue: null,
@@ -429,7 +429,7 @@ describe('calculateSectionScores', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 1, // Reversed to 3
         adjustedValue: null,
@@ -439,7 +439,7 @@ describe('calculateSectionScores', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 3, // Reversed to 1
         adjustedValue: null,
@@ -478,7 +478,7 @@ describe('calculateSurveyScore', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5,
         adjustedValue: null,
@@ -488,7 +488,7 @@ describe('calculateSurveyScore', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 3,
         adjustedValue: null,
@@ -498,7 +498,7 @@ describe('calculateSurveyScore', () => {
       {
         id: '3',
         invitationId: 'inv1',
-        sanityQuestionId: 'q3',
+        questionId: 'q3',
         questionNumber: 3,
         value: 4,
         adjustedValue: null,
@@ -526,7 +526,7 @@ describe('calculateSurveyScore', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5,
         adjustedValue: null,
@@ -557,7 +557,7 @@ describe('calculateSurveyScore', () => {
       {
         id: '1',
         invitationId: 'inv1',
-        sanityQuestionId: 'q1',
+        questionId: 'q1',
         questionNumber: 1,
         value: 5,
         adjustedValue: null,
@@ -567,7 +567,7 @@ describe('calculateSurveyScore', () => {
       {
         id: '2',
         invitationId: 'inv1',
-        sanityQuestionId: 'q2',
+        questionId: 'q2',
         questionNumber: 2,
         value: 4,
         adjustedValue: null,
@@ -577,7 +577,7 @@ describe('calculateSurveyScore', () => {
       {
         id: '3',
         invitationId: 'inv1',
-        sanityQuestionId: 'q3',
+        questionId: 'q3',
         questionNumber: 3,
         value: 4,
         adjustedValue: null,

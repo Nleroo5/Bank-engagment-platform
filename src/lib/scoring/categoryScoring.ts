@@ -118,7 +118,7 @@ export function validateScoringData(
     if (response.value < scaleMin || response.value > scaleMax) {
       errors.push({
         type: 'INVALID_VALUE',
-        questionId: response.sanityQuestionId,
+        questionId: response.questionId,
         value: response.value,
         message: `Invalid value ${response.value} (expected ${scaleMin}-${scaleMax})`,
       });
@@ -372,7 +372,7 @@ export function calculateCategoryScores(
  */
 export function prepareResponsesForScoring(
   dbResponses: Array<{
-    sanityQuestionId: string;
+    questionId: string;
     questionNumber: number;
     value: number;
   }>,
@@ -390,13 +390,13 @@ export function prepareResponsesForScoring(
   const questionMap = new Map(questions.map((q) => [q._id, q]));
 
   return dbResponses.map((response) => {
-    const question = questionMap.get(response.sanityQuestionId);
+    const question = questionMap.get(response.questionId);
     if (!question) {
-      throw new Error(`Question not found: ${response.sanityQuestionId}`);
+      throw new Error(`Question not found: ${response.questionId}`);
     }
 
     return {
-      sanityQuestionId: response.sanityQuestionId,
+      questionId: response.questionId,
       questionNumber: response.questionNumber,
       value: response.value,
       isReversed: question.isReversed,

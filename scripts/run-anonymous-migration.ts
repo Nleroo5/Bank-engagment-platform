@@ -84,7 +84,7 @@ async function runMigration() {
       CREATE TABLE IF NOT EXISTS "anonymous_response_items" (
         "id" TEXT NOT NULL,
         "anonymousResponseId" TEXT NOT NULL,
-        "sanityQuestionId" TEXT NOT NULL,
+        "questionId" TEXT NOT NULL,
         "questionNumber" INTEGER NOT NULL,
         "value" INTEGER,
         "adjustedValue" INTEGER,
@@ -99,7 +99,7 @@ async function runMigration() {
     console.log('6. Creating indexes on anonymous_response_items...');
     await prisma.$executeRawUnsafe(`
       CREATE UNIQUE INDEX IF NOT EXISTS "anonymous_response_items_anonymousResponseId_sanityQuestio_key"
-      ON "anonymous_response_items"("anonymousResponseId", "sanityQuestionId");
+      ON "anonymous_response_items"("anonymousResponseId", "questionId");
     `);
     await prisma.$executeRawUnsafe(`
       CREATE INDEX IF NOT EXISTS "anonymous_response_items_anonymousResponseId_idx" ON "anonymous_response_items"("anonymousResponseId");

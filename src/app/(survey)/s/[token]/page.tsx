@@ -134,7 +134,7 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   }
 
   // Fetch the survey from Sanity
-  const survey = await getSurveyById(invitation.campaign.sanitysurveyId);
+  const survey = await getSurveyById(invitation.campaign.surveyId);
 
   if (!survey) {
     return (
@@ -151,7 +151,7 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   const existingResponses: Record<string, number | string> = {};
   for (const response of invitation.responses) {
     // Use textValue if present, otherwise use numeric value
-    existingResponses[response.sanityQuestionId] =
+    existingResponses[response.questionId] =
       response.textValue ?? response.value ?? 0;
   }
 

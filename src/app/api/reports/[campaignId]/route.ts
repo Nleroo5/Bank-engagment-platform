@@ -56,7 +56,7 @@ export async function GET(
     // Fetch survey from Sanity with full question and category data
     let survey;
     try {
-      survey = await getSurveyById(campaign.sanitysurveyId);
+      survey = await getSurveyById(campaign.surveyId);
     } catch (sanityError) {
       console.error('Sanity fetch error:', sanityError);
       return NextResponse.json(
@@ -68,7 +68,7 @@ export async function GET(
             '1. Set SANITY_API_TOKEN in your environment variables\n' +
             '2. Create survey content in Sanity Studio\n' +
             '3. Ensure the survey ID matches: ' +
-            campaign.sanitysurveyId,
+            campaign.surveyId,
         },
         { status: 503 }
       );
@@ -79,7 +79,7 @@ export async function GET(
         {
           error: 'Survey content not found',
           message:
-            `Survey with ID "${campaign.sanitysurveyId}" was not found in Sanity.\n\n` +
+            `Survey with ID "${campaign.surveyId}" was not found in Sanity.\n\n` +
             'Please create the survey content in Sanity Studio first, or update the campaign to reference an existing survey.',
         },
         { status: 404 }
@@ -185,7 +185,7 @@ export async function GET(
     let filteredData: Array<{
       id: string;
       responses: Array<{
-        sanityQuestionId: string;
+        questionId: string;
         questionNumber: number;
         value: number | null;
         adjustedValue: number | null;
@@ -234,7 +234,7 @@ export async function GET(
       // Prepare responses for scoring
       const preparedResponses = prepareResponsesForScoring(
         data.responses.map((r) => ({
-          sanityQuestionId: r.sanityQuestionId,
+          questionId: r.questionId,
           questionNumber: r.questionNumber,
           value: r.value!,
         })),
@@ -328,7 +328,7 @@ export async function GET(
 
       filteredData.forEach((data) => {
         const sectionResponses = data.responses.filter((r) =>
-          sectionQuestionIds.includes(r.sanityQuestionId)
+          sectionQuestionIds.includes(r.questionId)
         );
 
         sectionResponses.forEach((response) => {

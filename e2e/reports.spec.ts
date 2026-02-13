@@ -22,7 +22,7 @@ test.describe('Report Viewing', () => {
     // Create test campaign
     const campaign = await prisma.surveyCampaign.create({
       data: {
-        sanitysurveyId: 'survey-4',
+        surveyId: 'survey-4',
         surveyTitle: 'Test Report Campaign',
         organizationId: organization.id,
         status: 'COMPLETED',
@@ -68,7 +68,7 @@ test.describe('Report Viewing', () => {
         await prisma.response.create({
           data: {
             invitationId: invitation.id,
-            sanityQuestionId: `q${q}`,
+            questionId: `q${q}`,
             questionNumber: q,
             value: Math.floor(Math.random() * 5) + 1, // Random 1-5
             submittedAt: new Date(),
@@ -190,7 +190,7 @@ test.describe('Report Viewing', () => {
 
     const anonymousCampaign = await prisma.surveyCampaign.create({
       data: {
-        sanitysurveyId: 'survey-7',
+        surveyId: 'survey-7',
         surveyTitle: 'Anonymous Survey Test',
         organizationId: organization!.id,
         status: 'COMPLETED',
