@@ -82,6 +82,12 @@ async function migrateSurveys() {
     const categoryMap = new Map<string, string>(); // Sanity ID → Prisma ID
 
     for (const sanityCategory of sanityCategories) {
+      // Skip categories with missing required fields
+      if (!sanityCategory.name) {
+        console.log(`   ⚠️  Skipping invalid category (missing name): ${sanityCategory._id}`);
+        continue;
+      }
+
       // Check if category already exists by name
       let dbCategory = await prisma.category.findFirst({
         where: { name: sanityCategory.name },
@@ -125,6 +131,12 @@ async function migrateSurveys() {
     const scaleMap = new Map<string, string>(); // Sanity ID → Prisma ID
 
     for (const sanityScale of sanityScales) {
+      // Skip scales with missing required fields
+      if (!sanityScale.name || !sanityScale.scaleType) {
+        console.log(`   ⚠️  Skipping invalid scale (missing name or type): ${sanityScale._id}`);
+        continue;
+      }
+
       let dbScale = await prisma.scale.findFirst({
         where: { name: sanityScale.name },
       });
@@ -134,8 +146,8 @@ async function migrateSurveys() {
           data: {
             name: sanityScale.name,
             scaleType: sanityScale.scaleType,
-            min: sanityScale.min,
-            max: sanityScale.max,
+            min: sanityScale.min ?? 1,
+            max: sanityScale.max ?? 5,
             labels: sanityScale.labels || {},
           },
         });
@@ -195,6 +207,12 @@ async function migrateSurveys() {
     let questionCount = 0;
 
     for (const sanitySurvey of sanitySurveys) {
+      // Skip surveys with missing required fields
+      if (!sanitySurvey.title) {
+        console.log(`   ⚠️  Skipping invalid survey (missing title): ${sanitySurvey._id}`);
+        continue;
+      }
+
       // Check if survey already exists by title
       const existingSurvey = await prisma.survey.findFirst({
         where: { title: sanitySurvey.title },
@@ -218,7 +236,9 @@ async function migrateSurveys() {
           title: sanitySurvey.title,
           description: sanitySurvey.description || null,
           surveyType: sanitySurvey.surveyType || 'likert5',
-          surveyNumber: sanitySurvey.surveyNumber || null,
+          surveyNumber: sanitySurvey.surveyNumber
+            ? String(sanitySurvey.surveyNumber)
+            : null,
           status: sanitySurvey.status || 'DRAFT',
           scaleId: scaleId || undefined,
           surveyjsSchema: {},
