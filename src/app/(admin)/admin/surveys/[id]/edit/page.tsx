@@ -56,11 +56,13 @@ export default async function EditSurveyPage({
     weight: category.weight.toNumber(),
   }));
 
-  // Transform survey to match expected type (convert null to undefined)
+  // Transform survey to match expected type (convert null to undefined for all optional fields)
   const surveyData = survey
     ? {
         ...survey,
         description: survey.description ?? undefined,
+        surveyNumber: survey.surveyNumber ?? undefined,
+        scaleId: survey.scaleId ?? undefined,
       }
     : undefined;
 
