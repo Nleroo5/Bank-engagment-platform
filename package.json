@@ -18,6 +18,7 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "db:backfill-adjusted": "tsx scripts/backfill-adjusted-values.ts",
+    "db:migrate-sanity": "tsx scripts/migrate-sanity-surveys.ts",
     "create-admin": "tsx create-admin.ts",
     "sanity:dev": "cd sanity && sanity dev",
     "sanity:create-categories": "tsx scripts/create-categories.ts",
