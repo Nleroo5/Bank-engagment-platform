@@ -37,11 +37,11 @@ interface Question {
 interface Survey {
   id?: string;
   title: string;
-  description?: string;
+  description: string | null;
   surveyType: string;
-  surveyNumber?: string;
+  surveyNumber: string | null;
   status: string;
-  scaleId?: string;
+  scaleId: string | null;
   questions?: Question[];
 }
 
