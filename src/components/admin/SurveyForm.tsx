@@ -62,9 +62,9 @@ export function SurveyForm({ scales, categories, survey }: SurveyFormProps) {
     status: survey?.status || 'DRAFT',
     scaleId: survey?.scaleId || scales[0]?.id || '',
   });
-  const [questions, setQuestions] = useState<Question[]>(
-    survey?.questions || []
-  );
+
+  // Questions are managed server-side, not in state
+  const questions = survey?.questions || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

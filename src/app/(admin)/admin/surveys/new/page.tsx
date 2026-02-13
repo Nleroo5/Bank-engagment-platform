@@ -3,7 +3,7 @@ import { SurveyForm } from '@/components/admin/SurveyForm';
 
 export default async function NewSurveyPage() {
   // Fetch available scales for the form
-  const scales = await prisma.scale.findMany({
+  const scalesRaw = await prisma.scale.findMany({
     orderBy: {
       name: 'asc',
     },
@@ -15,6 +15,12 @@ export default async function NewSurveyPage() {
       sortOrder: 'asc',
     },
   });
+
+  // Transform scales to match expected type
+  const scales = scalesRaw.map((scale) => ({
+    ...scale,
+    labels: (scale.labels as Record<string, string>) || {},
+  }));
 
   return (
     <div className="p-8">
