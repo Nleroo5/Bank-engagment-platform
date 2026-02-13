@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { NewUserForm } from '@/components/admin/NewUserForm';
 
+// Force dynamic rendering - requires database access
+export const dynamic = 'force-dynamic';
 export default async function NewUserPage() {
   // Fetch all organizations (no role-based filtering)
   const organizations = await prisma.organization.findMany({

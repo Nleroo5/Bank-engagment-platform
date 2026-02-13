@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { CSVImportForm } from '@/components/admin/CSVImportForm';
 
+// Force dynamic rendering - requires database access
+export const dynamic = 'force-dynamic';
+
 export default async function ImportUsersPage() {
   // Fetch all organizations (no role-based filtering)
   const organizations = await prisma.organization.findMany({
