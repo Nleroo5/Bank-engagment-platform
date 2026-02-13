@@ -37,7 +37,7 @@ describe('Anonymity Protection', () => {
 
       const result = await checkAnonymityThreshold(
         'campaign-1',
-        'associate-180'
+        'associate_180'
       );
       expect(result).toBe(false);
       expect(prisma.invitation.count).toHaveBeenCalledWith({
@@ -53,7 +53,7 @@ describe('Anonymity Protection', () => {
 
       const result = await checkAnonymityThreshold(
         'campaign-1',
-        'associate-180'
+        'associate_180'
       );
       expect(result).toBe(true);
     });
@@ -63,7 +63,7 @@ describe('Anonymity Protection', () => {
 
       const result = await checkAnonymityThreshold(
         'campaign-1',
-        'associate-180'
+        'associate_180'
       );
       expect(result).toBe(true);
     });
@@ -73,7 +73,7 @@ describe('Anonymity Protection', () => {
 
       const result = await checkAnonymityThreshold(
         'campaign-1',
-        'ASSOCIATE-180'
+        'ASSOCIATE_180'
       );
       expect(result).toBe(false);
     });
@@ -96,7 +96,7 @@ describe('Anonymity Protection', () => {
 
       const result = await validateFilteredAnonymity(
         'campaign-1',
-        'associate-180',
+        'associate_180',
         { division: 'Technology' }
       );
 
@@ -109,7 +109,7 @@ describe('Anonymity Protection', () => {
 
       const result = await validateFilteredAnonymity(
         'campaign-1',
-        'associate-180',
+        'associate_180',
         { division: 'Technology' }
       );
 
@@ -122,7 +122,7 @@ describe('Anonymity Protection', () => {
 
       const result = await validateFilteredAnonymity(
         'campaign-1',
-        'associate-180',
+        'associate_180',
         { division: 'Technology', gender: 'FEMALE' }
       );
 
@@ -139,7 +139,7 @@ describe('Anonymity Protection', () => {
 
   describe('ANONYMOUS_SURVEY_TYPES constant', () => {
     it('should include expected survey types', () => {
-      expect(ANONYMOUS_SURVEY_TYPES).toContain('associate-180');
+      expect(ANONYMOUS_SURVEY_TYPES).toContain('associate_180');
       expect(ANONYMOUS_SURVEY_TYPES).toContain('survey-7');
     });
 

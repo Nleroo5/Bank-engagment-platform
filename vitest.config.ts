@@ -6,7 +6,15 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: [],
-    exclude: ['node_modules', 'e2e/**', 'dist', '.next'],
+    include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
+    exclude: [
+      'node_modules',
+      'sanity/**',
+      'e2e/**',
+      'dist',
+      '.next',
+      'scripts/**',
+    ],
   },
   resolve: {
     alias: {
