@@ -60,6 +60,14 @@ export async function POST(
     const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     const swapQuestion = allQuestions[swapIndex];
 
+    // TypeScript safety check (should never happen due to bounds check above)
+    if (!swapQuestion) {
+      return NextResponse.json(
+        { error: 'Invalid swap target' },
+        { status: 500 }
+      );
+    }
+
     await prisma.$transaction([
       prisma.question.update({
         where: { id: currentQuestion.id },
