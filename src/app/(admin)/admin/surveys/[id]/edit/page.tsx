@@ -38,7 +38,7 @@ export default async function EditSurveyPage({
     },
   });
 
-  const categories = await prisma.category.findMany({
+  const categoriesRaw = await prisma.category.findMany({
     orderBy: {
       sortOrder: 'asc',
     },
@@ -48,6 +48,12 @@ export default async function EditSurveyPage({
   const scales = scalesRaw.map((scale) => ({
     ...scale,
     labels: (scale.labels as Record<string, string>) || {},
+  }));
+
+  // Transform categories to match expected type (convert Decimal to number)
+  const categories = categoriesRaw.map((category) => ({
+    ...category,
+    weight: category.weight.toNumber(),
   }));
 
   return (
