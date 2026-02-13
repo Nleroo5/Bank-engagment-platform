@@ -25,8 +25,8 @@ const nextConfig = {
     if (isServer) {
       config.externals = config.externals || [];
       config.externals.push({
-        'exceljs': 'commonjs exceljs',
-        'archiver': 'commonjs archiver',
+        exceljs: 'commonjs exceljs',
+        archiver: 'commonjs archiver',
       });
     }
 

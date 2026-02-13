@@ -86,9 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all answered question IDs from responses
-    const answeredQuestionIds = invitation.responses.map(
-      (r) => r.questionId
-    );
+    const answeredQuestionIds = invitation.responses.map((r) => r.questionId);
 
     // Find missing questions
     const missingQuestionIds = allQuestionIds.filter(

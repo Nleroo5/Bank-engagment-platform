@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma/client';
-import { detectFraudulentResponse, flagResponseForReview } from '@/lib/fraud-detection';
+import {
+  detectFraudulentResponse,
+  flagResponseForReview,
+} from '@/lib/fraud-detection';
 import { rateLimit, getClientIp, getRateLimitHeaders } from '@/lib/rate-limit';
 import { z } from 'zod';
 
@@ -67,10 +70,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!anonymousResponse) {
-      return NextResponse.json(
-        { error: 'Invalid session' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Invalid session' }, { status: 404 });
     }
 
     // ============================================
@@ -97,10 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (campaign.endDate && now > campaign.endDate) {
-      return NextResponse.json(
-        { error: 'Survey has ended' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Survey has ended' }, { status: 400 });
     }
 
     // ============================================
@@ -152,7 +149,8 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         completedAt: updatedResponse.completedAt,
-        message: 'Your anonymous responses have been recorded. Thank you for participating.',
+        message:
+          'Your anonymous responses have been recorded. Thank you for participating.',
       },
       { status: 200 }
     );

@@ -139,7 +139,11 @@ export async function GET(
     if (Object.keys(filters).length > 0) {
       const validation = isAnonymous
         ? await validateFilteredAnonymityAnonymous(campaign.id, filters)
-        : await validateFilteredAnonymity(campaign.id, survey.surveyType, filters);
+        : await validateFilteredAnonymity(
+            campaign.id,
+            survey.surveyType,
+            filters
+          );
 
       if (!validation.valid) {
         return NextResponse.json(
@@ -196,18 +200,21 @@ export async function GET(
 
     if (isAnonymous) {
       // Filter anonymous responses based on demographics JSON
-      filteredData = campaign.anonymousResponses.filter((anonResp) => {
-        if (Object.keys(filters).length === 0) return true;
+      filteredData = campaign.anonymousResponses
+        .filter((anonResp) => {
+          if (Object.keys(filters).length === 0) return true;
 
-        const demographics = (anonResp.demographics as Record<string, unknown>) || {};
-        return Object.entries(filters).every(([key, value]) => {
-          return demographics[key] === value;
-        });
-      }).map((anonResp) => ({
-        id: anonResp.id,
-        responses: anonResp.responses,
-        demographics: anonResp.demographics as Record<string, unknown>,
-      }));
+          const demographics =
+            (anonResp.demographics as Record<string, unknown>) || {};
+          return Object.entries(filters).every(([key, value]) => {
+            return demographics[key] === value;
+          });
+        })
+        .map((anonResp) => ({
+          id: anonResp.id,
+          responses: anonResp.responses,
+          demographics: anonResp.demographics as Record<string, unknown>,
+        }));
     } else {
       // Filter tracked invitations based on User demographics
       filteredData = campaign.invitations
@@ -254,8 +261,10 @@ export async function GET(
       );
 
       return {
-        userId: isAnonymous ? 'anonymous' : (data.user?.email || 'unknown'),
-        userName: isAnonymous ? 'Anonymous' : (data.user?.name || data.user?.email || 'Unknown'),
+        userId: isAnonymous ? 'anonymous' : data.user?.email || 'unknown',
+        userName: isAnonymous
+          ? 'Anonymous'
+          : data.user?.name || data.user?.email || 'Unknown',
         ...scoringResult,
       };
     });
@@ -340,8 +349,10 @@ export async function GET(
 
       const averageScore =
         allSectionResponses.length > 0
-          ? allSectionResponses.reduce((sum: number, val: number) => sum + val, 0) /
-            allSectionResponses.length
+          ? allSectionResponses.reduce(
+              (sum: number, val: number) => sum + val,
+              0
+            ) / allSectionResponses.length
           : 0;
 
       return {
@@ -368,7 +379,8 @@ export async function GET(
     );
     const overallScore =
       allResponses.length > 0
-        ? allResponses.reduce((sum: number, val: number) => sum + val, 0) / allResponses.length
+        ? allResponses.reduce((sum: number, val: number) => sum + val, 0) /
+          allResponses.length
         : 0;
 
     // Determine if individual scores should be shown
@@ -393,7 +405,8 @@ export async function GET(
         totalInvitations: totalCount,
         completedCount: isAnonymous
           ? campaign.anonymousResponses.length
-          : campaign.invitations.filter((inv) => inv.status === 'COMPLETED').length,
+          : campaign.invitations.filter((inv) => inv.status === 'COMPLETED')
+              .length,
         completionRate,
         filteredCount: filteredData.length,
       },

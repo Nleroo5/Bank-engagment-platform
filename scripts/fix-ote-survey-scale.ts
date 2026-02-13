@@ -122,7 +122,9 @@ async function main() {
     console.log('📊 FIX SUMMARY');
     console.log('═'.repeat(70));
     console.log(`✅ Survey: ${survey.title}`);
-    console.log(`✅ Scale: 5-Point Likert (Strongly Disagree to Strongly Agree)`);
+    console.log(
+      `✅ Scale: 5-Point Likert (Strongly Disagree to Strongly Agree)`
+    );
     console.log(`✅ Scale reference set on survey document`);
     console.log('═'.repeat(70));
 

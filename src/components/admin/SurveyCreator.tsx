@@ -10,7 +10,10 @@ interface SurveyCreatorProps {
   onSave?: (json: object) => void;
 }
 
-export function SurveyCreatorWidget({ initialJson, onSave }: SurveyCreatorProps) {
+export function SurveyCreatorWidget({
+  initialJson,
+  onSave,
+}: SurveyCreatorProps) {
   const creatorRef = useRef<SurveyCreator | null>(null);
 
   useEffect(() => {
@@ -31,7 +34,10 @@ export function SurveyCreatorWidget({ initialJson, onSave }: SurveyCreatorProps)
     }
 
     // Save handler
-    creator.saveSurveyFunc = (saveNo: number, callback: (saveNo: number, success: boolean) => void) => {
+    creator.saveSurveyFunc = (
+      saveNo: number,
+      callback: (saveNo: number, success: boolean) => void
+    ) => {
       if (onSave) {
         onSave(creator.JSON);
         callback(saveNo, true);

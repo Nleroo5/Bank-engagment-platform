@@ -214,10 +214,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!anonymousResponse) {
-      return NextResponse.json(
-        { error: 'Session not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
     // ============================================

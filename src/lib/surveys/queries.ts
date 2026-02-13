@@ -38,8 +38,16 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
     _type: 'survey' as const,
     title: survey.title,
     slug: { current: survey.surveyNumber || survey.id },
-    surveyNumber: survey.surveyNumber ? parseInt(survey.surveyNumber.replace('Survey ', '')) : undefined,
-    surveyType: survey.surveyType as 'likert3' | 'likert5' | 'demographics' | 'managerial' | 'ote' | 'associate_180',
+    surveyNumber: survey.surveyNumber
+      ? parseInt(survey.surveyNumber.replace('Survey ', ''))
+      : undefined,
+    surveyType: survey.surveyType as
+      | 'likert3'
+      | 'likert5'
+      | 'demographics'
+      | 'managerial'
+      | 'ote'
+      | 'associate_180',
     instructions: survey.description || undefined,
     sections: survey.sections.map((section) => ({
       _id: section.id,
@@ -49,37 +57,37 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
       description: section.description || undefined,
       directions: undefined,
       questions: section.questions.map((question) => {
-          // Validation: All questions should have categories
-          if (question.categories.length === 0) {
-            console.error(
-              `Data integrity error: Question ${question.id} (number ${question.questionNumber}) has no categories`
-            );
-            throw new Error(
-              `Question ${question.questionNumber} in section "${section.title}" has no category mapping`
-            );
-          }
+        // Validation: All questions should have categories
+        if (question.categories.length === 0) {
+          console.error(
+            `Data integrity error: Question ${question.id} (number ${question.questionNumber}) has no categories`
+          );
+          throw new Error(
+            `Question ${question.questionNumber} in section "${section.title}" has no category mapping`
+          );
+        }
 
-          const qCategory = question.categories[0]!.category;
-          return {
-            _id: question.id,
-            _type: 'question' as const,
-            number: question.questionNumber,
-            text: question.text,
-            category: {
-              _id: qCategory.id,
-              _type: 'category' as const,
-              name: qCategory.name,
-              colorCode: qCategory.colorCode || undefined,
-              description: qCategory.description || undefined,
-              sortOrder: qCategory.sortOrder,
-              weight: parseFloat(qCategory.weight.toString()),
-            },
-            isReversed: question.isReversed,
-            anchorText: (question.config as { anchorText?: string })?.anchorText,
-            fieldType: undefined,
-            slug: undefined,
-          };
-        }),
+        const qCategory = question.categories[0]!.category;
+        return {
+          _id: question.id,
+          _type: 'question' as const,
+          number: question.questionNumber,
+          text: question.text,
+          category: {
+            _id: qCategory.id,
+            _type: 'category' as const,
+            name: qCategory.name,
+            colorCode: qCategory.colorCode || undefined,
+            description: qCategory.description || undefined,
+            sortOrder: qCategory.sortOrder,
+            weight: parseFloat(qCategory.weight.toString()),
+          },
+          isReversed: question.isReversed,
+          anchorText: (question.config as { anchorText?: string })?.anchorText,
+          fieldType: undefined,
+          slug: undefined,
+        };
+      }),
     })),
     scale: survey.scale
       ? {
@@ -92,12 +100,12 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
           minLabel: undefined,
           maxLabel: undefined,
           midLabel: undefined,
-          labels: Object.entries(survey.scale.labels as Record<string, string>).map(
-            ([value, label]) => ({
-              value: parseInt(value),
-              label,
-            })
-          ),
+          labels: Object.entries(
+            survey.scale.labels as Record<string, string>
+          ).map(([value, label]) => ({
+            value: parseInt(value),
+            label,
+          })),
         }
       : undefined,
     respondentNameField: undefined, // Not yet migrated from Sanity
@@ -116,10 +124,7 @@ export async function getAllSurveys() {
     where: {
       status: 'PUBLISHED',
     },
-    orderBy: [
-      { surveyNumber: 'asc' },
-      { title: 'asc' },
-    ],
+    orderBy: [{ surveyNumber: 'asc' }, { title: 'asc' }],
     include: {
       _count: {
         select: {
@@ -133,7 +138,9 @@ export async function getAllSurveys() {
     _id: survey.id,
     title: survey.title,
     slug: { current: survey.surveyNumber || survey.id },
-    surveyNumber: survey.surveyNumber ? parseInt(survey.surveyNumber.replace('Survey ', '')) : undefined,
+    surveyNumber: survey.surveyNumber
+      ? parseInt(survey.surveyNumber.replace('Survey ', ''))
+      : undefined,
     surveyType: survey.surveyType,
     isActive: survey.status === 'PUBLISHED',
     estimatedMinutes: undefined,
@@ -145,10 +152,7 @@ export async function getAllSurveys() {
  */
 export async function getAllCategories() {
   const categories = await prisma.category.findMany({
-    orderBy: [
-      { sortOrder: 'asc' },
-      { name: 'asc' },
-    ],
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
   });
 
   return categories.map((category) => ({
@@ -203,5 +207,7 @@ export async function getCategoriesForSurvey(surveyId: string) {
     }
   }
 
-  return Array.from(categoryMap.values()).sort((a, b) => a.sortOrder - b.sortOrder);
+  return Array.from(categoryMap.values()).sort(
+    (a, b) => a.sortOrder - b.sortOrder
+  );
 }

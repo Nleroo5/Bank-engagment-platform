@@ -98,7 +98,9 @@ export default function AccessCodeEntry({
               <Shield className="h-12 w-12 text-blue-600" />
             </div>
           </div>
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">{surveyTitle}</h1>
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">
+            {surveyTitle}
+          </h1>
           <p className="text-lg text-gray-600">Anonymous Survey</p>
         </div>
 
@@ -113,24 +115,26 @@ export default function AccessCodeEntry({
             <div className="flex items-start">
               <CheckCircle className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0" />
               <p>
-                <strong>Completely Anonymous:</strong> Your responses cannot be traced back to you.
-                No email addresses or personal identifiers are collected.
+                <strong>Completely Anonymous:</strong> Your responses cannot be
+                traced back to you. No email addresses or personal identifiers
+                are collected.
               </p>
             </div>
 
             <div className="flex items-start">
               <CheckCircle className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0" />
               <p>
-                <strong>Aggregate Reporting Only:</strong> Results are shown as group averages,
-                never individual responses.
+                <strong>Aggregate Reporting Only:</strong> Results are shown as
+                group averages, never individual responses.
               </p>
             </div>
 
             <div className="flex items-start">
               <CheckCircle className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0" />
               <p>
-                <strong>Secure & Confidential:</strong> All data is encrypted and stored securely.
-                Only authorized personnel can access aggregate reports.
+                <strong>Secure & Confidential:</strong> All data is encrypted
+                and stored securely. Only authorized personnel can access
+                aggregate reports.
               </p>
             </div>
           </div>
@@ -152,7 +156,10 @@ export default function AccessCodeEntry({
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-800" role="alert">
+          <div
+            className="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-800"
+            role="alert"
+          >
             {error}
           </div>
         )}
@@ -174,7 +181,9 @@ export default function AccessCodeEntry({
             <li>Complete the CAPTCHA verification above to begin</li>
             <li>You can save your progress and return later</li>
             <li>Your session is valid until the survey closes</li>
-            <li>Answer honestly - your responses help improve our organization</li>
+            <li>
+              Answer honestly - your responses help improve our organization
+            </li>
           </ul>
         </div>
       </div>
@@ -190,7 +199,11 @@ function getDeviceType(): string {
   if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
     return 'tablet';
   }
-  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+  if (
+    /Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(
+      ua
+    )
+  ) {
     return 'mobile';
   }
   return 'desktop';

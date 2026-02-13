@@ -117,9 +117,7 @@ async function main() {
 
     if (failed === 0) {
       console.log('\n✨ All references updated successfully!');
-      console.log(
-        `\n💡 Now you can delete the old survey with:`
-      );
+      console.log(`\n💡 Now you can delete the old survey with:`);
       console.log(`   npx tsx scripts/delete-survey.ts ${oldSurveyId}`);
     }
 

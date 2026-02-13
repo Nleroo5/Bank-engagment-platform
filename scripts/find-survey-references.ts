@@ -28,7 +28,9 @@ async function main() {
 
   if (!surveyId) {
     console.error('❌ ERROR: Survey ID is required');
-    console.log('\nUsage: npx tsx scripts/find-survey-references.ts <SURVEY_ID>');
+    console.log(
+      '\nUsage: npx tsx scripts/find-survey-references.ts <SURVEY_ID>'
+    );
     process.exit(1);
   }
 
@@ -69,7 +71,9 @@ async function main() {
       process.exit(0);
     }
 
-    console.log(`⚠️  Found ${references.length} document(s) referencing this survey:\n`);
+    console.log(
+      `⚠️  Found ${references.length} document(s) referencing this survey:\n`
+    );
     console.log('═'.repeat(70));
 
     for (const ref of references) {
@@ -83,7 +87,9 @@ async function main() {
 
     console.log('═'.repeat(70));
     console.log('\n💡 To replace references, use:');
-    console.log('   npx tsx scripts/replace-survey-references.ts <OLD_ID> <NEW_ID>');
+    console.log(
+      '   npx tsx scripts/replace-survey-references.ts <OLD_ID> <NEW_ID>'
+    );
     console.log('');
 
     process.exit(0);

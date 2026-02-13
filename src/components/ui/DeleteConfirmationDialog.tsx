@@ -98,7 +98,10 @@ export function DeleteConfirmationDialog({
         <div className="px-6 py-4">
           <p className="mb-4 text-sm text-gray-700">
             Are you sure you want to delete{' '}
-            <span className="font-semibold text-gray-900">&quot;{itemName}&quot;</span>?
+            <span className="font-semibold text-gray-900">
+              &quot;{itemName}&quot;
+            </span>
+            ?
           </p>
 
           {consequences.length > 0 && (
@@ -108,10 +111,7 @@ export function DeleteConfirmationDialog({
               </p>
               <ul className="space-y-1">
                 {consequences.map((consequence, index) => (
-                  <li
-                    key={index}
-                    className="text-sm text-amber-800"
-                  >
+                  <li key={index} className="text-sm text-amber-800">
                     • {consequence}
                   </li>
                 ))}

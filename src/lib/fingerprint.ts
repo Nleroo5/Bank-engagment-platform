@@ -26,7 +26,9 @@ export interface BrowserComponents {
  */
 export function collectBrowserComponents(): BrowserComponents {
   if (typeof window === 'undefined') {
-    throw new Error('collectBrowserComponents() must be called in browser environment');
+    throw new Error(
+      'collectBrowserComponents() must be called in browser environment'
+    );
   }
 
   // Type assertion for non-standard properties
@@ -54,13 +56,18 @@ export function collectBrowserComponents(): BrowserComponents {
  */
 export async function generateBrowserFingerprint(): Promise<string> {
   if (typeof window === 'undefined') {
-    throw new Error('generateBrowserFingerprint() must be called in browser environment');
+    throw new Error(
+      'generateBrowserFingerprint() must be called in browser environment'
+    );
   }
 
   const components = collectBrowserComponents();
 
   // Serialize components to stable string
-  const fingerprintString = JSON.stringify(components, Object.keys(components).sort());
+  const fingerprintString = JSON.stringify(
+    components,
+    Object.keys(components).sort()
+  );
 
   // Hash with SHA-256
   const encoder = new TextEncoder();
@@ -69,7 +76,9 @@ export async function generateBrowserFingerprint(): Promise<string> {
 
   // Convert to hex string
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 
   return hashHex;
 }
@@ -80,7 +89,10 @@ export async function generateBrowserFingerprint(): Promise<string> {
  * Server-side function to hash IP addresses
  * Uses SHA-256 with campaign ID as salt
  */
-export async function hashIpAddress(ipAddress: string, campaignId: string): Promise<string> {
+export async function hashIpAddress(
+  ipAddress: string,
+  campaignId: string
+): Promise<string> {
   // Combine IP with campaign ID as salt
   const saltedIp = `${ipAddress}:${campaignId}`;
 
@@ -95,7 +107,7 @@ export async function hashIpAddress(ipAddress: string, campaignId: string): Prom
   const data = encoder.encode(saltedIp);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**

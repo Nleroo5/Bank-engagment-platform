@@ -106,13 +106,7 @@ export const authOptions: NextAuthOptions = {
     error: '/admin/login',
   },
   callbacks: {
-    async jwt({
-      token,
-      user,
-    }: {
-      token: JWT;
-      user?: NextAuthUser;
-    }) {
+    async jwt({ token, user }: { token: JWT; user?: NextAuthUser }) {
       // Initial sign in
       if (user) {
         token.id = user.id;

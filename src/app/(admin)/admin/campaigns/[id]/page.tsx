@@ -140,7 +140,8 @@ export default async function CampaignDetailPage({
                 Public Survey Link
               </h3>
               <p className="mb-3 text-sm text-blue-700">
-                Share this link with respondents. They&apos;ll need to enter the access code to begin.
+                Share this link with respondents. They&apos;ll need to enter the
+                access code to begin.
               </p>
               <div className="flex items-center gap-2">
                 <input
@@ -166,7 +167,8 @@ export default async function CampaignDetailPage({
                 </p>
                 {campaign.maxResponses && (
                   <p className="mt-1 text-sm text-gray-700">
-                    <span className="font-semibold">Maximum Responses:</span> {campaign.maxResponses}
+                    <span className="font-semibold">Maximum Responses:</span>{' '}
+                    {campaign.maxResponses}
                   </p>
                 )}
               </div>
@@ -249,7 +251,8 @@ export default async function CampaignDetailPage({
               Anonymous Responses
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              Individual responses are anonymized and cannot be traced to specific respondents
+              Individual responses are anonymized and cannot be traced to
+              specific respondents
             </p>
           </div>
 
@@ -257,7 +260,8 @@ export default async function CampaignDetailPage({
             <div className="p-12 text-center">
               <Shield className="mx-auto mb-4 h-12 w-12 text-gray-400" />
               <p className="text-gray-500">
-                No responses yet. Share the public link to start collecting anonymous responses.
+                No responses yet. Share the public link to start collecting
+                anonymous responses.
               </p>
             </div>
           ) : (
@@ -278,15 +282,19 @@ export default async function CampaignDetailPage({
                 <div className="rounded-lg bg-orange-50 p-4">
                   <p className="text-sm text-orange-700">In Progress</p>
                   <p className="mt-1 text-2xl font-bold text-orange-900">
-                    {campaign.anonymousResponses.filter((r) => !r.completedAt).length}
+                    {
+                      campaign.anonymousResponses.filter((r) => !r.completedAt)
+                        .length
+                    }
                   </p>
                 </div>
               </div>
 
               <div className="mt-6 rounded-lg bg-blue-50 p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Privacy Note:</strong> For anonymity protection, individual response data is not shown.
-                  View aggregate reports to analyze results while maintaining respondent privacy.
+                  <strong>Privacy Note:</strong> For anonymity protection,
+                  individual response data is not shown. View aggregate reports
+                  to analyze results while maintaining respondent privacy.
                 </p>
               </div>
             </div>
@@ -304,7 +312,8 @@ export default async function CampaignDetailPage({
           {campaign.invitations.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-gray-500">
-                No invitations sent yet. Activate the campaign and send invitations to get started.
+                No invitations sent yet. Activate the campaign and send
+                invitations to get started.
               </p>
             </div>
           ) : (

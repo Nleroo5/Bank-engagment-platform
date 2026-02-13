@@ -29,7 +29,9 @@ export function setAnonymousSessionCookie(
   const { sessionToken, campaignEndDate, maxAge } = options;
 
   // Calculate expiration
-  const expires = campaignEndDate || new Date(Date.now() + DEFAULT_DURATION_DAYS * 24 * 60 * 60 * 1000);
+  const expires =
+    campaignEndDate ||
+    new Date(Date.now() + DEFAULT_DURATION_DAYS * 24 * 60 * 60 * 1000);
 
   // Set cookie with security flags
   response.cookies.set(COOKIE_NAME, sessionToken, {

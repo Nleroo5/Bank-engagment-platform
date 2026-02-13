@@ -56,9 +56,12 @@ export default async function AnonymousSurveyPage({
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-          <h1 className="mb-4 text-2xl font-bold text-red-600">Invalid Survey Type</h1>
+          <h1 className="mb-4 text-2xl font-bold text-red-600">
+            Invalid Survey Type
+          </h1>
           <p className="text-gray-700">
-            This survey uses personalized invitations. Please use the link sent to your email.
+            This survey uses personalized invitations. Please use the link sent
+            to your email.
           </p>
         </div>
       </div>
@@ -83,7 +86,9 @@ export default async function AnonymousSurveyPage({
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-          <h1 className="mb-4 text-2xl font-bold text-gray-800">Survey Unavailable</h1>
+          <h1 className="mb-4 text-2xl font-bold text-gray-800">
+            Survey Unavailable
+          </h1>
           <p className="text-gray-700">{message}</p>
         </div>
       </div>
@@ -103,10 +108,12 @@ export default async function AnonymousSurveyPage({
       return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
           <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-            <h1 className="mb-4 text-2xl font-bold text-gray-800">Survey Full</h1>
+            <h1 className="mb-4 text-2xl font-bold text-gray-800">
+              Survey Full
+            </h1>
             <p className="text-gray-700">
-              This survey has reached its maximum number of responses. Thank you for your
-              interest.
+              This survey has reached its maximum number of responses. Thank you
+              for your interest.
             </p>
           </div>
         </div>
@@ -138,13 +145,15 @@ export default async function AnonymousSurveyPage({
         return (
           <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
             <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-              <h1 className="mb-4 text-2xl font-bold text-green-600">Thank You!</h1>
+              <h1 className="mb-4 text-2xl font-bold text-green-600">
+                Thank You!
+              </h1>
               <p className="mb-4 text-gray-700">
                 Your anonymous responses have been recorded.
               </p>
               <p className="text-sm text-gray-600">
-                You may now close this window. Your feedback is valuable and will help improve our
-                organization.
+                You may now close this window. Your feedback is valuable and
+                will help improve our organization.
               </p>
             </div>
           </div>
@@ -157,7 +166,9 @@ export default async function AnonymousSurveyPage({
           campaign={campaign}
           existingResponses={anonymousResponse.responses}
           sessionToken={sessionToken}
-          demographics={anonymousResponse.demographics as Record<string, unknown> | null}
+          demographics={
+            anonymousResponse.demographics as Record<string, unknown> | null
+          }
         />
       );
     }

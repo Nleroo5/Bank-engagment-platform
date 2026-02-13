@@ -94,7 +94,9 @@ export function NewCampaignForm({
         isAnonymous: formData.isAnonymous,
         ...(formData.isAnonymous && {
           accessCode: formData.accessCode,
-          maxResponses: formData.maxResponses ? parseInt(formData.maxResponses) : null,
+          maxResponses: formData.maxResponses
+            ? parseInt(formData.maxResponses)
+            : null,
         }),
       };
 
@@ -250,8 +252,8 @@ export function NewCampaignForm({
               Anonymous Survey
             </label>
             <p className="text-sm text-gray-500">
-              Use public link with access code instead of personalized email invitations.
-              Responses cannot be traced to individuals.
+              Use public link with access code instead of personalized email
+              invitations. Responses cannot be traced to individuals.
             </p>
           </div>
         </div>
@@ -278,16 +280,23 @@ export function NewCampaignForm({
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono uppercase focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
               {checkingAccessCode && (
-                <p className="mt-1 text-sm text-gray-500">Checking availability...</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Checking availability...
+                </p>
               )}
               {accessCodeError && (
                 <p className="mt-1 text-sm text-red-600">{accessCodeError}</p>
               )}
-              {!accessCodeError && formData.accessCode.length >= 6 && !checkingAccessCode && (
-                <p className="mt-1 text-sm text-green-600">✓ Access code is available</p>
-              )}
+              {!accessCodeError &&
+                formData.accessCode.length >= 6 &&
+                !checkingAccessCode && (
+                  <p className="mt-1 text-sm text-green-600">
+                    ✓ Access code is available
+                  </p>
+                )}
               <p className="mt-1 text-sm text-gray-500">
-                6-20 alphanumeric characters (automatically converted to uppercase)
+                6-20 alphanumeric characters (automatically converted to
+                uppercase)
               </p>
             </div>
 
@@ -339,7 +348,8 @@ export function NewCampaignForm({
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
           <p className="mt-1 text-sm text-gray-500">
-            Send reminder emails this many days before the campaign ends (default: 3)
+            Send reminder emails this many days before the campaign ends
+            (default: 3)
           </p>
         </div>
       )}

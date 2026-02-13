@@ -236,7 +236,8 @@ export async function getFilterableOptionsAnonymous(
     const counts = new Map<string, number>();
 
     for (const response of responses) {
-      const demographics = (response.demographics as Record<string, unknown>) || {};
+      const demographics =
+        (response.demographics as Record<string, unknown>) || {};
       const value = demographics[field];
 
       if (value && typeof value === 'string') {
@@ -308,7 +309,8 @@ export async function validateFilteredAnonymityAnonymous(
 
   // Filter responses based on demographics JSON
   const filteredResponses = responses.filter((response) => {
-    const demographics = (response.demographics as Record<string, unknown>) || {};
+    const demographics =
+      (response.demographics as Record<string, unknown>) || {};
 
     return Object.entries(filters).every(([key, value]) => {
       return demographics[key] === value;

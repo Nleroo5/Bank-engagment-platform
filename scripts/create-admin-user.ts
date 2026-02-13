@@ -55,13 +55,19 @@ async function createAdminUser() {
       });
 
       console.log('\n✅ Admin user updated successfully!\n');
-      console.log('═══════════════════════════════════════════════════════════');
+      console.log(
+        '═══════════════════════════════════════════════════════════'
+      );
       console.log('Login Credentials:');
-      console.log('═══════════════════════════════════════════════════════════');
+      console.log(
+        '═══════════════════════════════════════════════════════════'
+      );
       console.log(`Email:    ${updatedUser.email}`);
       console.log(`Password: ${password}`);
       console.log(`Role:     ${updatedUser.role}`);
-      console.log('═══════════════════════════════════════════════════════════\n');
+      console.log(
+        '═══════════════════════════════════════════════════════════\n'
+      );
     } else {
       // Create new admin user
       const user = await prisma.user.create({
@@ -76,14 +82,20 @@ async function createAdminUser() {
       });
 
       console.log('\n✅ Admin user created successfully!\n');
-      console.log('═══════════════════════════════════════════════════════════');
+      console.log(
+        '═══════════════════════════════════════════════════════════'
+      );
       console.log('Login Credentials:');
-      console.log('═══════════════════════════════════════════════════════════');
+      console.log(
+        '═══════════════════════════════════════════════════════════'
+      );
       console.log(`Email:    ${user.email}`);
       console.log(`Password: ${password}`);
       console.log(`Role:     ${user.role}`);
       console.log(`Name:     ${user.name}`);
-      console.log('═══════════════════════════════════════════════════════════\n');
+      console.log(
+        '═══════════════════════════════════════════════════════════\n'
+      );
     }
 
     console.log('🌐 Login URL: http://localhost:3000/admin/login\n');

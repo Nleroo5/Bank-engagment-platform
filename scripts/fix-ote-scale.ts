@@ -84,8 +84,7 @@ async function main() {
       for (const question of section.questions) {
         totalQuestions++;
 
-        const hasScale =
-          question.scale && question.scale._ref === scale._id;
+        const hasScale = question.scale && question.scale._ref === scale._id;
 
         if (!hasScale) {
           questionsWithoutScale++;
@@ -102,15 +101,15 @@ async function main() {
     }
 
     if (questionsWithoutScale === 0) {
-      console.log(`   ✅ All ${totalQuestions} questions have scale references!`);
+      console.log(
+        `   ✅ All ${totalQuestions} questions have scale references!`
+      );
       console.log('\n✨ No fixes needed - OTE survey is properly configured!');
       process.exit(0);
     }
 
     // Step 4: Fix questions
-    console.log(
-      `\n🔧 Step 4: Fixing ${questionsWithoutScale} questions...\n`
-    );
+    console.log(`\n🔧 Step 4: Fixing ${questionsWithoutScale} questions...\n`);
 
     for (const question of questionsToFix) {
       try {
@@ -152,7 +151,9 @@ async function main() {
     );
 
     if (stillMissing.length === 0) {
-      console.log(`   ✅ Verification passed! All questions have scale references`);
+      console.log(
+        `   ✅ Verification passed! All questions have scale references`
+      );
     } else {
       console.warn(
         `   ⚠️  Warning: ${stillMissing.length} questions still missing scale`

@@ -112,7 +112,9 @@ async function runMigration() {
 
     // Verify migration
     console.log('8. Verifying migration...');
-    const verification = await prisma.$queryRaw<Array<{ status: string; count: number }>>`
+    const verification = await prisma.$queryRaw<
+      Array<{ status: string; count: number }>
+    >`
       SELECT
         'Migration completed successfully' as status,
         (SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'anonymous_responses')::int as count

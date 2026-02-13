@@ -64,12 +64,15 @@ export async function detectFraudulentResponse(
   // Check 1: Completion time too fast
   // ============================================
   if (response.completedAt) {
-    const completionTime = response.completedAt.getTime() - response.startedAt.getTime();
+    const completionTime =
+      response.completedAt.getTime() - response.startedAt.getTime();
     details.completionTime = completionTime;
 
     const minTime = RISK_THRESHOLDS.TOO_FAST_MINUTES * 60 * 1000;
     if (completionTime < minTime) {
-      reasons.push(`Completed in ${Math.round(completionTime / 1000)}s (minimum ${RISK_THRESHOLDS.TOO_FAST_MINUTES} min expected)`);
+      reasons.push(
+        `Completed in ${Math.round(completionTime / 1000)}s (minimum ${RISK_THRESHOLDS.TOO_FAST_MINUTES} min expected)`
+      );
       riskScore += RISK_WEIGHTS.TOO_FAST;
     }
   }
@@ -78,15 +81,17 @@ export async function detectFraudulentResponse(
   // Check 2: Straight-lining (all same answers)
   // ============================================
   const numericValues = response.responses
-    .filter(r => r.value !== null)
-    .map(r => r.value);
+    .filter((r) => r.value !== null)
+    .map((r) => r.value);
 
   if (numericValues.length > 0) {
     const uniqueValues = new Set(numericValues);
     details.uniqueValueCount = uniqueValues.size;
 
     if (uniqueValues.size === 1) {
-      reasons.push(`All ${numericValues.length} answers identical (value: ${Array.from(uniqueValues)[0]})`);
+      reasons.push(
+        `All ${numericValues.length} answers identical (value: ${Array.from(uniqueValues)[0]})`
+      );
       riskScore += RISK_WEIGHTS.STRAIGHT_LINE;
     }
   }
@@ -95,7 +100,9 @@ export async function detectFraudulentResponse(
   // Check 3: Duplicate IP hash in recent window
   // ============================================
   if (response.ipHash) {
-    const recentWindow = new Date(Date.now() - RISK_THRESHOLDS.RECENT_WINDOW_MINUTES * 60 * 1000);
+    const recentWindow = new Date(
+      Date.now() - RISK_THRESHOLDS.RECENT_WINDOW_MINUTES * 60 * 1000
+    );
 
     const ipDuplicates = await prisma.anonymousResponse.count({
       where: {
@@ -111,7 +118,9 @@ export async function detectFraudulentResponse(
     details.ipDuplicateCount = ipDuplicates;
 
     if (ipDuplicates > 0) {
-      reasons.push(`${ipDuplicates + 1} submission(s) from same IP in ${RISK_THRESHOLDS.RECENT_WINDOW_MINUTES} minutes`);
+      reasons.push(
+        `${ipDuplicates + 1} submission(s) from same IP in ${RISK_THRESHOLDS.RECENT_WINDOW_MINUTES} minutes`
+      );
       riskScore += RISK_WEIGHTS.IP_DUPLICATE;
     }
   }
@@ -132,7 +141,9 @@ export async function detectFraudulentResponse(
     details.fingerprintDuplicateCount = fingerprintDuplicates;
 
     if (fingerprintDuplicates > 0) {
-      reasons.push(`${fingerprintDuplicates + 1} submission(s) with identical browser fingerprint`);
+      reasons.push(
+        `${fingerprintDuplicates + 1} submission(s) with identical browser fingerprint`
+      );
       riskScore += RISK_WEIGHTS.FINGERPRINT_DUPLICATE;
     }
   }
@@ -193,7 +204,9 @@ export async function getFlaggedResponses(campaignId: string) {
  *
  * Admin action to clear flag after manual review
  */
-export async function clearFraudFlag(anonymousResponseId: string): Promise<void> {
+export async function clearFraudFlag(
+  anonymousResponseId: string
+): Promise<void> {
   await prisma.anonymousResponse.update({
     where: { id: anonymousResponseId },
     data: {

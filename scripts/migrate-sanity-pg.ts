@@ -71,7 +71,9 @@ async function migrateSurveys() {
 
     console.log(`   Found ${sanityCategories.length} categories\n`);
 
-    const pgCategoriesResult = await client.query('SELECT id, name FROM categories');
+    const pgCategoriesResult = await client.query(
+      'SELECT id, name FROM categories'
+    );
     for (const sanityCategory of sanityCategories) {
       const pgCategory = pgCategoriesResult.rows.find(
         (c: { name: string }) => c.name === sanityCategory.name
@@ -85,7 +87,9 @@ async function migrateSurveys() {
     // Step 2: Fetch scales
     console.log('\n📦 Step 2: Fetching scales...');
     const pgScalesResult = await client.query('SELECT id, name FROM scales');
-    console.log(`   Found ${pgScalesResult.rows.length} scales in PostgreSQL\n`);
+    console.log(
+      `   Found ${pgScalesResult.rows.length} scales in PostgreSQL\n`
+    );
 
     // Step 3: Fetch surveys with sections and questions
     console.log('📦 Step 3: Fetching surveys from Sanity...');
@@ -159,7 +163,9 @@ async function migrateSurveys() {
           sanitySurvey.title,
           sanitySurvey.description || null,
           surveyType,
-          sanitySurvey.surveyNumber ? `Survey ${sanitySurvey.surveyNumber}` : null,
+          sanitySurvey.surveyNumber
+            ? `Survey ${sanitySurvey.surveyNumber}`
+            : null,
           JSON.stringify({ title: sanitySurvey.title }),
           scaleId,
         ]
@@ -199,7 +205,9 @@ async function migrateSurveys() {
         const qText = question.questionText ?? question.text;
 
         if (!qNum || !qText) {
-          console.warn(`      ⚠️  Skipping question with missing data: ${question._id}`);
+          console.warn(
+            `      ⚠️  Skipping question with missing data: ${question._id}`
+          );
           continue;
         }
 
@@ -210,7 +218,9 @@ async function migrateSurveys() {
             console.log(`      ⚠️  Skipping demographics question ${qNum}`);
             continue;
           }
-          console.warn(`      ⚠️  Skipping question ${qNum}: No category mapping for ${question.category.name}`);
+          console.warn(
+            `      ⚠️  Skipping question ${qNum}: No category mapping for ${question.category.name}`
+          );
           continue;
         }
 
@@ -224,7 +234,9 @@ async function migrateSurveys() {
             qText,
             surveyType,
             `q${qNum}`,
-            question.anchorText ? JSON.stringify({ anchorText: question.anchorText }) : null,
+            question.anchorText
+              ? JSON.stringify({ anchorText: question.anchorText })
+              : null,
             question.isRequired ?? true, // Default to true if null
             question.isReversed ?? false, // Default to false if null
             qNum,
@@ -244,7 +256,9 @@ async function migrateSurveys() {
         console.log(`      ✓ Question ${qNum}: ${qText.substring(0, 50)}...`);
       }
 
-      console.log(`   ✅ Completed "${sanitySurvey.title}" (${allQuestions.length} questions)\n`);
+      console.log(
+        `   ✅ Completed "${sanitySurvey.title}" (${allQuestions.length} questions)\n`
+      );
     }
 
     // Step 5: Save mapping
@@ -257,8 +271,12 @@ async function migrateSurveys() {
     console.log('✅ Step 6: Migration Summary\n');
     console.log('━'.repeat(50));
     console.log(`   Surveys migrated: ${Object.keys(mapping.surveys).length}`);
-    console.log(`   Questions migrated: ${Object.keys(mapping.questions).length}`);
-    console.log(`   Categories mapped: ${Object.keys(mapping.categories).length}`);
+    console.log(
+      `   Questions migrated: ${Object.keys(mapping.questions).length}`
+    );
+    console.log(
+      `   Categories mapped: ${Object.keys(mapping.categories).length}`
+    );
     console.log(`   Sections created: ${Object.keys(mapping.sections).length}`);
     console.log('━'.repeat(50));
 

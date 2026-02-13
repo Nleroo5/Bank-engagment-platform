@@ -280,9 +280,7 @@ async function migrateSurveys() {
     console.log(
       `   Categories mapped: ${Object.keys(mapping.categories).length}`
     );
-    console.log(
-      `   Sections created: ${Object.keys(mapping.sections).length}`
-    );
+    console.log(`   Sections created: ${Object.keys(mapping.sections).length}`);
     console.log('━'.repeat(50));
 
     const finalSurveys = await prisma.survey.findMany({

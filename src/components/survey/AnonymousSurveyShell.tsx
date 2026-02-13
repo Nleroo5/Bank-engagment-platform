@@ -83,7 +83,11 @@ export default function AnonymousSurveyShell({
 
   // Auto-save function
   const saveResponse = useCallback(
-    async (questionId: string, questionNumber: number, value: number | string) => {
+    async (
+      questionId: string,
+      questionNumber: number,
+      value: number | string
+    ) => {
       try {
         setIsSaving(true);
         const response = await fetch('/api/anonymous/responses', {
@@ -241,8 +245,9 @@ export default function AnonymousSurveyShell({
   if (stage === 'demographics') {
     // Check if demographics questions exist in survey
     const demographicsSection = survey.sections.find(
-      (s) => s.title.toLowerCase().includes('demographics') ||
-             s.questions.some((q) => q.fieldType)
+      (s) =>
+        s.title.toLowerCase().includes('demographics') ||
+        s.questions.some((q) => q.fieldType)
     );
 
     if (!demographicsSection) {
@@ -268,12 +273,15 @@ export default function AnonymousSurveyShell({
             <h1 className="mb-2 text-2xl font-bold text-gray-900">
               {survey.title}
             </h1>
-            <h2 className="mb-6 text-lg text-gray-600">Demographics Information</h2>
+            <h2 className="mb-6 text-lg text-gray-600">
+              Demographics Information
+            </h2>
 
             <p className="mb-6 text-sm text-gray-700">
-              Please provide some basic information. This data is stored separately from your
-              survey responses and is only used for aggregate reporting. Individual responses are
-              never visible to administrators.
+              Please provide some basic information. This data is stored
+              separately from your survey responses and is only used for
+              aggregate reporting. Individual responses are never visible to
+              administrators.
             </p>
 
             <div className="space-y-4">
@@ -286,7 +294,10 @@ export default function AnonymousSurveyShell({
                   fieldType={question.fieldType || question.slug?.current || ''}
                   value={demographics[question.fieldType || question._id] || ''}
                   onChange={(_, value) =>
-                    handleDemographicsChange(question.fieldType || question._id, value as string)
+                    handleDemographicsChange(
+                      question.fieldType || question._id,
+                      value as string
+                    )
                   }
                   disabled={false}
                 />
@@ -325,13 +336,15 @@ export default function AnonymousSurveyShell({
               <Shield className="h-12 w-12 text-green-600" />
             </div>
           </div>
-          <h1 className="mb-4 text-center text-2xl font-bold text-green-600">Thank You!</h1>
+          <h1 className="mb-4 text-center text-2xl font-bold text-green-600">
+            Thank You!
+          </h1>
           <p className="mb-4 text-center text-gray-700">
             Your anonymous responses have been recorded.
           </p>
           <p className="text-center text-sm text-gray-600">
-            You may now close this window. Your feedback is valuable and will help improve our
-            organization.
+            You may now close this window. Your feedback is valuable and will
+            help improve our organization.
           </p>
         </div>
       </div>
@@ -374,7 +387,9 @@ export default function AnonymousSurveyShell({
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-3 rounded-lg bg-white p-6 shadow-lg">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-              <span className="text-sm font-medium text-gray-700">Loading section...</span>
+              <span className="text-sm font-medium text-gray-700">
+                Loading section...
+              </span>
             </div>
           </div>
         )}
@@ -470,11 +485,12 @@ export default function AnonymousSurveyShell({
             )}
           </div>
 
-          {!currentSectionAnswered && currentSectionIndex < totalSections - 1 && (
-            <p className="mt-2 text-center text-sm text-orange-600">
-              Please answer all questions in this section to continue
-            </p>
-          )}
+          {!currentSectionAnswered &&
+            currentSectionIndex < totalSections - 1 && (
+              <p className="mt-2 text-center text-sm text-orange-600">
+                Please answer all questions in this section to continue
+              </p>
+            )}
 
           {currentSectionIndex === totalSections - 1 && !allAnswered && (
             <p className="mt-2 text-center text-sm text-orange-600">

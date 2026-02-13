@@ -63,7 +63,9 @@ async function main() {
     for (const [title, surveysWithTitle] of Object.entries(groupedByTitle)) {
       if (surveysWithTitle.length > 1) {
         duplicatesFound = true;
-        console.log(`⚠️  DUPLICATE: "${title}" (${surveysWithTitle.length} entries)`);
+        console.log(
+          `⚠️  DUPLICATE: "${title}" (${surveysWithTitle.length} entries)`
+        );
         console.log('─'.repeat(70));
 
         surveysWithTitle.forEach((survey, index) => {

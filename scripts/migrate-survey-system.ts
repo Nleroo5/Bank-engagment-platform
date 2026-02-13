@@ -109,20 +109,22 @@ async function runMigration() {
       result.scales_table === 1
     ) {
       console.log('\n✅ All tables created successfully!');
-      console.log(
-        `   Scales: ${result.default_scales_count} (Likert 3 & 5)`
-      );
+      console.log(`   Scales: ${result.default_scales_count} (Likert 3 & 5)`);
       console.log(
         `   Categories: ${result.default_categories_count} (Communication, Leadership, etc.)`
       );
     } else {
-      console.warn('\n⚠️  Some tables may not have been created. Please verify manually.');
+      console.warn(
+        '\n⚠️  Some tables may not have been created. Please verify manually.'
+      );
     }
 
     console.log('\n🎉 Migration complete! Ready to generate Prisma client.\n');
     console.log('Next steps:');
     console.log('  1. Run: npx prisma generate');
-    console.log('  2. Install SurveyJS: npm install survey-react survey-creator-react');
+    console.log(
+      '  2. Install SurveyJS: npm install survey-react survey-creator-react'
+    );
     console.log('  3. Build admin survey management UI\n');
   } catch (error) {
     console.error('\n❌ Migration failed:', error);

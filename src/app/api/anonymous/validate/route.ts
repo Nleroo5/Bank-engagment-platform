@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma/client';
-import { hashIpAddress, getClientIp as getClientIpFingerprint } from '@/lib/fingerprint';
+import {
+  hashIpAddress,
+  getClientIp as getClientIpFingerprint,
+} from '@/lib/fingerprint';
 import { rateLimit, getRateLimitHeaders, getClientIp } from '@/lib/rate-limit';
 import { z } from 'zod';
 
@@ -52,7 +55,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { accessCode, captchaToken, browserFingerprint, device, userAgent } = validation.data;
+    const { accessCode, captchaToken, browserFingerprint, device, userAgent } =
+      validation.data;
 
     // ============================================
     // 1. Verify CAPTCHA
@@ -155,7 +159,9 @@ export async function POST(request: NextRequest) {
     // 7. Hash IP address for duplicate detection
     // ============================================
     const clientIpForHash = getClientIpFingerprint(request);
-    const ipHash = clientIpForHash ? await hashIpAddress(clientIpForHash, campaign.id) : null;
+    const ipHash = clientIpForHash
+      ? await hashIpAddress(clientIpForHash, campaign.id)
+      : null;
 
     // ============================================
     // 8. Create AnonymousResponse session

@@ -63,9 +63,7 @@ export function SurveysTable({ surveys }: SurveysTableProps) {
       router.refresh();
     } catch (error) {
       console.error('Error deleting survey:', error);
-      alert(
-        error instanceof Error ? error.message : 'Failed to delete survey'
-      );
+      alert(error instanceof Error ? error.message : 'Failed to delete survey');
     } finally {
       setIsDeleting(false);
     }
@@ -186,7 +184,7 @@ export function SurveysTable({ surveys }: SurveysTableProps) {
                       <Trash2
                         className={`h-4 w-4 ${
                           survey._count.campaigns > 0
-                            ? 'opacity-50 cursor-not-allowed'
+                            ? 'cursor-not-allowed opacity-50'
                             : ''
                         }`}
                       />

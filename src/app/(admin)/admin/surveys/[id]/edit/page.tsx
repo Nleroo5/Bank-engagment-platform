@@ -95,9 +95,7 @@ export default function EditSurveyPage() {
       alert('Survey updated successfully!');
     } catch (error) {
       console.error('Error updating survey:', error);
-      alert(
-        error instanceof Error ? error.message : 'Failed to update survey'
-      );
+      alert(error instanceof Error ? error.message : 'Failed to update survey');
     } finally {
       setIsSaving(false);
     }
@@ -127,9 +125,7 @@ export default function EditSurveyPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Edit Survey
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Survey</h1>
               <p className="mt-1 text-sm text-gray-500">
                 {metadata.title} (v{metadata.version})
               </p>
@@ -138,7 +134,7 @@ export default function EditSurveyPage() {
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
             {isSaving ? 'Saving...' : 'Save Changes'}
@@ -247,7 +243,10 @@ export default function EditSurveyPage() {
                 onChange={(e) =>
                   setMetadata({
                     ...metadata,
-                    status: e.target.value as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
+                    status: e.target.value as
+                      | 'DRAFT'
+                      | 'PUBLISHED'
+                      | 'ARCHIVED',
                   })
                 }
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
@@ -270,7 +269,7 @@ export default function EditSurveyPage() {
         </div>
 
         {/* Survey Creator */}
-        <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
           <SurveyCreatorWidget initialJson={surveyJson} onSave={handleSave} />
         </div>
       </div>

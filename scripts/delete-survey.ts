@@ -60,9 +60,7 @@ async function main() {
     console.log(`   Slug: ${survey.slug?.current || 'No slug'}`);
     console.log(`   Type: ${survey.surveyType || 'Not set'}`);
     console.log(`   Active: ${survey.isActive ? 'Yes' : 'No'}`);
-    console.log(
-      `   Created: ${new Date(survey._createdAt).toLocaleString()}`
-    );
+    console.log(`   Created: ${new Date(survey._createdAt).toLocaleString()}`);
     console.log('─'.repeat(70));
 
     // Check if there are any campaigns using this survey
