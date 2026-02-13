@@ -6,9 +6,12 @@ import { getSurveyById } from '@/lib/sanity';
 const createCampaignSchema = z.object({
   surveyId: z.string(),
   organizationId: z.string().uuid(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  reminderDays: z.string().transform((val) => parseInt(val, 10)),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
+  reminderDays: z.number().int().min(1).max(30).default(3),
+  isAnonymous: z.boolean().default(false),
+  accessCode: z.string().min(6).max(20).optional(),
+  maxResponses: z.number().int().positive().nullable().optional(),
 });
 
 export async function GET() {
@@ -21,6 +24,7 @@ export async function GET() {
       include: {
         organization: true,
         invitations: true,
+        anonymousResponses: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -40,8 +44,16 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { surveyId, organizationId, startDate, endDate, reminderDays } =
-      createCampaignSchema.parse(body);
+    const {
+      surveyId,
+      organizationId,
+      startDate,
+      endDate,
+      reminderDays,
+      isAnonymous,
+      accessCode,
+      maxResponses,
+    } = createCampaignSchema.parse(body);
 
     // Fetch survey from Sanity to get the title
     const survey = await getSurveyById(surveyId);
@@ -62,6 +74,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate anonymous survey requirements
+    if (isAnonymous) {
+      if (!accessCode) {
+        return NextResponse.json(
+          { error: 'Access code is required for anonymous surveys' },
+          { status: 400 }
+        );
+      }
+
+      // Check access code uniqueness
+      const existingCampaign = await prisma.surveyCampaign.findUnique({
+        where: { accessCode: accessCode.toUpperCase() },
+      });
+
+      if (existingCampaign) {
+        return NextResponse.json(
+          { error: 'This access code is already in use' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create the campaign
     const campaign = await prisma.surveyCampaign.create({
       data: {
@@ -72,6 +106,9 @@ export async function POST(request: NextRequest) {
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
         reminderDays,
+        isAnonymous,
+        accessCode: isAnonymous && accessCode ? accessCode.toUpperCase() : null,
+        maxResponses: isAnonymous ? maxResponses : null,
       },
       include: {
         organization: true,

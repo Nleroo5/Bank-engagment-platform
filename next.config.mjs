@@ -14,6 +14,14 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  webpack: (config) => {
+    // Fix for @sanity/client browser build
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@sanity/eventsource': false,
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

@@ -192,3 +192,133 @@ export async function validateFilteredAnonymity(
     count,
   };
 }
+
+/**
+ * Gets demographic filter options for anonymous campaigns.
+ *
+ * Parses demographics from JSON instead of User table.
+ * Only returns filter options that maintain the anonymity threshold (>= 5 respondents).
+ *
+ * @param campaignId - The ID of the anonymous campaign
+ * @returns Array of safe demographic filter options
+ */
+export async function getFilterableOptionsAnonymous(
+  campaignId: string
+): Promise<{
+  divisions: DemographicFilter[];
+  jobRoles: DemographicFilter[];
+  genders: DemographicFilter[];
+  timeAtBank: DemographicFilter[];
+}> {
+  // Get all completed anonymous responses with demographics
+  const responses = await prisma.anonymousResponse.findMany({
+    where: {
+      campaignId,
+      completedAt: { not: null },
+    },
+    select: {
+      demographics: true,
+    },
+  });
+
+  // If below threshold, return empty filters
+  if (responses.length < ANONYMITY_THRESHOLD) {
+    return {
+      divisions: [],
+      jobRoles: [],
+      genders: [],
+      timeAtBank: [],
+    };
+  }
+
+  // Helper function to count respondents for each value of a field
+  const countByField = (field: string) => {
+    const counts = new Map<string, number>();
+
+    for (const response of responses) {
+      const demographics = (response.demographics as Record<string, unknown>) || {};
+      const value = demographics[field];
+
+      if (value && typeof value === 'string') {
+        counts.set(value, (counts.get(value) || 0) + 1);
+      }
+    }
+
+    return counts;
+  };
+
+  // Helper function to convert counts to filter options
+  const toFilterOptions = (
+    field: string,
+    label: string,
+    counts: Map<string, number>
+  ): DemographicFilter[] => {
+    const options: DemographicFilter[] = [];
+
+    for (const [value, count] of counts) {
+      // Only include options that maintain the threshold
+      if (count >= ANONYMITY_THRESHOLD) {
+        options.push({
+          field,
+          label: `${label}: ${value}`,
+          value,
+          count,
+        });
+      }
+    }
+
+    return options.sort((a, b) => a.value.localeCompare(b.value));
+  };
+
+  // Get counts for each demographic field
+  const divisionCounts = countByField('division');
+  const jobRoleCounts = countByField('jobRole');
+  const genderCounts = countByField('gender');
+  const timeAtBankCounts = countByField('timeAtBank');
+
+  return {
+    divisions: toFilterOptions('division', 'Division', divisionCounts),
+    jobRoles: toFilterOptions('jobRole', 'Job Role', jobRoleCounts),
+    genders: toFilterOptions('gender', 'Gender', genderCounts),
+    timeAtBank: toFilterOptions('timeAtBank', 'Time at Bank', timeAtBankCounts),
+  };
+}
+
+/**
+ * Validates that applying filters to anonymous responses maintains the anonymity threshold.
+ *
+ * @param campaignId - The ID of the anonymous campaign
+ * @param filters - Filters to apply (e.g., { division: 'Technology', gender: 'FEMALE' })
+ * @returns Object with valid flag and count
+ */
+export async function validateFilteredAnonymityAnonymous(
+  campaignId: string,
+  filters: Record<string, string>
+): Promise<{ valid: boolean; count: number }> {
+  // Get all completed anonymous responses
+  const responses = await prisma.anonymousResponse.findMany({
+    where: {
+      campaignId,
+      completedAt: { not: null },
+    },
+    select: {
+      demographics: true,
+    },
+  });
+
+  // Filter responses based on demographics JSON
+  const filteredResponses = responses.filter((response) => {
+    const demographics = (response.demographics as Record<string, unknown>) || {};
+
+    return Object.entries(filters).every(([key, value]) => {
+      return demographics[key] === value;
+    });
+  });
+
+  const count = filteredResponses.length;
+
+  return {
+    valid: count >= ANONYMITY_THRESHOLD,
+    count,
+  };
+}

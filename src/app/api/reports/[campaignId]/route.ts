@@ -10,6 +10,8 @@ import {
   getFilterableOptions,
   validateFilteredAnonymity,
   ANONYMOUS_SURVEY_TYPES,
+  getFilterableOptionsAnonymous,
+  validateFilteredAnonymityAnonymous,
 } from '@/lib/scoring/anonymity';
 
 export async function GET(
@@ -30,6 +32,14 @@ export async function GET(
             },
           },
         },
+        anonymousResponses: {
+          where: { completedAt: { not: null } },
+          include: {
+            responses: {
+              orderBy: { questionNumber: 'asc' },
+            },
+          },
+        },
       },
     });
 
@@ -39,6 +49,9 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    // Determine if this is an anonymous campaign
+    const isAnonymous = campaign.isAnonymous;
 
     // Fetch survey from Sanity with full question and category data
     let survey;
@@ -85,11 +98,10 @@ export async function GET(
       );
     }
 
-    // Check anonymity threshold for Survey 7 (Associate 180)
-    const meetsThreshold = await checkAnonymityThreshold(
-      campaign.id,
-      survey.surveyType
-    );
+    // Check anonymity threshold
+    const meetsThreshold = isAnonymous
+      ? campaign.anonymousResponses.length >= 5
+      : await checkAnonymityThreshold(campaign.id, survey.surveyType);
 
     if (!meetsThreshold) {
       return NextResponse.json(
@@ -105,10 +117,9 @@ export async function GET(
     }
 
     // Get filter options for demographics
-    const filterOptions = await getFilterableOptions(
-      campaign.id,
-      survey.surveyType
-    );
+    const filterOptions = isAnonymous
+      ? await getFilterableOptionsAnonymous(campaign.id)
+      : await getFilterableOptions(campaign.id, survey.surveyType);
 
     // Parse query parameters for filters
     const { searchParams } = new URL(request.url);
@@ -126,11 +137,9 @@ export async function GET(
 
     // Validate filters maintain anonymity
     if (Object.keys(filters).length > 0) {
-      const validation = await validateFilteredAnonymity(
-        campaign.id,
-        survey.surveyType,
-        filters
-      );
+      const validation = isAnonymous
+        ? await validateFilteredAnonymityAnonymous(campaign.id, filters)
+        : await validateFilteredAnonymity(campaign.id, survey.surveyType, filters);
 
       if (!validation.valid) {
         return NextResponse.json(
@@ -142,19 +151,6 @@ export async function GET(
           { status: 400 }
         );
       }
-    }
-
-    // Filter invitations based on demographics
-    let filteredInvitations = campaign.invitations.filter(
-      (inv) => inv.status === 'COMPLETED'
-    );
-
-    if (Object.keys(filters).length > 0) {
-      filteredInvitations = filteredInvitations.filter((inv) => {
-        return Object.entries(filters).every(([key, value]) => {
-          return inv.user[key as keyof typeof inv.user] === value;
-        });
-      });
     }
 
     // Extract all questions with their metadata
@@ -185,11 +181,59 @@ export async function GET(
       return a.name.localeCompare(b.name);
     });
 
+    // Prepare data based on campaign type
+    let filteredData: Array<{
+      id: string;
+      responses: Array<{
+        sanityQuestionId: string;
+        questionNumber: number;
+        value: number | null;
+        adjustedValue: number | null;
+      }>;
+      demographics?: Record<string, unknown>;
+      user?: { name?: string; email: string } & Record<string, unknown>;
+    }>;
+
+    if (isAnonymous) {
+      // Filter anonymous responses based on demographics JSON
+      filteredData = campaign.anonymousResponses.filter((anonResp) => {
+        if (Object.keys(filters).length === 0) return true;
+
+        const demographics = (anonResp.demographics as Record<string, unknown>) || {};
+        return Object.entries(filters).every(([key, value]) => {
+          return demographics[key] === value;
+        });
+      }).map((anonResp) => ({
+        id: anonResp.id,
+        responses: anonResp.responses,
+        demographics: anonResp.demographics as Record<string, unknown>,
+      }));
+    } else {
+      // Filter tracked invitations based on User demographics
+      filteredData = campaign.invitations
+        .filter((inv) => inv.status === 'COMPLETED')
+        .filter((inv) => {
+          if (Object.keys(filters).length === 0) return true;
+
+          return Object.entries(filters).every(([key, value]) => {
+            return inv.user[key as keyof typeof inv.user] === value;
+          });
+        })
+        .map((inv) => ({
+          id: inv.id,
+          responses: inv.responses,
+          user: {
+            ...inv.user,
+            name: inv.user.name ?? undefined,
+          },
+        }));
+    }
+
     // Calculate weighted scores for each respondent
-    const individualResults = filteredInvitations.map((invitation) => {
+    const individualResults = filteredData.map((data) => {
       // Prepare responses for scoring
       const preparedResponses = prepareResponsesForScoring(
-        invitation.responses.map((r) => ({
+        data.responses.map((r) => ({
           sanityQuestionId: r.sanityQuestionId,
           questionNumber: r.questionNumber,
           value: r.value!,
@@ -203,15 +247,15 @@ export async function GET(
         categories,
         survey._id,
         survey.title,
-        invitation.id,
+        data.id,
         survey.scale!.min,
         survey.scale!.max,
         survey.surveyType as 'likert3' | 'likert5'
       );
 
       return {
-        userId: invitation.userId,
-        userName: invitation.user.name || invitation.user.email,
+        userId: isAnonymous ? 'anonymous' : (data.user?.email || 'unknown'),
+        userName: isAnonymous ? 'Anonymous' : (data.user?.name || data.user?.email || 'Unknown'),
         ...scoringResult,
       };
     });
@@ -266,22 +310,24 @@ export async function GET(
     });
 
     // Calculate overall metrics
-    const totalInvitations = campaign.invitations.length;
-    const completedCount = filteredInvitations.length;
+    const totalCount = isAnonymous
+      ? campaign.anonymousResponses.length
+      : campaign.invitations.length;
+    const completedCount = filteredData.length;
     const completionRate =
-      totalInvitations > 0
-        ? Math.round((completedCount / totalInvitations) * 100 * 10) / 10
+      totalCount > 0
+        ? Math.round((completedCount / totalCount) * 100 * 10) / 10
         : 0;
 
     // Calculate section-level aggregates
     const sectionAggregates = survey.sections.map((section) => {
       const sectionQuestionIds = section.questions.map((q) => q._id);
 
-      // Collect all responses for this section across all invitations
+      // Collect all responses for this section
       const allSectionResponses: number[] = [];
 
-      filteredInvitations.forEach((invitation) => {
-        const sectionResponses = invitation.responses.filter((r) =>
+      filteredData.forEach((data) => {
+        const sectionResponses = data.responses.filter((r) =>
           sectionQuestionIds.includes(r.sanityQuestionId)
         );
 
@@ -303,7 +349,7 @@ export async function GET(
         sectionTitle: section.title,
         averageScore: Math.round(averageScore * 10) / 10,
         questionCount: section.questions.length,
-        responseCount: filteredInvitations.length,
+        responseCount: filteredData.length,
       };
     });
 
@@ -317,18 +363,19 @@ export async function GET(
     }));
 
     // Calculate simple overall score (average of all adjusted responses)
-    const allResponses = filteredInvitations.flatMap((inv) =>
-      inv.responses.map((r) => (r.adjustedValue ?? r.value ?? 0) as number)
+    const allResponses = filteredData.flatMap((data) =>
+      data.responses.map((r) => (r.adjustedValue ?? r.value ?? 0) as number)
     );
     const overallScore =
       allResponses.length > 0
         ? allResponses.reduce((sum: number, val: number) => sum + val, 0) / allResponses.length
         : 0;
 
-    // Determine if individual scores should be shown (not for Associate 180)
-    const showIndividualScores = !ANONYMOUS_SURVEY_TYPES.includes(
-      survey.surveyType.toLowerCase()
-    );
+    // Determine if individual scores should be shown
+    // Never show for anonymous campaigns or Associate 180
+    const showIndividualScores =
+      !isAnonymous &&
+      !ANONYMOUS_SURVEY_TYPES.includes(survey.surveyType.toLowerCase());
 
     return NextResponse.json({
       campaign: {
@@ -340,12 +387,15 @@ export async function GET(
         startDate: campaign.startDate,
         endDate: campaign.endDate,
         status: campaign.status,
+        isAnonymous,
       },
       metrics: {
-        totalInvitations,
-        completedCount,
+        totalInvitations: totalCount,
+        completedCount: isAnonymous
+          ? campaign.anonymousResponses.length
+          : campaign.invitations.filter((inv) => inv.status === 'COMPLETED').length,
         completionRate,
-        filteredCount: filteredInvitations.length,
+        filteredCount: filteredData.length,
       },
       scores: {
         overall: Math.round(overallScore * 10) / 10,
