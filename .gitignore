@@ -43,4 +43,3 @@ prisma/migrations/**/*.sql
 sanity/dist
 sanity/.sanity
 .env.production
-src/lib/auth/
