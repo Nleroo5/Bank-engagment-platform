@@ -1,3 +1,15 @@
+/**
+ * @deprecated This scoring module is no longer used.
+ *
+ * All surveys now use the weighted scoring system in `categoryScoring.ts`.
+ * This file implements simple averaging without category weights, which is not
+ * aligned with the current scoring requirements.
+ *
+ * **Status**: Unused throughout the codebase (verified 2026-02-12)
+ * **Replacement**: Use `/lib/scoring/categoryScoring.ts` instead
+ * **Safe to delete**: Yes - no active imports found
+ */
+
 import { prisma } from '@/lib/prisma';
 import type { Response } from '@prisma/client';
 

@@ -83,10 +83,38 @@ export async function PATCH(request: NextRequest) {
     }
 
     // ============================================
-    // 4. Upsert response items (allows partial saves)
+    // 4. Fetch question metadata for reverse-scoring
     // ============================================
-    const upsertPromises = responses.map((response) =>
-      prisma.anonymousResponseItem.upsert({
+    const questionIds = responses.map((r) => r.questionId);
+    const questions = await prisma.question.findMany({
+      where: { id: { in: questionIds } },
+      include: {
+        survey: {
+          include: { scale: true },
+        },
+      },
+    });
+
+    // Create a map for quick lookup
+    const questionMap = new Map(questions.map((q) => [q.id, q]));
+
+    // ============================================
+    // 5. Upsert response items with reverse-scoring
+    // ============================================
+    const upsertPromises = responses.map((response) => {
+      const question = questionMap.get(response.questionId);
+
+      // Calculate adjusted value if reversed
+      let adjustedValue = response.value ?? null;
+
+      if (question && response.value !== null && response.value !== undefined) {
+        if (question.isReversed) {
+          const scaleMax = question.survey.scale?.max ?? 3;
+          adjustedValue = scaleMax + 1 - response.value;
+        }
+      }
+
+      return prisma.anonymousResponseItem.upsert({
         where: {
           anonymousResponseId_questionId: {
             anonymousResponseId: anonymousResponse.id,
@@ -98,16 +126,18 @@ export async function PATCH(request: NextRequest) {
           questionId: response.questionId,
           questionNumber: response.questionNumber,
           value: response.value ?? null,
+          adjustedValue,
           textValue: response.textValue ?? null,
           submittedAt: new Date(),
         },
         update: {
           value: response.value ?? null,
+          adjustedValue,
           textValue: response.textValue ?? null,
           submittedAt: new Date(),
         },
-      })
-    );
+      });
+    });
 
     await Promise.all(upsertPromises);
 

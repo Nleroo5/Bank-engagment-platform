@@ -9,7 +9,7 @@ import {
   checkAnonymityThreshold,
   ANONYMOUS_SURVEY_TYPES,
 } from '@/lib/scoring/anonymity';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -190,7 +190,7 @@ export async function GET(
     // EXCEL EXPORT
     // ================================================================================
     if (format === 'xlsx') {
-      const workbook = XLSX.utils.book_new();
+      const workbook = new ExcelJS.Workbook();
 
       // Sheet 1: Summary
       const totalInvitations =
@@ -213,7 +213,8 @@ export async function GET(
           0
         ) / individualResults.length;
 
-      const summaryData = [
+      const summarySheet = workbook.addWorksheet('Summary');
+      summarySheet.addRows([
         ['WEIGHTED SCORING REPORT'],
         [''],
         ['Survey Information'],
@@ -243,13 +244,11 @@ export async function GET(
         ['Overall Weighted Score'],
         ['Average Weighted Score', overallWeightedScore.toFixed(1)],
         ['Scale Range', `${survey.scale.min} - ${survey.scale.max}`],
-      ];
+      ]);
 
-      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
-
-      // Sheet 2: Weighted Category Scores ⭐ NEW!
-      const categoryData = [
+      // Sheet 2: Weighted Category Scores
+      const categorySheet = workbook.addWorksheet('Category Scores');
+      categorySheet.addRows([
         ['WEIGHTED CATEGORY SCORES'],
         [''],
         [
@@ -282,13 +281,12 @@ export async function GET(
         ['Avg Weighted Score = (Sum of adjusted responses) × Weight'],
         ['Avg Raw Score = Sum of adjusted responses (before weight)'],
         ['Percentage = (Avg Weighted / Max Possible Weighted) × 100'],
-      ];
-
-      const categorySheet = XLSX.utils.aoa_to_sheet(categoryData);
-      XLSX.utils.book_append_sheet(workbook, categorySheet, 'Category Scores');
+      ]);
 
       // Sheet 3: Individual Scores (if not anonymous)
       if (!isAnonymousSurvey) {
+        const individualSheet = workbook.addWorksheet('Individual Scores');
+
         const individualHeaders = [
           'Respondent',
           ...categories.map((c) => `${c.name} (×${c.weight})`),
@@ -312,23 +310,16 @@ export async function GET(
           ];
         });
 
-        const individualData = [
+        individualSheet.addRows([
           ['INDIVIDUAL WEIGHTED SCORES'],
           [''],
           individualHeaders,
           ...individualRows,
-        ];
-
-        const individualSheet = XLSX.utils.aoa_to_sheet(individualData);
-        XLSX.utils.book_append_sheet(
-          workbook,
-          individualSheet,
-          'Individual Scores'
-        );
+        ]);
       }
 
       // Generate buffer
-      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      const buffer = await workbook.xlsx.writeBuffer();
 
       return new NextResponse(buffer, {
         status: 200,

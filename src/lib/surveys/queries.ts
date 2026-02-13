@@ -48,10 +48,18 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
       sortOrder: section.sortOrder,
       description: section.description || undefined,
       directions: undefined,
-      questions: section.questions
-        .filter((question) => question.categories.length > 0) // Filter out questions without categories
-        .map((question) => {
-          const qCategory = question.categories[0]!.category; // Non-null assertion after filter
+      questions: section.questions.map((question) => {
+          // Validation: All questions should have categories
+          if (question.categories.length === 0) {
+            console.error(
+              `Data integrity error: Question ${question.id} (number ${question.questionNumber}) has no categories`
+            );
+            throw new Error(
+              `Question ${question.questionNumber} in section "${section.title}" has no category mapping`
+            );
+          }
+
+          const qCategory = question.categories[0]!.category;
           return {
             _id: question.id,
             _type: 'question' as const,

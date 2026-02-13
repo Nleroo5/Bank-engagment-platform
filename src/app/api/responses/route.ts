@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 const patchSchema = z.object({
   token: z.string().uuid(),
   questionId: z.string(),
-  value: z.union([z.number().int().min(1).max(5), z.string()]),
+  value: z.union([z.number().int(), z.string()]), // Relaxed validation - will validate against actual scale
 });
 
 export async function PATCH(request: NextRequest) {
@@ -56,13 +56,52 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Get question number (we'll need this for the response)
-    // For now, we'll extract it from the questionId or set it to 0
-    // In a real scenario, you'd fetch this from Sanity
-    const questionNumber = 0; // Placeholder
+    // Fetch question to get questionNumber and check if reversed
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+      include: {
+        survey: {
+          include: { scale: true },
+        },
+      },
+    });
+
+    if (!question) {
+      return NextResponse.json(
+        { error: 'Invalid question ID' },
+        { status: 400 }
+      );
+    }
+
+    const questionNumber = question.questionNumber;
 
     // Determine if value is numeric (Likert) or text (demographics)
     const isNumeric = typeof value === 'number';
+
+    // Scale-specific validation for numeric values
+    if (isNumeric) {
+      const scaleMax = question.survey.scale?.max ?? 5;
+      const scaleMin = question.survey.scale?.min ?? 1;
+
+      if ((value as number) < scaleMin || (value as number) > scaleMax) {
+        return NextResponse.json(
+          {
+            error: `Invalid value ${value} for this scale (expected ${scaleMin}-${scaleMax})`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Calculate adjusted value if reversed
+    let adjustedValue: number | null = null;
+
+    if (isNumeric && question.isReversed) {
+      const scaleMax = question.survey.scale?.max ?? 5;
+      adjustedValue = scaleMax + 1 - (value as number);
+    } else if (isNumeric) {
+      adjustedValue = value as number;
+    }
 
     // Upsert the response
     const response = await prisma.response.upsert({
@@ -74,6 +113,7 @@ export async function PATCH(request: NextRequest) {
       },
       update: {
         value: isNumeric ? value : null,
+        adjustedValue,
         textValue: !isNumeric ? value : null,
         submittedAt: new Date(),
       },
@@ -82,6 +122,7 @@ export async function PATCH(request: NextRequest) {
         questionId: questionId,
         questionNumber,
         value: isNumeric ? value : null,
+        adjustedValue,
         textValue: !isNumeric ? value : null,
       },
     });

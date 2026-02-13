@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma/client';
-import { hashIpAddress, getClientIp } from '@/lib/fingerprint';
+import { hashIpAddress, getClientIp as getClientIpFingerprint } from '@/lib/fingerprint';
+import { rateLimit, getRateLimitHeaders, getClientIp } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 /**
@@ -22,6 +23,25 @@ const ValidateRequestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // ============================================
+    // 0. Rate limiting - 30 requests per minute
+    // ============================================
+    const clientIp = getClientIp(request);
+    const rateLimitResult = rateLimit(clientIp, {
+      interval: 60 * 1000, // 1 minute
+      uniqueTokenPerInterval: 30, // 30 requests per minute
+    });
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+
     const body = await request.json();
     const validation = ValidateRequestSchema.safeParse(body);
 
@@ -134,8 +154,8 @@ export async function POST(request: NextRequest) {
     // ============================================
     // 7. Hash IP address for duplicate detection
     // ============================================
-    const clientIp = getClientIp(request);
-    const ipHash = clientIp ? await hashIpAddress(clientIp, campaign.id) : null;
+    const clientIpForHash = getClientIpFingerprint(request);
+    const ipHash = clientIpForHash ? await hashIpAddress(clientIpForHash, campaign.id) : null;
 
     // ============================================
     // 8. Create AnonymousResponse session

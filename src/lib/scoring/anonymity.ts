@@ -8,7 +8,7 @@ export const ANONYMITY_THRESHOLD = 5;
 /**
  * Survey types that require anonymity protection
  */
-export const ANONYMOUS_SURVEY_TYPES = ['associate-180', 'survey-7'];
+export const ANONYMOUS_SURVEY_TYPES = ['associate_180', 'survey-7'];
 
 /**
  * Demographic filter option

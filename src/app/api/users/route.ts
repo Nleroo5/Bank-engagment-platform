@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/config';
+import type { Session } from 'next-auth';
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -11,7 +14,21 @@ const createUserSchema = z.object({
 
 export async function GET() {
   try {
-    // Fetch all users (no role-based filtering)
+    // Authentication check - only SUPER_ADMIN can access user management
+    const session = (await getServerSession(authOptions)) as Session | null;
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (session.user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only super admins can access user management' },
+        { status: 403 }
+      );
+    }
+
+    // Fetch all users
     const users = await prisma.user.findMany({
       include: {
         organization: true,
@@ -33,6 +50,20 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Authentication check - only SUPER_ADMIN can create users
+    const session = (await getServerSession(authOptions)) as Session | null;
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (session.user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only super admins can create users' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { email, name, role, organizationId } = createUserSchema.parse(body);
 

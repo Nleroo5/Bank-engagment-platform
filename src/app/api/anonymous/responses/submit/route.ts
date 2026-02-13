@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma/client';
 import { detectFraudulentResponse, flagResponseForReview } from '@/lib/fraud-detection';
+import { rateLimit, getClientIp, getRateLimitHeaders } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 /**
@@ -23,6 +24,25 @@ const SubmitRequestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // ============================================
+    // 0. Rate limiting - 10 requests per minute
+    // ============================================
+    const clientIp = getClientIp(request);
+    const rateLimitResult = rateLimit(clientIp, {
+      interval: 60 * 1000, // 1 minute
+      uniqueTokenPerInterval: 10, // 10 requests per minute
+    });
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+
     const body = await request.json();
     const validation = SubmitRequestSchema.safeParse(body);
 
