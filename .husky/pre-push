@@ -3,9 +3,9 @@
 
 echo "🚀 Running pre-push validation..."
 
-# Type check (disabled due to memory issues with large TypeScript projects)
-# echo "📝 Type checking..."
-# npm run type-check || { echo "❌ Type check failed! Fix errors before pushing."; exit 1; }
+# Type check with increased memory
+echo "📝 Type checking..."
+NODE_OPTIONS=--max-old-space-size=16384 npm run type-check || { echo "❌ Type check failed! Fix errors before pushing."; exit 1; }
 
 # Lint
 echo "🔎 Linting..."

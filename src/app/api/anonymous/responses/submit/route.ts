@@ -101,17 +101,65 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 4. TODO: Validate all required questions answered
-    // (This requires fetching survey from Sanity to know question count)
-    // For now, we'll accept whatever responses were saved
+    // 4. Validate all required questions answered
     // ============================================
+    const survey = await prisma.survey.findUnique({
+      where: { id: campaign.surveyId },
+      include: {
+        questions: {
+          where: { isRequired: true },
+        },
+        scale: true,
+      },
+    });
+
+    if (!survey) {
+      return NextResponse.json({ error: 'Survey not found' }, { status: 404 });
+    }
+
+    const requiredQuestionIds = survey.questions.map((q) => q.id);
+    const answeredQuestionIds = anonymousResponse.responses.map(
+      (r) => r.questionId
+    );
+
+    const missingQuestions = requiredQuestionIds.filter(
+      (qId) => !answeredQuestionIds.includes(qId)
+    );
+
+    if (missingQuestions.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'Please answer all required questions',
+          missingQuestionIds: missingQuestions,
+        },
+        { status: 400 }
+      );
+    }
 
     // ============================================
     // 5. Apply reverse-scoring to adjustedValue fields
-    // (This requires survey metadata from Sanity to know which questions are reversed)
-    // For now, we'll implement this in Phase 5 when we update scoring logic
     // ============================================
-    // Note: This will be implemented in src/lib/scoring/applyReverseScoring.ts
+    const scaleMax = survey.scale?.max ?? 3;
+
+    // Update responses with adjusted values for reversed questions
+    for (const response of anonymousResponse.responses) {
+      const question = survey.questions.find((q) => q.id === response.questionId);
+
+      if (question?.isReversed && typeof response.value === 'number') {
+        const adjustedValue = scaleMax + 1 - response.value;
+
+        await prisma.anonymousResponseItem.update({
+          where: { id: response.id },
+          data: { adjustedValue },
+        });
+      } else if (typeof response.value === 'number') {
+        // For non-reversed questions, adjusted = raw
+        await prisma.anonymousResponseItem.update({
+          where: { id: response.id },
+          data: { adjustedValue: response.value },
+        });
+      }
+    }
 
     // ============================================
     // 6. Store demographics JSON

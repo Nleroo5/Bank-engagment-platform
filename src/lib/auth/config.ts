@@ -35,6 +35,19 @@ declare module 'next-auth/jwt' {
   }
 }
 
+// Validate NEXTAUTH_SECRET on startup
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    'NEXTAUTH_SECRET is required. Generate one with: openssl rand -base64 32'
+  );
+}
+
+if (process.env.NEXTAUTH_SECRET.length < 32) {
+  throw new Error(
+    'NEXTAUTH_SECRET must be at least 32 characters long for security'
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
