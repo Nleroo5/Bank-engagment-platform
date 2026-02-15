@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { CampaignActions } from '@/components/admin/CampaignActions';
 import { CampaignHeaderActions } from '@/components/admin/CampaignHeaderActions';
-import { ArrowLeft, Link as LinkIcon, Copy, Shield } from 'lucide-react';
+import { CopyButton } from '@/components/admin/CopyButton';
+import { ArrowLeft, Link as LinkIcon, Shield } from 'lucide-react';
 
 // Force dynamic rendering - admin pages need database access at runtime
 export const dynamic = 'force-dynamic';
@@ -150,13 +151,7 @@ export default async function CampaignDetailPage({
                   value={publicLink}
                   className="flex-1 rounded-md border border-blue-300 bg-white px-3 py-2 font-mono text-sm"
                 />
-                <button
-                  onClick={() => navigator.clipboard.writeText(publicLink)}
-                  className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </button>
+                <CopyButton text={publicLink} />
               </div>
               <div className="mt-3 rounded-md bg-white p-3">
                 <p className="text-sm text-gray-700">
