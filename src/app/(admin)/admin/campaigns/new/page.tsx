@@ -40,10 +40,15 @@ export default async function NewCampaignPage() {
     activeSurveys = surveys.map((survey) => ({
       _id: survey.id,
       title: survey.title,
-      description: survey.description || undefined,
+      slug: {
+        current: survey.id, // PostgreSQL uses ID instead of Sanity slug
+      },
+      surveyNumber: survey.surveyNumber
+        ? parseInt(survey.surveyNumber, 10)
+        : undefined,
       surveyType: survey.surveyType,
       isActive: survey.status === 'ACTIVE',
-      questionCount: survey._count.questions,
+      estimatedMinutes: undefined, // Not stored in PostgreSQL surveys
     }));
   } catch (error) {
     console.error('[NewCampaignPage] Error fetching surveys:', error);
