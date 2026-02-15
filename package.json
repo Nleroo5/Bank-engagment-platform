@@ -17,6 +17,7 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed-surveys": "tsx scripts/seed-sample-surveys.ts",
     "db:backfill-adjusted": "tsx scripts/backfill-adjusted-values.ts",
     "db:migrate-sanity": "tsx scripts/migrate-sanity-surveys.ts",
     "create-admin": "tsx create-admin.ts",
