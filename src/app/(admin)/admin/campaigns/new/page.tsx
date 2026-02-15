@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import { getAllSurveys } from '@/lib/surveys/queries';
 import { NewCampaignForm } from '@/components/admin/NewCampaignForm';
 import type { SurveyListItem } from '@/types/survey';
 
@@ -13,18 +12,39 @@ export default async function NewCampaignPage() {
     },
   });
 
-  // Fetch active surveys from Sanity with error handling
+  // Fetch active surveys from PostgreSQL
   let activeSurveys: SurveyListItem[] = [];
   let surveyError: string | null = null;
 
   try {
-    console.log('[NewCampaignPage] Fetching surveys from Sanity...');
-    const surveys = await getAllSurveys();
-    console.log(`[NewCampaignPage] Got ${surveys.length} total surveys`);
-    activeSurveys = surveys.filter((survey) => survey.isActive);
-    console.log(
-      `[NewCampaignPage] Filtered to ${activeSurveys.length} active surveys`
-    );
+    console.log('[NewCampaignPage] Fetching surveys from PostgreSQL...');
+    const surveys = await prisma.survey.findMany({
+      where: {
+        status: 'ACTIVE',
+      },
+      include: {
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    console.log(`[NewCampaignPage] Got ${surveys.length} active surveys`);
+
+    // Transform to match SurveyListItem type
+    activeSurveys = surveys.map((survey) => ({
+      _id: survey.id,
+      title: survey.title,
+      description: survey.description || undefined,
+      surveyType: survey.surveyType,
+      isActive: survey.status === 'ACTIVE',
+      questionCount: survey._count.questions,
+    }));
   } catch (error) {
     console.error('[NewCampaignPage] Error fetching surveys:', error);
     surveyError = error instanceof Error ? error.message : 'Unknown error';
