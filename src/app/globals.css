@@ -20,7 +20,7 @@ body {
 
 /* Enhanced focus indicators for accessibility (WCAG 2.1) */
 *:focus-visible {
-  outline: 2px solid #0284c7;
+  outline: 2px solid #003da5; /* Brand navy */
   outline-offset: 2px;
 }
 
