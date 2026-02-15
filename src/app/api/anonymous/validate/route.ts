@@ -18,7 +18,7 @@ import { z } from 'zod';
 
 const ValidateRequestSchema = z.object({
   accessCode: z.string().min(1, 'Access code is required'),
-  captchaToken: z.string().min(1, 'CAPTCHA verification required'),
+  captchaToken: z.string().optional(), // Optional if hCaptcha not configured
   browserFingerprint: z.string().optional(),
   device: z.string().optional(),
   userAgent: z.string().optional(),
@@ -59,27 +59,32 @@ export async function POST(request: NextRequest) {
       validation.data;
 
     // ============================================
-    // 1. Verify CAPTCHA
+    // 1. Verify CAPTCHA (optional - skip if not configured)
     // ============================================
-    const captchaResponse = await fetch('https://hcaptcha.com/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        secret: process.env.HCAPTCHA_SECRET_KEY || '',
-        response: captchaToken,
-      }),
-    });
+    const hCaptchaEnabled = Boolean(process.env.HCAPTCHA_SECRET_KEY);
 
-    const captchaResult = await captchaResponse.json();
+    if (hCaptchaEnabled && captchaToken) {
+      const captchaResponse = await fetch('https://hcaptcha.com/siteverify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          secret: process.env.HCAPTCHA_SECRET_KEY!,
+          response: captchaToken,
+        }),
+      });
 
-    if (!captchaResult.success) {
-      return NextResponse.json(
-        { error: 'CAPTCHA verification failed. Please try again.' },
-        { status: 400 }
-      );
+      const captchaResult = await captchaResponse.json();
+
+      if (!captchaResult.success) {
+        return NextResponse.json(
+          { error: 'CAPTCHA verification failed. Please try again.' },
+          { status: 400 }
+        );
+      }
     }
+    // If hCaptcha not configured, skip verification (for development/testing)
 
     // ============================================
     // 2. Lookup campaign by access code

@@ -21,16 +21,21 @@ export function NewCampaignForm({
   const [formData, setFormData] = useState({
     surveyId: '',
     organizationId: '',
+    organizationName: '', // For typing new organization names
     startDate: '',
     endDate: '',
     reminderDays: '3',
     isAnonymous: false,
     accessCode: '',
     maxResponses: '',
+    maxInvitationUses: '', // Per-invitation link limit
   });
 
   const [accessCodeError, setAccessCodeError] = useState<string | null>(null);
   const [checkingAccessCode, setCheckingAccessCode] = useState(false);
+  const [filteredOrganizations, setFilteredOrganizations] = useState(
+    organizations
+  );
 
   // Check access code availability
   const checkAccessCode = async (code: string) => {
@@ -87,16 +92,20 @@ export function NewCampaignForm({
     try {
       const payload = {
         surveyId: formData.surveyId,
-        organizationId: formData.organizationId,
+        organizationId: formData.organizationId || undefined,
+        organizationName: formData.organizationId ? undefined : formData.organizationName,
         startDate: formData.startDate || null,
         endDate: formData.endDate || null,
         reminderDays: parseInt(formData.reminderDays),
         isAnonymous: formData.isAnonymous,
+        maxResponses: formData.maxResponses
+          ? parseInt(formData.maxResponses)
+          : null,
+        maxInvitationUses: formData.maxInvitationUses
+          ? parseInt(formData.maxInvitationUses)
+          : null,
         ...(formData.isAnonymous && {
           accessCode: formData.accessCode,
-          maxResponses: formData.maxResponses
-            ? parseInt(formData.maxResponses)
-            : null,
         }),
       };
 
@@ -162,30 +171,64 @@ export function NewCampaignForm({
         )}
       </div>
 
-      {/* Organization Selection */}
+      {/* Organization Selection with Type-ahead */}
       <div>
         <label
-          htmlFor="organizationId"
+          htmlFor="organizationName"
           className="block text-sm font-medium text-gray-700"
         >
-          Organization
+          Organization Name
         </label>
-        <select
-          id="organizationId"
+        <input
+          type="text"
+          id="organizationName"
           required
-          value={formData.organizationId}
-          onChange={(e) =>
-            setFormData({ ...formData, organizationId: e.target.value })
-          }
+          list="organizations-list"
+          value={formData.organizationName}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFormData({ ...formData, organizationName: value });
+
+            // Find matching organization
+            const matchingOrg = organizations.find(
+              (org) => org.name.toLowerCase() === value.toLowerCase()
+            );
+            if (matchingOrg) {
+              setFormData({
+                ...formData,
+                organizationName: value,
+                organizationId: matchingOrg.id,
+              });
+            } else {
+              setFormData({
+                ...formData,
+                organizationName: value,
+                organizationId: '',
+              });
+            }
+
+            // Filter organizations for autocomplete
+            setFilteredOrganizations(
+              organizations.filter((org) =>
+                org.name.toLowerCase().includes(value.toLowerCase())
+              )
+            );
+          }}
+          placeholder="Type to search or enter new organization"
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-        >
-          <option value="">Select an organization</option>
-          {organizations.map((org) => (
-            <option key={org.id} value={org.id}>
-              {org.name}
-            </option>
+        />
+        <datalist id="organizations-list">
+          {filteredOrganizations.map((org) => (
+            <option key={org.id} value={org.name} />
           ))}
-        </select>
+        </datalist>
+        <p className="mt-1 text-sm text-gray-500">
+          {formData.organizationId
+            ? '✓ Existing organization selected'
+            : formData.organizationName
+            ? '⚠ Will create new organization'
+            : 'Start typing to search existing organizations'}
+        </p>
       </div>
 
       {/* Date Range */}
@@ -230,6 +273,65 @@ export function NewCampaignForm({
           <p className="mt-1 text-sm text-gray-500">
             Leave blank for no expiration
           </p>
+        </div>
+      </div>
+
+      {/* Respondent Limits */}
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <h3 className="mb-4 font-medium text-gray-900">
+          Response Limits (Optional)
+        </h3>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="maxResponses"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Maximum Total Responses
+            </label>
+            <input
+              type="number"
+              id="maxResponses"
+              min="1"
+              value={formData.maxResponses}
+              onChange={(e) =>
+                setFormData({ ...formData, maxResponses: e.target.value })
+              }
+              placeholder="Unlimited"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Campaign closes after this many completed responses
+            </p>
+          </div>
+
+          {!formData.isAnonymous && (
+            <div>
+              <label
+                htmlFor="maxInvitationUses"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Max Uses Per Invitation Link
+              </label>
+              <input
+                type="number"
+                id="maxInvitationUses"
+                min="1"
+                value={formData.maxInvitationUses}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    maxInvitationUses: e.target.value,
+                  })
+                }
+                placeholder="1"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                How many times each invitation link can be used (default: 1)
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -297,29 +399,6 @@ export function NewCampaignForm({
               <p className="mt-1 text-sm text-gray-500">
                 6-20 alphanumeric characters (automatically converted to
                 uppercase)
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="maxResponses"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Maximum Responses (Optional)
-              </label>
-              <input
-                type="number"
-                id="maxResponses"
-                min="1"
-                value={formData.maxResponses}
-                onChange={(e) =>
-                  setFormData({ ...formData, maxResponses: e.target.value })
-                }
-                placeholder="Leave blank for unlimited"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                Survey will close after this many completed responses
               </p>
             </div>
           </div>

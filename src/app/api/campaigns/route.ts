@@ -47,30 +47,53 @@ export async function POST(request: NextRequest) {
     const {
       surveyId,
       organizationId,
+      organizationName,
       startDate,
       endDate,
       reminderDays,
       isAnonymous,
       accessCode,
       maxResponses,
-    } = createCampaignSchema.parse(body);
+      maxInvitationUses,
+    } = body;
 
-    // Fetch survey from Sanity to get the title
-    const survey = await getSurveyById(surveyId);
+    // Fetch survey from PostgreSQL to get the title
+    const survey = await prisma.survey.findUnique({
+      where: { id: surveyId },
+      select: { title: true },
+    });
 
     if (!survey) {
       return NextResponse.json({ error: 'Survey not found' }, { status: 404 });
     }
 
-    // Validate organization exists
-    const organization = await prisma.organization.findUnique({
-      where: { id: organizationId },
-    });
+    // Handle organization - either find existing or create new
+    let finalOrganizationId = organizationId;
 
-    if (!organization) {
+    if (!organizationId && organizationName) {
+      // Create new organization
+      const newOrganization = await prisma.organization.create({
+        data: {
+          name: organizationName,
+        },
+      });
+      finalOrganizationId = newOrganization.id;
+    } else if (organizationId) {
+      // Validate organization exists
+      const organization = await prisma.organization.findUnique({
+        where: { id: organizationId },
+      });
+
+      if (!organization) {
+        return NextResponse.json(
+          { error: 'Organization not found' },
+          { status: 404 }
+        );
+      }
+    } else {
       return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
+        { error: 'Organization name or ID is required' },
+        { status: 400 }
       );
     }
 
@@ -101,14 +124,16 @@ export async function POST(request: NextRequest) {
       data: {
         surveyId: surveyId,
         surveyTitle: survey.title,
-        organizationId,
+        organizationId: finalOrganizationId,
         status: 'DRAFT',
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
-        reminderDays,
-        isAnonymous,
+        reminderDays: parseInt(reminderDays) || 3,
+        isAnonymous: Boolean(isAnonymous),
         accessCode: isAnonymous && accessCode ? accessCode.toUpperCase() : null,
-        maxResponses: isAnonymous ? maxResponses : null,
+        maxResponses: maxResponses ? parseInt(maxResponses) : null,
+        // Note: maxInvitationUses would be stored per-invitation, not per-campaign
+        // This can be implemented when creating invitations
       },
       include: {
         organization: true,
