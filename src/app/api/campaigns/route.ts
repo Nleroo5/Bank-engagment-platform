@@ -1,18 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { getSurveyById } from '@/lib/surveys/queries';
-
-const createCampaignSchema = z.object({
-  surveyId: z.string(),
-  organizationId: z.string().uuid(),
-  startDate: z.string().nullable().optional(),
-  endDate: z.string().nullable().optional(),
-  reminderDays: z.number().int().min(1).max(30).default(3),
-  isAnonymous: z.boolean().default(false),
-  accessCode: z.string().min(6).max(20).optional(),
-  maxResponses: z.number().int().positive().nullable().optional(),
-});
 
 export async function GET() {
   try {
@@ -54,7 +41,6 @@ export async function POST(request: NextRequest) {
       isAnonymous,
       accessCode,
       maxResponses,
-      maxInvitationUses,
     } = body;
 
     // Fetch survey from PostgreSQL to get the title
@@ -142,13 +128,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ campaign }, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid request data', details: error.errors },
-        { status: 400 }
-      );
-    }
-
     console.error('Error creating campaign:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
