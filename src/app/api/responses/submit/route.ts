@@ -113,22 +113,66 @@ export async function POST(request: NextRequest) {
 
     const completedAt = new Date();
 
-    // Update invitation status to COMPLETED
-    await prisma.invitation.update({
-      where: { id: invitation.id },
-      data: {
-        status: 'COMPLETED',
-        completedAt,
-      },
-    });
+    // ============================================
+    // TRANSACTION: Apply reverse-scoring and mark complete atomically
+    // ============================================
+    // Wrap all database writes in a transaction for data integrity
+    await prisma.$transaction(async (tx) => {
+      // 1. Fetch PostgreSQL survey data to get scale and reversed questions
+      const pgSurvey = await tx.survey.findUnique({
+        where: { id: invitation.campaign.surveyId },
+        include: {
+          questions: true,
+          scale: true,
+        },
+      });
 
-    // Update response session
-    await prisma.responseSession.update({
-      where: { invitationId: invitation.id },
-      data: {
-        completedAt,
-        lastActiveAt: completedAt,
-      },
+      if (pgSurvey) {
+        const scaleMax = pgSurvey.scale?.max ?? 3;
+
+        // 2. Apply reverse-scoring to all responses
+        for (const response of invitation.responses) {
+          const question = pgSurvey.questions.find(
+            (q) => q.id === response.questionId
+          );
+
+          let adjustedValue: number | null = null;
+
+          if (question?.isReversed && typeof response.value === 'number') {
+            // Apply reverse-scoring formula: adjustedValue = (max + 1) - raw
+            adjustedValue = scaleMax + 1 - response.value;
+          } else if (typeof response.value === 'number') {
+            // For non-reversed questions, adjusted = raw
+            adjustedValue = response.value;
+          }
+
+          // Update the adjusted value
+          if (adjustedValue !== null) {
+            await tx.response.update({
+              where: { id: response.id },
+              data: { adjustedValue },
+            });
+          }
+        }
+      }
+
+      // 3. Update invitation status to COMPLETED
+      await tx.invitation.update({
+        where: { id: invitation.id },
+        data: {
+          status: 'COMPLETED',
+          completedAt,
+        },
+      });
+
+      // 4. Update response session
+      await tx.responseSession.update({
+        where: { invitationId: invitation.id },
+        data: {
+          completedAt,
+          lastActiveAt: completedAt,
+        },
+      });
     });
 
     return NextResponse.json({

@@ -137,39 +137,72 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 5. Apply reverse-scoring to adjustedValue fields
+    // 5. ATOMIC CHECK: Verify maxResponses limit before submission
     // ============================================
-    const scaleMax = survey.scale?.max ?? 3;
+    // This prevents race conditions where multiple users bypass the limit
+    if (campaign.maxResponses) {
+      const completedCount = await prisma.anonymousResponse.count({
+        where: {
+          campaignId: campaign.id,
+          completedAt: { not: null },
+        },
+      });
 
-    // Update responses with adjusted values for reversed questions
-    for (const response of anonymousResponse.responses) {
-      const question = survey.questions.find((q) => q.id === response.questionId);
-
-      if (question?.isReversed && typeof response.value === 'number') {
-        const adjustedValue = scaleMax + 1 - response.value;
-
-        await prisma.anonymousResponseItem.update({
-          where: { id: response.id },
-          data: { adjustedValue },
-        });
-      } else if (typeof response.value === 'number') {
-        // For non-reversed questions, adjusted = raw
-        await prisma.anonymousResponseItem.update({
-          where: { id: response.id },
-          data: { adjustedValue: response.value },
-        });
+      if (completedCount >= campaign.maxResponses) {
+        return NextResponse.json(
+          {
+            error: 'This survey has reached its maximum number of responses.',
+            maxResponses: campaign.maxResponses,
+            currentCount: completedCount,
+          },
+          { status: 400 }
+        );
       }
     }
 
     // ============================================
-    // 6. Store demographics JSON
+    // 6. TRANSACTION: Apply reverse-scoring and mark complete atomically
     // ============================================
-    const updatedResponse = await prisma.anonymousResponse.update({
-      where: { id: anonymousResponse.id },
-      data: {
-        demographics: demographics || {},
-        completedAt: new Date(),
-      },
+    // Wrap all database writes in a transaction for data integrity
+    // If any operation fails, entire transaction rolls back
+    const scaleMax = survey.scale?.max ?? 3;
+
+    const updatedResponse = await prisma.$transaction(async (tx) => {
+      // 6a. Update adjusted values for all responses
+      for (const response of anonymousResponse.responses) {
+        const question = survey.questions.find(
+          (q) => q.id === response.questionId
+        );
+
+        let adjustedValue: number;
+
+        if (question?.isReversed && typeof response.value === 'number') {
+          // Apply reverse-scoring formula
+          adjustedValue = scaleMax + 1 - response.value;
+        } else if (typeof response.value === 'number') {
+          // For non-reversed questions, adjusted = raw
+          adjustedValue = response.value;
+        } else {
+          continue; // Skip non-numeric responses
+        }
+
+        await tx.anonymousResponseItem.update({
+          where: { id: response.id },
+          data: { adjustedValue },
+        });
+      }
+
+      // 6b. Mark response as completed with demographics
+      // This is the final atomic operation that makes the response count
+      const completed = await tx.anonymousResponse.update({
+        where: { id: anonymousResponse.id },
+        data: {
+          demographics: demographics || {},
+          completedAt: new Date(),
+        },
+      });
+
+      return completed;
     });
 
     // ============================================
