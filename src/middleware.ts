@@ -30,13 +30,26 @@ export default withAuth(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
-      const role = token.role as string;
+      const role = token.role as string | undefined;
       const method = req.method;
+
+      // Ensure role exists
+      if (!role) {
+        console.error('Token exists but role is missing:', { path, email: token.email });
+        if (path.startsWith('/admin')) {
+          return NextResponse.redirect(new URL('/admin/login', req.url));
+        }
+        return NextResponse.json(
+          { error: 'Unauthorized: Invalid session' },
+          { status: 401 }
+        );
+      }
 
       // Role-based access control
       // SUPER_ADMIN: Full access to everything
       // ORG_ADMIN: Cannot access /api/users or /admin/users
       // VIEWER: GET requests only (no POST/PUT/DELETE)
+      // RESPONDENT: Should not access admin/API routes
 
       if (role === 'SUPER_ADMIN') {
         return NextResponse.next(); // Full access
@@ -66,7 +79,8 @@ export default withAuth(
         return NextResponse.next();
       }
 
-      // Unknown role or insufficient permissions
+      // RESPONDENT or unknown role - block access to admin/API
+      console.warn('User with insufficient role attempted access:', { role, path });
       if (path.startsWith('/admin')) {
         return NextResponse.redirect(new URL('/admin/login', req.url));
       }
@@ -91,7 +105,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    // Match all paths except static files and images
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    // Match all paths except static files, images, and favicons
+    '/((?!_next/static|_next/image|favicon|.*\\.png$|.*\\.jpg$|.*\\.ico$|.*\\.svg$).*)',
   ],
 };
