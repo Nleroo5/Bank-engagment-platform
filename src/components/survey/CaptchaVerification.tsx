@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 interface CaptchaVerificationProps {
@@ -14,6 +14,9 @@ interface CaptchaVerificationProps {
  *
  * Wraps hCaptcha widget with professional styling
  * Calls onVerify callback with token when user completes challenge
+ *
+ * If NEXT_PUBLIC_HCAPTCHA_SITE_KEY is not configured, auto-verifies
+ * (backend will skip CAPTCHA validation when not configured)
  */
 export default function CaptchaVerification({
   onVerify,
@@ -48,13 +51,17 @@ export default function CaptchaVerification({
 
   const siteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
+  // If no site key configured, auto-verify (CAPTCHA is optional)
+  useEffect(() => {
+    if (!siteKey) {
+      console.info('hCaptcha not configured - skipping CAPTCHA verification');
+      onVerify(''); // Empty token - backend will skip validation
+    }
+  }, [siteKey, onVerify]);
+
+  // If not configured, return null (don't render anything)
   if (!siteKey) {
-    console.error('NEXT_PUBLIC_HCAPTCHA_SITE_KEY is not configured');
-    return (
-      <div className="rounded-md bg-red-50 p-4 text-sm text-red-800">
-        CAPTCHA configuration error. Please contact support.
-      </div>
-    );
+    return null;
   }
 
   return (
