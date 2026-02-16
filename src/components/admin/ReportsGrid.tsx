@@ -4,14 +4,21 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FileBarChart, Users, Calendar, Trash2 } from 'lucide-react';
-import type { SurveyCampaign, Organization, Invitation } from '@prisma/client';
+import type {
+  SurveyCampaign,
+  Organization,
+  Invitation,
+  AnonymousResponse,
+} from '@prisma/client';
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
 
 type CampaignWithRelations = SurveyCampaign & {
   organization: Organization;
   invitations: Invitation[];
+  anonymousResponses: AnonymousResponse[];
   _count: {
     invitations: number;
+    anonymousResponses: number;
   };
 };
 
@@ -76,14 +83,22 @@ export function ReportsGrid({ campaigns }: ReportsGridProps) {
   };
 
   const getDeleteConsequences = (campaign: CampaignWithRelations) => {
-    const completedCount = campaign.invitations.filter(
+    // Count both tracked and anonymous responses
+    const completedTracked = campaign.invitations.filter(
       (inv) => inv.status === 'COMPLETED'
     ).length;
+    const completedAnonymous = campaign.anonymousResponses.length;
+    const completedCount = completedTracked + completedAnonymous;
+
+    const totalTracked = campaign._count.invitations;
+    const totalAnonymous = campaign._count.anonymousResponses;
+    const totalRespondents = totalTracked + totalAnonymous;
+
     const consequences = [];
 
-    if (campaign._count.invitations > 0) {
+    if (totalRespondents > 0) {
       consequences.push(
-        `Remove access for ${campaign._count.invitations} respondent${campaign._count.invitations === 1 ? '' : 's'}`
+        `Remove access for ${totalRespondents} respondent${totalRespondents === 1 ? '' : 's'}`
       );
     }
 
@@ -124,12 +139,20 @@ export function ReportsGrid({ campaigns }: ReportsGridProps) {
     <>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {campaigns.map((campaign) => {
-          const completedCount = campaign.invitations.length;
-          const totalInvitations = campaign._count.invitations;
-          const responseRate = getResponseRate(
-            campaign.invitations,
-            totalInvitations || 1
-          );
+          // Calculate ACCURATE metrics for both tracked AND anonymous campaigns
+          const completedTracked = campaign.invitations.length;
+          const completedAnonymous = campaign.anonymousResponses.length;
+          const completedCount = completedTracked + completedAnonymous;
+
+          const totalTracked = campaign._count.invitations;
+          const totalAnonymous = campaign._count.anonymousResponses;
+          const totalInvitations = totalTracked + totalAnonymous;
+
+          // Calculate accurate response rate
+          const responseRate =
+            totalInvitations > 0
+              ? Math.round((completedCount / totalInvitations) * 100)
+              : 0;
 
           return (
             <div

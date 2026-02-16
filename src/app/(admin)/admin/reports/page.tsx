@@ -13,14 +13,23 @@ export default async function ReportsListPage() {
     },
     include: {
       organization: true,
+      // Count BOTH tracked invitations AND anonymous responses
       _count: {
         select: {
-          invitations: true,
+          invitations: true, // Total tracked invitations
+          anonymousResponses: true, // Total anonymous sessions (completed + pending)
         },
       },
+      // Get completed tracked invitations
       invitations: {
         where: {
           status: 'COMPLETED',
+        },
+      },
+      // Get completed anonymous responses
+      anonymousResponses: {
+        where: {
+          completedAt: { not: null },
         },
       },
     },
