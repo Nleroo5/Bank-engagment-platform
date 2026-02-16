@@ -533,8 +533,8 @@ export async function GET(
         available: filterOptions,
       },
       scale: {
-        min: survey.scale.min,
-        max: survey.scale.max,
+        min: survey.scale?.min ?? 1,
+        max: survey.scale?.max ?? 5,
         type: survey.surveyType,
       },
     });
