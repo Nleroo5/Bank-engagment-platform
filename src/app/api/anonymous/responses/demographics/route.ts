@@ -81,7 +81,7 @@ export async function PATCH(request: NextRequest) {
     await prisma.anonymousResponse.update({
       where: { id: anonymousResponse.id },
       data: {
-        demographics: demographics as Record<string, unknown>,
+        demographics,
         lastActiveAt: new Date(),
       },
     });
