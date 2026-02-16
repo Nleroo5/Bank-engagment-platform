@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Shield, Lock, Clock, CheckCircle } from 'lucide-react';
 import { generateBrowserFingerprint } from '@/lib/fingerprint';
 
@@ -68,6 +69,18 @@ export default function AccessCodeEntry({
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12">
       <div className="w-full max-w-2xl rounded-xl bg-white p-8 shadow-2xl md:p-12">
+        {/* Logo Header */}
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/logo-red.png"
+            alt="Logo"
+            width={180}
+            height={60}
+            priority
+            className="h-auto w-auto"
+          />
+        </div>
+
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="mb-4 flex justify-center">

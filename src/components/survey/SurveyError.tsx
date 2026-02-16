@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 interface SurveyErrorProps {
   title: string;
   message: string;
@@ -77,6 +79,18 @@ export function SurveyError({
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
       <div className="w-full max-w-md">
+        {/* Logo Header */}
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/logo-red.png"
+            alt="Logo"
+            width={180}
+            height={60}
+            priority
+            className="h-auto w-auto"
+          />
+        </div>
+
         <div className="rounded-lg bg-white p-8 text-center shadow-lg">
           {/* Icon */}
           <div className="mb-6">{iconMap[icon]}</div>
