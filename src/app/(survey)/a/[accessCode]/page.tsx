@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import AnonymousSurveyShell from '@/components/survey/AnonymousSurveyShell';
+import { SingleQuestionAnonymousSurveyShell } from '@/components/survey/SingleQuestionAnonymousSurveyShell';
 import AccessCodeEntry from '@/components/survey/AccessCodeEntry';
 
 interface AnonymousSurveyPageProps {
@@ -162,7 +162,7 @@ export default async function AnonymousSurveyPage({
 
       // Resume partial survey
       return (
-        <AnonymousSurveyShell
+        <SingleQuestionAnonymousSurveyShell
           campaign={campaign}
           existingResponses={anonymousResponse.responses}
           sessionToken={sessionToken}

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/surveys/queries';
-import { SurveyShell } from '@/components/survey/SurveyShell';
+import { SingleQuestionSurveyShell } from '@/components/survey/SingleQuestionSurveyShell';
 import { SurveyError } from '@/components/survey/SurveyError';
 
 interface SurveyPageProps {
@@ -157,7 +157,7 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <SurveyShell
+      <SingleQuestionSurveyShell
         survey={survey}
         invitationToken={token}
         existingResponses={existingResponses}
