@@ -153,21 +153,15 @@ export async function GET(
           return (anonResp.demographics as Record<string, unknown>) || {};
         } else {
           // For tracked invitations, extract user demographic fields
+          // Note: Only fields that exist on the User model (per schema)
           const invitation = r as typeof campaign.invitations[number];
           return {
-            bankName: invitation.user.bankName,
-            country: invitation.user.country,
-            state: invitation.user.state,
-            metroArea: invitation.user.metroArea,
-            city: invitation.user.city,
-            bankSize: invitation.user.bankSize,
-            device: invitation.user.device,
+            division: invitation.user.division,
+            jobRole: invitation.user.jobRole,
             employmentStatus: invitation.user.employmentStatus,
             gender: invitation.user.gender,
             timeAtBank: invitation.user.timeAtBank,
             bankExperience: invitation.user.bankExperience,
-            division: invitation.user.division,
-            jobRole: invitation.user.jobRole,
           };
         }
       });
