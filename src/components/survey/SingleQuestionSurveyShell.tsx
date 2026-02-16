@@ -72,7 +72,6 @@ export function SingleQuestionSurveyShell({
 
   const totalQuestions = allQuestions.length;
   const currentQuestion = allQuestions[currentQuestionIndex];
-  const answeredCount = Object.keys(answers).length;
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   const isFirstQuestion = currentQuestionIndex === 0;
 
