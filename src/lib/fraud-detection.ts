@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma/client';
+import { prisma } from '@/lib/prisma';
 
 /**
  * Fraud Detection for Anonymous Surveys

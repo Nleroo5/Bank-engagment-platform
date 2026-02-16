@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { prisma } from '@/lib/prisma/client';
+import { prisma } from '@/lib/prisma';
 import AnonymousSurveyShell from '@/components/survey/AnonymousSurveyShell';
 import AccessCodeEntry from '@/components/survey/AccessCodeEntry';
 

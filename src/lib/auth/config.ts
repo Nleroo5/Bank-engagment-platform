@@ -2,7 +2,7 @@ import { type NextAuthOptions, type User as NextAuthUser } from 'next-auth';
 import { type JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
-import { prisma } from '@/lib/prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export type UserRole = 'SUPER_ADMIN' | 'ORG_ADMIN' | 'VIEWER' | 'RESPONDENT';
 
