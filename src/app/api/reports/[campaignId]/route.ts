@@ -83,8 +83,11 @@ export async function GET(
       );
     }
 
-    // Validate survey has scale information
-    if (!survey.scale) {
+    // Check if this is a demographics survey (doesn't need scoring)
+    const isDemographicsSurvey = survey.surveyType === 'demographics';
+
+    // Validate survey has scale information (skip for demographics)
+    if (!isDemographicsSurvey && !survey.scale) {
       return NextResponse.json(
         {
           error: 'Survey configuration incomplete',
@@ -132,6 +135,118 @@ export async function GET(
     if (jobRole) filters.jobRole = jobRole;
     if (timeAtBank) filters.timeAtBank = timeAtBank;
     if (bankExperience) filters.bankExperience = bankExperience;
+
+    // ============================================
+    // DEMOGRAPHICS SURVEY HANDLING
+    // ============================================
+    if (isDemographicsSurvey) {
+      // Get all responses (tracked or anonymous)
+      const responses = isAnonymous
+        ? campaign.anonymousResponses
+        : campaign.invitations.filter((inv) => inv.status === 'COMPLETED');
+
+      // Extract demographics data from each response
+      const demographicsData: Record<string, unknown>[] = responses.map((r) => {
+        if (isAnonymous) {
+          return (r as any).demographics as Record<string, unknown> || {};
+        } else {
+          const invitation = r as any;
+          return {
+            bankName: invitation.user.bankName,
+            country: invitation.user.country,
+            state: invitation.user.state,
+            metroArea: invitation.user.metroArea,
+            city: invitation.user.city,
+            bankSize: invitation.user.bankSize,
+            device: invitation.user.device,
+            employmentStatus: invitation.user.employmentStatus,
+            gender: invitation.user.gender,
+            timeAtBank: invitation.user.timeAtBank,
+            bankExperience: invitation.user.bankExperience,
+            division: invitation.user.division,
+            jobRole: invitation.user.jobRole,
+          };
+        }
+      });
+
+      // Calculate frequency distributions for each field
+      const fields = [
+        { key: 'bankSize', label: 'Bank Size' },
+        { key: 'device', label: 'Device Used' },
+        { key: 'employmentStatus', label: 'Employment Status' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'timeAtBank', label: 'Time at Bank' },
+        { key: 'bankExperience', label: 'Banking Industry Experience' },
+        { key: 'division', label: 'Division' },
+        { key: 'jobRole', label: 'Job Role/Title' },
+        { key: 'country', label: 'Country' },
+        { key: 'state', label: 'State' },
+        { key: 'metroArea', label: 'Metro Area' },
+        { key: 'city', label: 'City' },
+      ];
+
+      const distributions = fields.map((field) => {
+        // Count occurrences of each value
+        const counts = new Map<string, number>();
+        demographicsData.forEach((data) => {
+          const value = data[field.key];
+          if (value && typeof value === 'string') {
+            counts.set(value, (counts.get(value) || 0) + 1);
+          }
+        });
+
+        // Convert to array with percentages
+        const total = demographicsData.length;
+        const distribution = Array.from(counts.entries())
+          .map(([value, count]) => ({
+            value,
+            count,
+            percentage: Math.round((count / total) * 1000) / 10, // 1 decimal place
+          }))
+          .sort((a, b) => b.count - a.count); // Sort by count descending
+
+        return {
+          field: field.key,
+          label: field.label,
+          total,
+          distribution,
+        };
+      });
+
+      // Return demographics report data
+      return NextResponse.json({
+        campaign: {
+          id: campaign.id,
+          surveyTitle: campaign.surveyTitle,
+          surveyType: survey.surveyType,
+          organizationName: campaign.organization.name,
+          startDate: campaign.startDate,
+          endDate: campaign.endDate,
+          status: campaign.status,
+          isAnonymous,
+        },
+        metrics: {
+          totalInvitations: isAnonymous
+            ? campaign.anonymousResponses.length
+            : campaign.invitations.length,
+          completedCount: responses.length,
+          completionRate:
+            responses.length > 0
+              ? Math.round(
+                  (responses.length /
+                    (isAnonymous
+                      ? campaign.anonymousResponses.length
+                      : campaign.invitations.length)) *
+                    100
+                )
+              : 0,
+        },
+        demographics: {
+          respondentCount: demographicsData.length,
+          distributions,
+        },
+      });
+    }
 
     // DISABLED: Filter anonymity validation removed per user request
     // Users want to view all reports regardless of respondent count

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { CategoryBarChart } from '@/components/charts/CategoryBarChart';
 import { CategoryRadarChart } from '@/components/charts/CategoryRadarChart';
 import { DemographicFilters } from './DemographicFilters';
+import { DemographicsReportView } from './DemographicsReportView';
 import { AlertCircle, Users, TrendingUp } from 'lucide-react';
 import {
   SkeletonCard,
@@ -159,6 +160,11 @@ export function ReportView({ campaignId }: ReportViewProps) {
 
   if (!data) {
     return null;
+  }
+
+  // Check if this is a demographics survey and render the appropriate view
+  if ('demographics' in data) {
+    return <DemographicsReportView campaignId={campaignId} />;
   }
 
   const scaleMax = data.campaign.surveyType === 'likert3' ? 3 : 5;
