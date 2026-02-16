@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
               orderBy: { questionNumber: 'asc' },
             },
           },
-          orderBy: { order: 'asc' },
+          orderBy: { sortOrder: 'asc' },
         },
       },
     });
@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
         _id: section.id,
         _type: 'section',
         title: section.title,
-        sortOrder: section.order,
-        directions: section.directions,
+        sortOrder: section.sortOrder,
+        directions: section.description || '',
         description: section.description,
         questions: section.questions.map((question) => ({
           _id: question.id,
