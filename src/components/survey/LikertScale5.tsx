@@ -41,42 +41,39 @@ export function LikertScale5({
   };
 
   return (
-    <fieldset className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
+    <fieldset>
       <legend className="sr-only">
         Question {questionNumber}: {questionText}
       </legend>
-      <div className="mb-4">
-        <div className="mb-2 flex items-start gap-3">
-          <span className="flex-shrink-0 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-            Q{questionNumber}
-          </span>
-          <p
-            className="flex-1 text-base font-medium text-gray-900"
-            id={`question-${questionId}`}
-          >
-            {questionText}
-          </p>
-        </div>
+
+      {/* Question Text - Apple Style: Large, Bold, Prominent */}
+      <div className="mb-8">
+        <p
+          className="text-3xl font-semibold leading-tight tracking-tight text-gray-900 md:text-4xl"
+          id={`question-${questionId}`}
+        >
+          {questionText}
+        </p>
         {anchorText && (
-          <p className="ml-14 text-sm italic text-gray-600">{anchorText}</p>
+          <p className="mt-3 text-base italic text-gray-500">{anchorText}</p>
         )}
       </div>
 
-      {/* Desktop view */}
+      {/* Desktop view - iOS-style Cards */}
       <div className="hidden md:block">
         <div
-          className="flex items-center justify-between gap-2"
+          className="flex items-stretch justify-between gap-3"
           role="radiogroup"
           aria-labelledby={`question-${questionId}`}
         >
           {SCALE_LABELS.map((item) => (
             <label
               key={item.value}
-              className={`flex flex-1 cursor-pointer flex-col items-center rounded-lg border-2 p-3 transition-all ${
+              className={`group relative flex flex-1 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 px-4 py-6 transition-all duration-200 ${
                 selectedValue === item.value
-                  ? 'border-primary-600 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                  ? 'scale-105 border-primary-500 bg-primary-50 shadow-lg shadow-primary-500/30'
+                  : 'border-gray-200 bg-gray-50 hover:scale-105 hover:border-gray-300 hover:bg-white hover:shadow-md'
+              } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
             >
               <input
                 type="radio"
@@ -88,45 +85,54 @@ export function LikertScale5({
                 className="sr-only"
                 aria-label={item.label}
               />
+
+              {/* Checkmark for selected state */}
+              {selectedValue === item.value && (
+                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary-500 text-white">
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+
               <span
-                className={`mb-2 flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-semibold ${
+                className={`mb-3 text-center text-base font-semibold ${
                   selectedValue === item.value
-                    ? 'border-primary-600 bg-primary-600 text-white'
-                    : 'border-gray-300 text-gray-600'
-                }`}
-                aria-hidden="true"
-              >
-                {item.value}
-              </span>
-              <span
-                className={`text-center text-xs ${
-                  selectedValue === item.value
-                    ? 'font-medium text-primary-900'
-                    : 'text-gray-600'
+                    ? 'text-primary-900'
+                    : 'text-gray-700 group-hover:text-gray-900'
                 }`}
               >
                 {item.label}
+              </span>
+              <span
+                className={`text-sm ${
+                  selectedValue === item.value
+                    ? 'text-primary-600'
+                    : 'text-gray-500'
+                }`}
+              >
+                {item.value}
               </span>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Mobile view */}
+      {/* Mobile view - iOS-style Stacked Cards */}
       <div className="md:hidden">
         <div
-          className="space-y-2"
+          className="space-y-3"
           role="radiogroup"
           aria-labelledby={`question-${questionId}`}
         >
           {SCALE_LABELS.map((item) => (
             <label
               key={item.value}
-              className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition-all ${
+              className={`group relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-5 transition-all duration-200 ${
                 selectedValue === item.value
-                  ? 'border-primary-600 bg-primary-50'
-                  : 'border-gray-200'
-              } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                  ? 'scale-105 border-primary-500 bg-primary-50 shadow-lg shadow-primary-500/20'
+                  : 'border-gray-200 bg-gray-50 active:scale-[0.98] active:bg-white'
+              } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
             >
               <input
                 type="radio"
@@ -135,11 +141,31 @@ export function LikertScale5({
                 checked={selectedValue === item.value}
                 onChange={() => handleChange(item.value)}
                 disabled={disabled}
-                className="h-5 w-5 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                className="sr-only"
                 aria-label={item.label}
               />
+
+              {/* Radio Circle */}
+              <div className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                selectedValue === item.value
+                  ? 'border-primary-500 bg-primary-500'
+                  : 'border-gray-300 bg-white'
+              }`}>
+                {selectedValue === item.value && (
+                  <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+
               <div className="flex-1">
-                <span className="font-medium text-gray-900">{item.label}</span>
+                <span className={`text-base font-semibold ${
+                  selectedValue === item.value
+                    ? 'text-primary-900'
+                    : 'text-gray-900'
+                }`}>
+                  {item.label}
+                </span>
                 <span className="ml-2 text-sm text-gray-500">
                   ({item.value})
                 </span>

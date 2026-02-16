@@ -530,108 +530,127 @@ export function SingleQuestionAnonymousSurveyShell({
   // MAIN RENDER
   // ============================================
   return (
-    <div className="mx-auto min-h-screen max-w-4xl px-4 py-8">
-      {/* Anonymity badge */}
-      <div className="mb-4 flex items-center justify-center gap-2 rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-800">
-        <Shield className="h-4 w-4" />
-        Anonymous Survey
-      </div>
-
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-gray-700">
-            Question {currentQuestionIndex + 1} of {totalQuestions}
-          </span>
-          <span className="font-medium text-gray-700">{progressPercentage}%</span>
+    <div className="min-h-screen bg-gray-50 px-4 py-12">
+      <div className="mx-auto max-w-2xl">
+        {/* Anonymity badge - Apple Style */}
+        <div className="mb-8 flex items-center justify-center gap-2 rounded-full bg-green-50 px-5 py-2.5 text-sm font-medium text-green-700 shadow-sm">
+          <Shield className="h-4 w-4" />
+          Anonymous Survey
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-          <div
-            className="h-full bg-primary-600 transition-all duration-500 ease-out"
-            style={{ width: `${progressPercentage}%` }}
-          />
+
+        {/* Progress Bar - Apple Style */}
+        <div className="mb-12">
+          <div className="mb-3 flex items-center justify-between text-sm">
+            <span className="font-medium text-gray-600">
+              Question {currentQuestionIndex + 1} of {totalQuestions}
+            </span>
+            <span className="font-semibold text-primary-600">{progressPercentage}%</span>
+          </div>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+            <div
+              className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-600 ease-out"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Save Indicator */}
-      {isSaving && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-gray-600">
-          <Save className="h-4 w-4 animate-pulse" />
-          <span>Saving...</span>
-        </div>
-      )}
-
-      {/* Answered Indicator */}
-      {justAnswered && !isAdvancing && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-green-600">
-          <CheckCircle2 className="h-4 w-4" />
-          <span>Answer recorded</span>
-        </div>
-      )}
-
-      {/* Question Container with Animation */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentQuestion._id}
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="mb-8"
-        >
-          {/* Section context (optional) */}
-          {currentQuestion.sectionTitle && (
-            <div className="mb-4 text-sm text-gray-500">
-              {currentQuestion.sectionTitle}
-            </div>
-          )}
-
-          {/* Question */}
-          {renderQuestionInput()}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-        {/* Back Button */}
-        <button
-          onClick={handleBack}
-          disabled={isFirstQuestion || isAdvancing}
-          className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Previous
-        </button>
-
-        {/* Submit Button (only on last question if answered) */}
-        {isLastQuestion && answers[currentQuestion._id] !== undefined && (
-          <button
-            onClick={handleSubmit}
-            disabled={isSaving}
-            className="inline-flex items-center gap-2 rounded-md bg-primary-600 px-6 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
-          >
-            {isSaving ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Submitting...
-              </>
-            ) : (
-              'Submit Survey'
-            )}
-          </button>
+        {/* Save Indicator - Subtle */}
+        {isSaving && (
+          <div className="mb-6 flex items-center justify-center gap-2 text-sm text-gray-500">
+            <Save className="h-4 w-4 animate-pulse" />
+            <span>Saving</span>
+          </div>
         )}
-      </div>
 
-      {/* Auto-advance hint */}
-      {!isLastQuestion && !answers[currentQuestion._id] && (
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Select an answer to automatically continue
+        {/* Answered Indicator - Apple Style with Red Accent */}
+        <AnimatePresence>
+          {justAnswered && !isAdvancing && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="mb-6 flex items-center justify-center gap-2"
+            >
+              <div className="flex items-center gap-2 rounded-full bg-accent-50 px-4 py-2 text-sm font-medium text-accent-600">
+                <CheckCircle2 className="h-5 w-5" />
+                <span>Answer recorded</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Question Container with Apple-style Card */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentQuestion._id}
+            initial={{ opacity: 0, x: 30, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            className="mb-8"
+          >
+            {/* White Card with Shadow - Apple Style */}
+            <div className="overflow-hidden rounded-3xl bg-white shadow-xl transition-shadow duration-300 hover:shadow-2xl">
+              <div className="px-8 py-12 md:px-12 md:py-16">
+                {/* Section context (optional) */}
+                {currentQuestion.sectionTitle && (
+                  <div className="mb-4 text-sm font-medium text-gray-500">
+                    {currentQuestion.sectionTitle}
+                  </div>
+                )}
+
+                {/* Question */}
+                {renderQuestionInput()}
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Navigation - Apple Minimalist Style */}
+        <div className="flex items-center justify-between">
+          {/* Back Button - Ghost Style */}
+          <button
+            onClick={handleBack}
+            disabled={isFirstQuestion || isAdvancing}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </button>
+
+          {/* Submit Button - Pill Shaped CTA (only on last question if answered) */}
+          {isLastQuestion && answers[currentQuestion._id] !== undefined && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSubmit}
+              disabled={isSaving}
+              className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-xl disabled:opacity-40"
+            >
+              {isSaving ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Survey'
+              )}
+            </motion.button>
+          )}
         </div>
-      )}
 
-      {/* Keyboard hint */}
-      <div className="mt-4 text-center text-xs text-gray-400">
-        Use ← arrow key to go back
+        {/* Auto-advance hint - Very Subtle */}
+        {!isLastQuestion && !answers[currentQuestion._id] && (
+          <div className="mt-6 text-center text-sm text-gray-400">
+            Select an answer to automatically continue
+          </div>
+        )}
+
+        {/* Keyboard hint - Ultra Subtle */}
+        <div className="mt-4 text-center text-xs text-gray-300">
+          Use ← arrow key to go back
+        </div>
       </div>
     </div>
   );
