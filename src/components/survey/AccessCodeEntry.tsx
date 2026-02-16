@@ -67,7 +67,7 @@ export default function AccessCodeEntry({
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-white px-4 py-12">
       <div className="w-full max-w-2xl rounded-xl bg-white p-8 shadow-2xl md:p-12">
         {/* Logo Header */}
         <div className="mb-8 flex justify-center">

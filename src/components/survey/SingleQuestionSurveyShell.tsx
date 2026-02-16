@@ -349,7 +349,7 @@ export function SingleQuestionSurveyShell({
   // MAIN RENDER
   // ============================================
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12">
+    <div className="min-h-screen bg-white px-4 py-12">
       <div className="mx-auto max-w-2xl">
         {/* Logo Header */}
         <div className="mb-8 flex justify-center">

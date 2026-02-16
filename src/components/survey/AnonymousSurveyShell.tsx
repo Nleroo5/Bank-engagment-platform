@@ -232,7 +232,7 @@ export default function AnonymousSurveyShell({
   // Loading state
   if (loading || !survey) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-600"></div>
           <p className="text-gray-600">Loading survey...</p>
@@ -261,7 +261,7 @@ export default function AnonymousSurveyShell({
     );
 
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="min-h-screen bg-white px-4 py-8">
         <div className="mx-auto max-w-4xl">
           {/* Anonymity badge */}
           <div className="mb-6 flex items-center justify-center gap-2 rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-800">
@@ -329,7 +329,7 @@ export default function AnonymousSurveyShell({
   // Completed stage
   if (stage === 'completed') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-white px-4">
         <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
           <div className="mb-6 flex justify-center">
             <div className="rounded-full bg-green-100 p-4">
@@ -368,7 +368,7 @@ export default function AnonymousSurveyShell({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-white py-8">
       <div ref={surveyContainerRef} className="mx-auto max-w-4xl px-4">
         {/* Anonymity badge */}
         <div className="mb-4 flex items-center justify-center gap-2 rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-800">

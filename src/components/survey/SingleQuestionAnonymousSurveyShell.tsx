@@ -534,7 +534,7 @@ export function SingleQuestionAnonymousSurveyShell({
       currentDemographicsField.fieldType === 'jobRole';
 
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-12">
+      <div className="min-h-screen bg-white px-4 py-12">
         <div className="mx-auto max-w-2xl">
           {/* Logo Header */}
           <div className="mb-6 flex justify-center">
@@ -686,7 +686,7 @@ export function SingleQuestionAnonymousSurveyShell({
   // Completed stage
   if (stage === 'completed') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-white px-4">
         <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
           <div className="mb-6 flex justify-center">
             <div className="rounded-full bg-green-100 p-4">
@@ -756,7 +756,7 @@ export function SingleQuestionAnonymousSurveyShell({
   // MAIN RENDER
   // ============================================
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12">
+    <div className="min-h-screen bg-white px-4 py-12">
       <div className="mx-auto max-w-2xl">
         {/* Logo Header */}
         <div className="mb-6 flex justify-center">
