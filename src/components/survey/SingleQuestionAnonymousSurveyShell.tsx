@@ -304,7 +304,15 @@ export function SingleQuestionAnonymousSurveyShell({
         throw new Error('Failed to save demographics');
       }
 
-      setStage('survey');
+      // Check if this is a demographics-only survey (no regular questions)
+      // If so, submit immediately instead of going to survey stage
+      if (allQuestions.length === 0) {
+        // Demographics-only survey - submit directly
+        await handleSubmit();
+      } else {
+        // Survey has questions after demographics - continue to survey
+        setStage('survey');
+      }
     } catch (error) {
       console.error('Error saving demographics:', error);
       alert('Failed to save demographics. Please try again.');

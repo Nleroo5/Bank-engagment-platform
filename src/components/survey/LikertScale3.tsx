@@ -27,7 +27,7 @@ export function LikertScale3({
   value,
   onChange,
   disabled = false,
-  isReversed = false,
+  isReversed: _isReversed = false,
 }: LikertScale3Props) {
   const [selectedValue, setSelectedValue] = useState<number | undefined>(value);
 

@@ -117,23 +117,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Survey not found' }, { status: 404 });
     }
 
-    const requiredQuestionIds = survey.questions.map((q) => q.id);
-    const answeredQuestionIds = anonymousResponse.responses.map(
-      (r) => r.questionId
-    );
+    // Check if this is a demographics-only survey (all required questions have fieldType)
+    const isDemographicsOnly = survey.questions.every((q) => {
+      const config = q.config as { fieldType?: string } | null;
+      return config?.fieldType;
+    });
 
-    const missingQuestions = requiredQuestionIds.filter(
-      (qId) => !answeredQuestionIds.includes(qId)
-    );
-
-    if (missingQuestions.length > 0) {
-      return NextResponse.json(
-        {
-          error: 'Please answer all required questions',
-          missingQuestionIds: missingQuestions,
-        },
-        { status: 400 }
+    // Only validate question responses for non-demographics-only surveys
+    if (!isDemographicsOnly) {
+      const requiredQuestionIds = survey.questions.map((q) => q.id);
+      const answeredQuestionIds = anonymousResponse.responses.map(
+        (r) => r.questionId
       );
+
+      const missingQuestions = requiredQuestionIds.filter(
+        (qId) => !answeredQuestionIds.includes(qId)
+      );
+
+      if (missingQuestions.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'Please answer all required questions',
+            missingQuestionIds: missingQuestions,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // ============================================
