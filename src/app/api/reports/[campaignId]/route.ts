@@ -6,12 +6,9 @@ import {
   prepareResponsesForScoring,
 } from '@/lib/scoring/categoryScoring';
 import {
-  checkAnonymityThreshold,
   getFilterableOptions,
-  validateFilteredAnonymity,
   ANONYMOUS_SURVEY_TYPES,
   getFilterableOptionsAnonymous,
-  validateFilteredAnonymityAnonymous,
 } from '@/lib/scoring/anonymity';
 
 export async function GET(
