@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { Shield, ChevronLeft, Save, CheckCircle2, ChevronRight } from 'lucide-react';
 import type { Survey } from '@/types/survey';
 import { LikertScale5 } from './LikertScale5';
@@ -532,6 +533,18 @@ export function SingleQuestionAnonymousSurveyShell({
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-12">
       <div className="mx-auto max-w-2xl">
+        {/* Logo Header */}
+        <div className="mb-6 flex justify-center">
+          <Image
+            src="/logo-red.png"
+            alt="Logo"
+            width={180}
+            height={60}
+            priority
+            className="h-auto w-auto"
+          />
+        </div>
+
         {/* Anonymity badge - Apple Style */}
         <div className="mb-8 flex items-center justify-center gap-2 rounded-full bg-green-50 px-5 py-2.5 text-sm font-medium text-green-700 shadow-sm">
           <Shield className="h-4 w-4" />

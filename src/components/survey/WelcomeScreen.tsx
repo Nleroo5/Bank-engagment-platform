@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Survey } from '@/types/survey';
 import { Clock } from 'lucide-react';
 
@@ -11,6 +12,18 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({ survey, onBegin }: WelcomeScreenProps) {
   return (
     <div className="mx-auto max-w-2xl">
+      {/* Logo Header */}
+      <div className="mb-8 flex justify-center">
+        <Image
+          src="/logo-red.png"
+          alt="Logo"
+          width={180}
+          height={60}
+          priority
+          className="h-auto w-auto"
+        />
+      </div>
+
       <div className="rounded-lg bg-white p-8 shadow-lg">
         <h1 className="mb-4 text-3xl font-bold text-gray-900">
           {survey.title}

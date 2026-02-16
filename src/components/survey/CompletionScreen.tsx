@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { CheckCircle } from 'lucide-react';
 import type { Survey } from '@/types/survey';
 
@@ -10,6 +11,18 @@ interface CompletionScreenProps {
 export function CompletionScreen({ survey }: CompletionScreenProps) {
   return (
     <div className="mx-auto max-w-2xl">
+      {/* Logo Header */}
+      <div className="mb-8 flex justify-center">
+        <Image
+          src="/logo-red.png"
+          alt="Logo"
+          width={180}
+          height={60}
+          priority
+          className="h-auto w-auto"
+        />
+      </div>
+
       <div className="rounded-lg bg-white p-8 text-center shadow-lg">
         <div className="mb-6 flex justify-center">
           <CheckCircle className="h-20 w-20 text-green-500" />

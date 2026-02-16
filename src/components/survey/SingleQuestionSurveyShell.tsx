@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import type { Survey } from '@/types/survey';
 import { WelcomeScreen } from './WelcomeScreen';
 import { CompletionScreen } from './CompletionScreen';
@@ -350,6 +351,18 @@ export function SingleQuestionSurveyShell({
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-12">
       <div className="mx-auto max-w-2xl">
+        {/* Logo Header */}
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/logo-red.png"
+            alt="Logo"
+            width={180}
+            height={60}
+            priority
+            className="h-auto w-auto"
+          />
+        </div>
+
         {/* Progress Bar - Apple Style */}
         <div className="mb-12">
           <div className="mb-3 flex items-center justify-between text-sm">
