@@ -87,11 +87,22 @@ export default async function DashboardPage() {
       _count: {
         select: {
           invitations: true,
+          anonymousResponses: true,
         },
       },
       invitations: {
         where: {
           status: 'COMPLETED',
+        },
+        select: {
+          id: true,
+        },
+      },
+      anonymousResponses: {
+        where: {
+          completedAt: {
+            not: null,
+          },
         },
         select: {
           id: true,

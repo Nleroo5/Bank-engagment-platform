@@ -204,11 +204,12 @@ export function DemographicsField({
     }
   };
 
-  // Text input for bank name and city
-  if (fieldType === 'bankName' || fieldType === 'city') {
+  // Text input for bank name, metro area, and city
+  if (fieldType === 'bankName' || fieldType === 'city' || fieldType === 'metroArea') {
     let placeholder = 'Enter value';
     if (fieldType === 'bankName') placeholder = "Enter your bank's name";
     if (fieldType === 'city') placeholder = 'Enter city name';
+    if (fieldType === 'metroArea') placeholder = 'Enter metro area';
 
     return (
       <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">

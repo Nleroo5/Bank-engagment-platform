@@ -4,14 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Trash2 } from 'lucide-react';
-import type { SurveyCampaign, Organization, Invitation } from '@prisma/client';
+import type { SurveyCampaign, Organization, Invitation, AnonymousResponse } from '@prisma/client';
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
 
 type CampaignWithRelations = SurveyCampaign & {
   organization: Organization;
   invitations: Pick<Invitation, 'id'>[];
+  anonymousResponses: Pick<AnonymousResponse, 'id'>[];
   _count: {
     invitations: number;
+    anonymousResponses: number;
   };
 };
 
@@ -76,12 +78,15 @@ export function RecentCampaignsTable({ campaigns }: RecentCampaignsTableProps) {
   };
 
   const getDeleteConsequences = (campaign: CampaignWithRelations) => {
-    const completedCount = campaign.invitations.length;
+    const completedTracked = campaign.invitations.length;
+    const completedAnonymous = campaign.anonymousResponses.length;
+    const completedCount = completedTracked + completedAnonymous;
+    const totalResponses = campaign._count.invitations + campaign._count.anonymousResponses;
     const consequences = [];
 
-    if (campaign._count.invitations > 0) {
+    if (totalResponses > 0) {
       consequences.push(
-        `Remove access for ${campaign._count.invitations} respondent${campaign._count.invitations === 1 ? '' : 's'}`
+        `Remove access for ${totalResponses} respondent${totalResponses === 1 ? '' : 's'}`
       );
     }
 
@@ -121,11 +126,13 @@ export function RecentCampaignsTable({ campaigns }: RecentCampaignsTableProps) {
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {campaigns.map((campaign) => {
-              const totalInvitations = campaign._count.invitations;
-              const completedCount = campaign.invitations.length;
+              const completedTracked = campaign.invitations.length;
+              const completedAnonymous = campaign.anonymousResponses.length;
+              const completedCount = completedTracked + completedAnonymous;
+              const totalCount = campaign._count.invitations + campaign._count.anonymousResponses;
               const responseRate = getResponseRate(
                 completedCount,
-                totalInvitations
+                totalCount
               );
 
               return (

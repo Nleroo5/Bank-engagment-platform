@@ -14,7 +14,24 @@ export default async function CampaignsPage() {
     },
     include: {
       organization: true,
-      invitations: true,
+      invitations: {
+        where: {
+          status: 'COMPLETED',
+        },
+      },
+      anonymousResponses: {
+        where: {
+          completedAt: {
+            not: null,
+          },
+        },
+      },
+      _count: {
+        select: {
+          invitations: true,
+          anonymousResponses: true,
+        },
+      },
     },
     orderBy: {
       createdAt: 'desc',

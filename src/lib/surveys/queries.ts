@@ -111,7 +111,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
           },
           isReversed: question.isReversed,
           anchorText: (question.config as { anchorText?: string })?.anchorText,
-          fieldType: undefined,
+          fieldType: (question.config as { fieldType?: string })?.fieldType,
           slug: undefined,
         };
       }),

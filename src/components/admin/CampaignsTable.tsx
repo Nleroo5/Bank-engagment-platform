@@ -3,13 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Trash2 } from 'lucide-react';
-import type { SurveyCampaign, Organization, Invitation } from '@prisma/client';
+import type { SurveyCampaign, Organization, Invitation, AnonymousResponse } from '@prisma/client';
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
 import { useRouter } from 'next/navigation';
 
 type CampaignWithRelations = SurveyCampaign & {
   organization: Organization;
   invitations: Invitation[];
+  anonymousResponses: AnonymousResponse[];
+  _count: {
+    invitations: number;
+    anonymousResponses: number;
+  };
 };
 
 interface CampaignsTableProps {
@@ -24,12 +29,23 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
   }>({ isOpen: false, campaign: null });
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const getResponseRate = (invitations: Invitation[]) => {
-    if (invitations.length === 0) return 0;
-    const completed = invitations.filter(
-      (inv) => inv.status === 'COMPLETED'
-    ).length;
-    return Math.round((completed / invitations.length) * 100);
+  const getResponseRate = (campaign: CampaignWithRelations) => {
+    // Count completed tracked invitations
+    const completedTracked = campaign.invitations.length; // Already filtered to completed in query
+
+    // Count completed anonymous responses
+    const completedAnonymous = campaign.anonymousResponses.length; // Already filtered to completed in query
+
+    // Total completed
+    const completedCount = completedTracked + completedAnonymous;
+
+    // Total invitations/responses
+    const totalTracked = campaign._count.invitations;
+    const totalAnonymous = campaign._count.anonymousResponses;
+    const totalCount = totalTracked + totalAnonymous;
+
+    if (totalCount === 0) return 0;
+    return Math.round((completedCount / totalCount) * 100);
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -86,14 +102,16 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
   };
 
   const getDeleteConsequences = (campaign: CampaignWithRelations) => {
-    const completedCount = campaign.invitations.filter(
-      (inv) => inv.status === 'COMPLETED'
-    ).length;
+    const completedTracked = campaign.invitations.length; // Already filtered to completed
+    const completedAnonymous = campaign.anonymousResponses.length; // Already filtered to completed
+    const completedCount = completedTracked + completedAnonymous;
+    const totalInvitations = campaign._count.invitations;
+    const totalResponses = totalInvitations + campaign._count.anonymousResponses;
     const consequences = [];
 
-    if (campaign.invitations.length > 0) {
+    if (totalResponses > 0) {
       consequences.push(
-        `Remove access for ${campaign.invitations.length} respondent${campaign.invitations.length === 1 ? '' : 's'}`
+        `Remove access for ${totalResponses} respondent${totalResponses === 1 ? '' : 's'}`
       );
     }
 
@@ -139,7 +157,7 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {campaigns.map((campaign) => {
-              const responseRate = getResponseRate(campaign.invitations);
+              const responseRate = getResponseRate(campaign);
               return (
                 <tr key={campaign.id} className="hover:bg-gray-50">
                   <td className="whitespace-nowrap px-6 py-4">
