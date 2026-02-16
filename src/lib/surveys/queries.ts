@@ -14,7 +14,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
         orderBy: { sortOrder: 'asc' },
         include: {
           questions: {
-            orderBy: { sortOrder: 'asc' },
+            orderBy: { questionNumber: 'asc' },
             include: {
               categories: {
                 include: {
@@ -25,11 +25,38 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
           },
         },
       },
+      questions: {
+        orderBy: { questionNumber: 'asc' },
+        include: {
+          categories: {
+            include: {
+              category: true,
+            },
+          },
+        },
+      },
     },
   });
 
   if (!survey) {
     return null;
+  }
+
+  // If survey has no sections, create a virtual section with all questions
+  let sectionsData = survey.sections;
+  if (sectionsData.length === 0 && survey.questions.length > 0) {
+    sectionsData = [
+      {
+        id: 'virtual-section',
+        surveyId: survey.id,
+        title: survey.title,
+        description: survey.description,
+        sortOrder: 1,
+        createdAt: survey.createdAt,
+        updatedAt: survey.updatedAt,
+        questions: survey.questions,
+      },
+    ];
   }
 
   // Transform PostgreSQL data to match Sanity structure
@@ -49,7 +76,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
       | 'ote'
       | 'associate_180',
     instructions: survey.description || undefined,
-    sections: survey.sections.map((section) => ({
+    sections: sectionsData.map((section) => ({
       _id: section.id,
       _type: 'section' as const,
       title: section.title,
