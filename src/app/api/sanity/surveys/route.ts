@@ -89,8 +89,8 @@ export async function GET(request: NextRequest) {
           number: question.questionNumber,
           text: question.text,
           isReversed: question.isReversed,
-          anchorText: question.anchorText,
-          fieldType: question.fieldType,
+          anchorText: null,
+          fieldType: null,
           category: question.categories[0]?.category
             ? {
                 _id: question.categories[0].category.id,
