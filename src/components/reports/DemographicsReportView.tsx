@@ -252,7 +252,7 @@ export function DemographicsReportView({
                     }}
                   />
                   <Bar dataKey="count" fill={CHART_COLORS[index % CHART_COLORS.length]}>
-                    {dist.distribution.map((entry, idx) => (
+                    {dist.distribution.map((_entry, idx) => (
                       <Cell
                         key={`cell-${idx}`}
                         fill={CHART_COLORS[(index + idx) % CHART_COLORS.length]}
