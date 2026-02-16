@@ -15,43 +15,66 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   // Fetch stats (exclude deleted campaigns from all metrics)
-  const [campaigns, users, invitations] = await Promise.all([
-    // Total campaigns (active ones, not deleted)
-    prisma.surveyCampaign.count({
-      where: {
-        status: 'ACTIVE',
-        deletedAt: null,
-      },
-    }),
-
-    // Total users
-    prisma.user.count(),
-
-    // Invitations from non-deleted campaigns only
-    prisma.invitation.findMany({
-      where: {
-        campaign: {
+  const [campaigns, users, invitations, anonymousCompleted, anonymousPending] =
+    await Promise.all([
+      // Total campaigns (active ones, not deleted)
+      prisma.surveyCampaign.count({
+        where: {
+          status: 'ACTIVE',
           deletedAt: null,
         },
-      },
-      select: {
-        status: true,
-      },
-    }),
-  ]);
+      }),
 
-  // Calculate pending responses (SENT or OPENED, not completed)
-  const pendingResponses = invitations.filter(
+      // Total users
+      prisma.user.count(),
+
+      // Invitations from non-deleted campaigns only
+      prisma.invitation.findMany({
+        where: {
+          campaign: {
+            deletedAt: null,
+          },
+        },
+        select: {
+          status: true,
+        },
+      }),
+
+      // Completed anonymous responses
+      prisma.anonymousResponse.count({
+        where: {
+          completedAt: { not: null },
+          campaign: { deletedAt: null },
+        },
+      }),
+
+      // Pending anonymous responses
+      prisma.anonymousResponse.count({
+        where: {
+          completedAt: null,
+          campaign: { deletedAt: null },
+        },
+      }),
+    ]);
+
+  // Calculate pending responses from tracked invitations (SENT or OPENED, not completed)
+  const pendingTrackedInvitations = invitations.filter(
     (inv) => inv.status === 'SENT' || inv.status === 'OPENED'
   ).length;
 
-  // Calculate completion rate
-  const completedResponses = invitations.filter(
+  // Total pending responses = tracked + anonymous
+  const pendingResponses = pendingTrackedInvitations + anonymousPending;
+
+  // Calculate completion rate (both tracked and anonymous)
+  const completedTrackedInvitations = invitations.filter(
     (inv) => inv.status === 'COMPLETED'
   ).length;
+  const totalCompleted = completedTrackedInvitations + anonymousCompleted;
+  const totalInvitations = invitations.length + anonymousCompleted + anonymousPending;
+
   const completionRate =
-    invitations.length > 0
-      ? Math.round((completedResponses / invitations.length) * 100)
+    totalInvitations > 0
+      ? Math.round((totalCompleted / totalInvitations) * 100)
       : 0;
 
   // Fetch recent campaigns (exclude deleted)
