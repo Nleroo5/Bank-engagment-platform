@@ -34,14 +34,6 @@ export function ReportsGrid({ campaigns }: ReportsGridProps) {
   }>({ isOpen: false, campaign: null });
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const getResponseRate = (
-    completedInvitations: Invitation[],
-    totalInvited: number
-  ) => {
-    if (totalInvited === 0) return 0;
-    return Math.round((completedInvitations.length / totalInvited) * 100);
-  };
-
   const handleDeleteClick = (
     e: React.MouseEvent,
     campaign: CampaignWithRelations
