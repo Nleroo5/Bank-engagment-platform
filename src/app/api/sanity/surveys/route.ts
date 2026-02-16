@@ -66,13 +66,13 @@ export async function GET(request: NextRequest) {
         ? {
             _id: survey.scale.id,
             _type: 'scale',
-            name: survey.scale.title,
+            name: survey.scale.name,
             scaleType: survey.scale.scaleType,
             min: survey.scale.min,
             max: survey.scale.max,
-            minLabel: survey.scale.minLabel,
-            maxLabel: survey.scale.maxLabel,
-            midLabel: survey.scale.midLabel,
+            minLabel: '',
+            maxLabel: '',
+            midLabel: '',
             labels: survey.scale.labels || [],
           }
         : null,
