@@ -110,26 +110,33 @@ export async function GET(request: NextRequest) {
         sortOrder: section.sortOrder,
         directions: section.description || '',
         description: section.description,
-        questions: section.questions.map((question) => ({
-          _id: question.id,
-          _type: 'question',
-          number: question.questionNumber,
-          text: question.text,
-          isReversed: question.isReversed,
-          anchorText: null,
-          fieldType: null,
-          category: question.categories[0]?.category
-            ? {
-                _id: question.categories[0].category.id,
-                _type: 'category',
-                name: question.categories[0].category.name,
-                colorCode: question.categories[0].category.colorCode,
-                description: question.categories[0].category.description,
-                sortOrder: question.categories[0].category.sortOrder,
-                weight: question.categories[0].category.weight,
-              }
-            : null,
-        })),
+        questions: section.questions.map((question) => {
+          // Extract config fields (fieldType, anchorText) from JSON config
+          const config = question.config as
+            | { fieldType?: string; anchorText?: string }
+            | null;
+
+          return {
+            _id: question.id,
+            _type: 'question',
+            number: question.questionNumber,
+            text: question.text,
+            isReversed: question.isReversed,
+            anchorText: config?.anchorText || null,
+            fieldType: config?.fieldType || null,
+            category: question.categories[0]?.category
+              ? {
+                  _id: question.categories[0].category.id,
+                  _type: 'category',
+                  name: question.categories[0].category.name,
+                  colorCode: question.categories[0].category.colorCode,
+                  description: question.categories[0].category.description,
+                  sortOrder: question.categories[0].category.sortOrder,
+                  weight: question.categories[0].category.weight,
+                }
+              : null,
+          };
+        }),
       })),
     };
 
