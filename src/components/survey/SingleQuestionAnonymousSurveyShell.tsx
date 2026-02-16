@@ -286,8 +286,31 @@ export function SingleQuestionAnonymousSurveyShell({
     setDemographics((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleDemographicsComplete = () => {
-    setStage('survey');
+  const handleDemographicsComplete = async () => {
+    try {
+      setIsSaving(true);
+
+      // Save demographics to server
+      const response = await fetch('/api/anonymous/responses/demographics', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionToken,
+          demographics,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save demographics');
+      }
+
+      setStage('survey');
+    } catch (error) {
+      console.error('Error saving demographics:', error);
+      alert('Failed to save demographics. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -388,9 +411,12 @@ export function SingleQuestionAnonymousSurveyShell({
       return null;
     }
 
-    const allDemographicsAnswered = demographicsSection.questions.every(
-      (q) => demographics[q.fieldType || q._id]
-    );
+    const allDemographicsAnswered = demographicsSection.questions.every((q) => {
+      const key = q.fieldType || q._id;
+      const value = demographics[key];
+      // Check for non-empty string or valid value
+      return value !== undefined && value !== null && value !== '';
+    });
 
     return (
       <div className="min-h-screen bg-gray-50 px-4 py-8">
@@ -439,11 +465,20 @@ export function SingleQuestionAnonymousSurveyShell({
             <div className="mt-8 flex justify-end">
               <button
                 onClick={handleDemographicsComplete}
-                disabled={!allDemographicsAnswered}
+                disabled={!allDemographicsAnswered || isSaving}
                 className="flex items-center gap-2 rounded-md bg-primary-600 px-6 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Continue to Survey
-                <ChevronRight className="h-4 w-4" />
+                {isSaving ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    Continue to Survey
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
               </button>
             </div>
 
