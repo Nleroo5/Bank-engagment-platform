@@ -57,6 +57,7 @@ export function SingleQuestionAnonymousSurveyShell({
     existingDemographics ? 'survey' : 'demographics'
   );
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentDemographicsIndex, setCurrentDemographicsIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
   const [demographics, setDemographics] = useState<Record<string, string>>(
     (existingDemographics as Record<string, string> | null) || {}
@@ -282,9 +283,82 @@ export function SingleQuestionAnonymousSurveyShell({
     }
   }, [currentQuestionIndex, isAdvancing]);
 
-  const handleDemographicsChange = (field: string, value: string) => {
-    setDemographics((prev) => ({ ...prev, [field]: value }));
-  };
+  const handleDemographicsNext = useCallback(async () => {
+    if (!survey) return;
+
+    const demographicsSection = survey.sections.find(
+      (s) =>
+        s.title.toLowerCase().includes('demographics') ||
+        s.questions.some((q) => q.fieldType)
+    );
+
+    if (!demographicsSection) return;
+
+    const totalDemographicsFields = demographicsSection.questions.length;
+    const isLastDemographicsField =
+      currentDemographicsIndex === totalDemographicsFields - 1;
+
+    if (isLastDemographicsField) {
+      // Save demographics and proceed
+      await handleDemographicsComplete();
+    } else {
+      // Move to next demographics field
+      setCurrentDemographicsIndex((prev) => prev + 1);
+    }
+  }, [survey, currentDemographicsIndex]);
+
+  const handleDemographicsBack = useCallback(() => {
+    if (currentDemographicsIndex > 0 && !isAdvancing) {
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
+        setIsAdvancing(false);
+      }
+      setCurrentDemographicsIndex((prev) => prev - 1);
+      setJustAnswered(false);
+    }
+  }, [currentDemographicsIndex, isAdvancing]);
+
+  const handleDemographicsAnswer = useCallback(
+    (field: string, value: string, fieldType: string) => {
+      // Prevent double-triggering during advance animation
+      if (isAdvancing) return;
+
+      // Update local state immediately
+      setDemographics((prev) => ({ ...prev, [field]: value }));
+      setJustAnswered(true);
+
+      // Check if this field type needs manual "Next" button or auto-advances
+      const needsManualNext =
+        fieldType === 'bankName' ||
+        fieldType === 'city' ||
+        fieldType === 'metroArea' ||
+        fieldType === 'state' ||
+        fieldType === 'country' ||
+        fieldType === 'bankSize' ||
+        fieldType === 'division' ||
+        fieldType === 'jobRole';
+
+      if (needsManualNext) {
+        // Don't auto-advance for text inputs and dropdowns
+        setJustAnswered(false);
+        return;
+      }
+
+      // Clear existing advance timeout
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
+      }
+
+      // Auto-advance for radio groups (device, employmentStatus, gender, timeAtBank, bankExperience)
+      setIsAdvancing(true);
+      advanceTimeoutRef.current = setTimeout(() => {
+        setJustAnswered(false);
+        handleDemographicsNext();
+        setIsAdvancing(false);
+      }, AUTO_ADVANCE_DELAY);
+    },
+    [isAdvancing, handleDemographicsNext]
+  );
 
   const handleDemographicsComplete = async () => {
     try {
@@ -360,23 +434,25 @@ export function SingleQuestionAnonymousSurveyShell({
   // 7. KEYBOARD NAVIGATION
   // ============================================
   useEffect(() => {
-    if (stage !== 'survey') return;
-
     const handleKeyPress = (e: KeyboardEvent) => {
       // Prevent if user is typing in text field
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) {
         return;
       }
 
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        handleBack();
+        if (stage === 'demographics') {
+          handleDemographicsBack();
+        } else if (stage === 'survey') {
+          handleBack();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [stage, handleBack]);
+  }, [stage, handleBack, handleDemographicsBack]);
 
   // ============================================
   // 8. CLEANUP TIMEOUTS ON UNMOUNT
@@ -404,7 +480,7 @@ export function SingleQuestionAnonymousSurveyShell({
     );
   }
 
-  // Demographics stage
+  // Demographics stage - ONE FIELD AT A TIME
   if (stage === 'demographics') {
     // Check if demographics questions exist in survey
     const demographicsSection = survey.sections.find(
@@ -419,82 +495,188 @@ export function SingleQuestionAnonymousSurveyShell({
       return null;
     }
 
-    const allDemographicsAnswered = demographicsSection.questions.every((q) => {
-      const key = q.fieldType || q._id;
-      const value = demographics[key];
-      // Check for non-empty string or valid value
-      return value !== undefined && value !== null && value !== '';
-    });
+    const demographicsQuestions = demographicsSection.questions;
+    const totalDemographicsFields = demographicsQuestions.length;
+    const currentDemographicsField = demographicsQuestions[currentDemographicsIndex];
+
+    if (!currentDemographicsField) {
+      return null;
+    }
+
+    const isFirstDemographicsField = currentDemographicsIndex === 0;
+    const isLastDemographicsField =
+      currentDemographicsIndex === totalDemographicsFields - 1;
+
+    // Calculate progress percentage for demographics
+    const demographicsProgressPercentage = Math.round(
+      ((currentDemographicsIndex + 1) / totalDemographicsFields) * 100
+    );
+
+    const currentFieldKey =
+      currentDemographicsField.fieldType || currentDemographicsField._id;
+    const currentFieldValue = demographics[currentFieldKey] || '';
+
+    // Check if current field is answered (for manual "Next" button)
+    const isCurrentFieldAnswered =
+      currentFieldValue !== undefined &&
+      currentFieldValue !== null &&
+      currentFieldValue !== '';
+
+    // Determine if this field needs manual "Next" button
+    const needsManualNext =
+      currentDemographicsField.fieldType === 'bankName' ||
+      currentDemographicsField.fieldType === 'city' ||
+      currentDemographicsField.fieldType === 'metroArea' ||
+      currentDemographicsField.fieldType === 'state' ||
+      currentDemographicsField.fieldType === 'country' ||
+      currentDemographicsField.fieldType === 'bankSize' ||
+      currentDemographicsField.fieldType === 'division' ||
+      currentDemographicsField.fieldType === 'jobRole';
 
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
-        <div className="mx-auto max-w-4xl">
-          {/* Anonymity badge */}
-          <div className="mb-6 flex items-center justify-center gap-2 rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-800">
-            <Shield className="h-4 w-4" />
-            Anonymous Survey - Your responses are completely confidential
+      <div className="min-h-screen bg-gray-50 px-4 py-12">
+        <div className="mx-auto max-w-2xl">
+          {/* Logo Header */}
+          <div className="mb-6 flex justify-center">
+            <Image
+              src="/logo-red.png"
+              alt="Logo"
+              width={180}
+              height={60}
+              priority
+              className="h-auto w-auto"
+            />
           </div>
 
-          <div className="rounded-lg bg-white p-8 shadow">
-            <h1 className="mb-2 text-2xl font-bold text-gray-900">
-              {survey.title}
-            </h1>
-            <h2 className="mb-6 text-lg text-gray-600">
-              Demographics Information
-            </h2>
+          {/* Anonymity badge - Apple Style */}
+          <div className="mb-8 flex items-center justify-center gap-2 rounded-full bg-green-50 px-5 py-2.5 text-sm font-medium text-green-700 shadow-sm">
+            <Shield className="h-4 w-4" />
+            Anonymous Survey - Demographics
+          </div>
 
-            <p className="mb-6 text-sm text-gray-700">
-              Please provide some basic information. This data is stored
-              separately from your survey responses and is only used for
-              aggregate reporting. Individual responses are never visible to
-              administrators.
-            </p>
-
-            <div className="space-y-4">
-              {demographicsSection.questions.map((question) => (
-                <DemographicsField
-                  key={question._id}
-                  questionId={question._id}
-                  questionNumber={question.number}
-                  questionText={question.text}
-                  fieldType={question.fieldType || question.slug?.current || ''}
-                  value={demographics[question.fieldType || question._id] || ''}
-                  onChange={(_, value) =>
-                    handleDemographicsChange(
-                      question.fieldType || question._id,
-                      value as string
-                    )
-                  }
-                  disabled={false}
-                />
-              ))}
+          {/* Progress Bar - Apple Style */}
+          <div className="mb-12">
+            <div className="mb-3 flex items-center justify-between text-sm">
+              <span className="font-medium text-gray-600">
+                Field {currentDemographicsIndex + 1} of {totalDemographicsFields}
+              </span>
+              <span className="font-semibold text-primary-600">
+                {demographicsProgressPercentage}%
+              </span>
             </div>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-600 ease-out"
+                style={{ width: `${demographicsProgressPercentage}%` }}
+              />
+            </div>
+          </div>
 
-            <div className="mt-8 flex justify-end">
-              <button
-                onClick={handleDemographicsComplete}
-                disabled={!allDemographicsAnswered || isSaving}
-                className="flex items-center gap-2 rounded-md bg-primary-600 px-6 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+          {/* Save Indicator */}
+          {isSaving && (
+            <div className="mb-6 flex items-center justify-center gap-2 text-sm text-gray-500">
+              <Save className="h-4 w-4 animate-pulse" />
+              <span>Saving</span>
+            </div>
+          )}
+
+          {/* Answered Indicator */}
+          <AnimatePresence>
+            {justAnswered && !isAdvancing && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className="mb-6 flex items-center justify-center gap-2"
+              >
+                <div className="flex items-center gap-2 rounded-full bg-accent-50 px-4 py-2 text-sm font-medium text-accent-600">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span>Answer recorded</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Demographics Field Container with Apple-style Card */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentDemographicsField._id}
+              initial={{ opacity: 0, x: 30, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
+              transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+              className="mb-8"
+            >
+              {/* White Card with Shadow - Apple Style */}
+              <div className="overflow-hidden rounded-3xl bg-white shadow-xl transition-shadow duration-300 hover:shadow-2xl">
+                <div className="px-8 py-12 md:px-12 md:py-16">
+                  <DemographicsField
+                    questionId={currentDemographicsField._id}
+                    questionNumber={currentDemographicsField.number}
+                    questionText={currentDemographicsField.text}
+                    fieldType={currentDemographicsField.fieldType || ''}
+                    value={currentFieldValue}
+                    onChange={(_, value) =>
+                      handleDemographicsAnswer(
+                        currentFieldKey,
+                        value as string,
+                        currentDemographicsField.fieldType || ''
+                      )
+                    }
+                    disabled={isSaving || isAdvancing}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation - Apple Minimalist Style */}
+          <div className="flex items-center justify-between">
+            {/* Back Button */}
+            <button
+              onClick={handleDemographicsBack}
+              disabled={isFirstDemographicsField || isAdvancing}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </button>
+
+            {/* Next/Continue Button - Only for manual fields */}
+            {needsManualNext && isCurrentFieldAnswered && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleDemographicsNext}
+                disabled={isSaving || isAdvancing}
+                className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-xl disabled:opacity-40"
               >
                 {isSaving ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Saving...
+                    {isLastDemographicsField ? 'Submitting...' : 'Saving...'}
                   </>
                 ) : (
                   <>
-                    Continue to Survey
+                    {isLastDemographicsField ? 'Continue to Survey' : 'Next'}
                     <ChevronRight className="h-4 w-4" />
                   </>
                 )}
-              </button>
-            </div>
-
-            {!allDemographicsAnswered && (
-              <p className="mt-4 text-center text-sm text-orange-600">
-                Please complete all fields to continue
-              </p>
+              </motion.button>
             )}
+          </div>
+
+          {/* Auto-advance hint for radio groups */}
+          {!needsManualNext && !isCurrentFieldAnswered && (
+            <div className="mt-6 text-center text-sm text-gray-400">
+              Select an option to automatically continue
+            </div>
+          )}
+
+          {/* Keyboard hint */}
+          <div className="mt-4 text-center text-xs text-gray-300">
+            Use ← arrow key to go back
           </div>
         </div>
       </div>

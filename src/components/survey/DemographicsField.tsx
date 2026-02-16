@@ -204,7 +204,7 @@ export function DemographicsField({
     }
   };
 
-  // Text input for bank name, metro area, and city
+  // Text input for bank name, metro area, and city - Apple Style
   if (fieldType === 'bankName' || fieldType === 'city' || fieldType === 'metroArea') {
     let placeholder = 'Enter value';
     if (fieldType === 'bankName') placeholder = "Enter your bank's name";
@@ -212,17 +212,22 @@ export function DemographicsField({
     if (fieldType === 'metroArea') placeholder = 'Enter metro area';
 
     return (
-      <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
-        <label htmlFor={questionId} className="mb-4 block">
-          <span className="mb-2 flex items-start gap-3">
-            <span className="flex-shrink-0 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-              Q{questionNumber}
-            </span>
-            <span className="flex-1 text-base font-medium text-gray-900">
-              {questionText}
-            </span>
-          </span>
-        </label>
+      <fieldset>
+        <legend className="sr-only">
+          Question {questionNumber}: {questionText}
+        </legend>
+
+        {/* Question Text - Apple Style: Large, Bold, Prominent */}
+        <div className="mb-8">
+          <p
+            className="text-3xl font-semibold leading-tight tracking-tight text-gray-900 md:text-4xl"
+            id={`question-${questionId}`}
+          >
+            {questionText}
+          </p>
+        </div>
+
+        {/* Text Input - Large, Modern */}
         <input
           id={questionId}
           type="text"
@@ -230,14 +235,15 @@ export function DemographicsField({
           value={selectedValue}
           onChange={(e) => handleChange(e.target.value)}
           disabled={disabled}
-          className="block w-full rounded-md border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100"
+          className="block w-full rounded-2xl border-2 border-gray-200 bg-gray-50 px-6 py-5 text-lg transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
           placeholder={placeholder}
+          aria-labelledby={`question-${questionId}`}
         />
-      </div>
+      </fieldset>
     );
   }
 
-  // Dropdown for location fields (country, state) and categorical fields (bankSize, division, jobRole)
+  // Dropdown for location fields (country, state) and categorical fields (bankSize, division, jobRole) - Apple Style
   if (
     fieldType === 'state' ||
     fieldType === 'country' ||
@@ -257,23 +263,29 @@ export function DemographicsField({
     const hasOtherOption = fieldType === 'division' || fieldType === 'jobRole';
 
     return (
-      <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
-        <label htmlFor={questionId} className="mb-4 block">
-          <span className="mb-2 flex items-start gap-3">
-            <span className="flex-shrink-0 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-              Q{questionNumber}
-            </span>
-            <span className="flex-1 text-base font-medium text-gray-900">
-              {questionText}
-            </span>
-          </span>
-        </label>
+      <fieldset>
+        <legend className="sr-only">
+          Question {questionNumber}: {questionText}
+        </legend>
+
+        {/* Question Text - Apple Style: Large, Bold, Prominent */}
+        <div className="mb-8">
+          <p
+            className="text-3xl font-semibold leading-tight tracking-tight text-gray-900 md:text-4xl"
+            id={`question-${questionId}`}
+          >
+            {questionText}
+          </p>
+        </div>
+
+        {/* Dropdown - Large, Modern */}
         <select
           id={questionId}
           value={showOther ? 'Other' : selectedValue}
           onChange={(e) => handleChange(e.target.value)}
           disabled={disabled}
-          className="block w-full rounded-md border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100"
+          className="block w-full rounded-2xl border-2 border-gray-200 bg-gray-50 px-6 py-5 text-lg transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
+          aria-labelledby={`question-${questionId}`}
         >
           <option value="">{placeholderText}</option>
           {options.map((option) => (
@@ -285,7 +297,7 @@ export function DemographicsField({
 
         {/* Show text input when "Other" is selected for division/jobRole */}
         {hasOtherOption && showOther && (
-          <div className="mt-3">
+          <div className="mt-6">
             <input
               type="text"
               inputMode="text"
@@ -293,15 +305,15 @@ export function DemographicsField({
               onChange={(e) => handleOtherChange(e.target.value)}
               disabled={disabled}
               placeholder="Please specify..."
-              className="block w-full rounded-md border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100"
+              className="block w-full rounded-2xl border-2 border-gray-200 bg-gray-50 px-6 py-5 text-lg transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
             />
           </div>
         )}
-      </div>
+      </fieldset>
     );
   }
 
-  // Radio groups for other fields
+  // Radio groups for other fields - Apple Style (iOS Cards)
   const options = getOptionsForField(fieldType);
 
   if (options.length === 0) {
@@ -309,58 +321,150 @@ export function DemographicsField({
   }
 
   return (
-    <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
-      <div className="mb-4">
-        <div className="mb-4 flex items-start gap-3">
-          <span className="flex-shrink-0 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-            Q{questionNumber}
-          </span>
-          <span className="flex-1 text-base font-medium text-gray-900">
-            {questionText}
-          </span>
+    <fieldset>
+      <legend className="sr-only">
+        Question {questionNumber}: {questionText}
+      </legend>
+
+      {/* Question Text - Apple Style: Large, Bold, Prominent */}
+      <div className="mb-8">
+        <p
+          className="text-3xl font-semibold leading-tight tracking-tight text-gray-900 md:text-4xl"
+          id={`question-${questionId}`}
+        >
+          {questionText}
+        </p>
+      </div>
+
+      {/* Desktop view - iOS-style Cards */}
+      <div className="hidden md:block">
+        <div
+          className="flex flex-wrap items-stretch justify-start gap-4"
+          role="radiogroup"
+          aria-labelledby={`question-${questionId}`}
+        >
+          {options.map((item) => (
+            <label
+              key={item}
+              className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 px-6 py-8 transition-all duration-200 ${
+                selectedValue === item
+                  ? 'scale-105 border-primary-500 bg-primary-50 shadow-lg shadow-primary-500/30'
+                  : 'border-gray-200 bg-gray-50 hover:scale-105 hover:border-gray-300 hover:bg-white hover:shadow-md'
+              } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
+              style={{ minWidth: '140px' }}
+            >
+              <input
+                type="radio"
+                name={questionId}
+                value={item}
+                checked={selectedValue === item}
+                onChange={() => handleChange(item)}
+                disabled={disabled}
+                className="sr-only"
+                aria-label={item}
+              />
+
+              {/* Checkmark for selected state */}
+              {selectedValue === item && (
+                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary-500 text-white">
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              )}
+
+              <span
+                className={`text-center text-lg font-semibold ${
+                  selectedValue === item
+                    ? 'text-primary-900'
+                    : 'text-gray-700 group-hover:text-gray-900'
+                }`}
+              >
+                {item}
+              </span>
+            </label>
+          ))}
         </div>
       </div>
 
-      <div className="space-y-3">
-        {options.map((option) => (
-          <label
-            key={option}
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition-all ${
-              selectedValue === option || (option === 'Other' && showOther)
-                ? 'border-primary-600 bg-primary-50'
-                : 'border-gray-200 hover:border-gray-300'
-            } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-          >
-            <input
-              type="radio"
-              name={questionId}
-              value={option}
-              checked={
-                selectedValue === option || (option === 'Other' && showOther)
-              }
-              onChange={() => handleChange(option)}
-              disabled={disabled}
-              className="h-5 w-5 text-primary-600 focus:ring-primary-500"
-            />
-            <span className="flex-1 text-gray-900">{option}</span>
-          </label>
-        ))}
+      {/* Mobile view - iOS-style Stacked Cards */}
+      <div className="md:hidden">
+        <div
+          className="space-y-3"
+          role="radiogroup"
+          aria-labelledby={`question-${questionId}`}
+        >
+          {options.map((item) => (
+            <label
+              key={item}
+              className={`group relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-6 transition-all duration-200 ${
+                selectedValue === item
+                  ? 'scale-105 border-primary-500 bg-primary-50 shadow-lg shadow-primary-500/20'
+                  : 'border-gray-200 bg-gray-50 active:scale-[0.98] active:bg-white'
+              } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
+            >
+              <input
+                type="radio"
+                name={questionId}
+                value={item}
+                checked={selectedValue === item}
+                onChange={() => handleChange(item)}
+                disabled={disabled}
+                className="sr-only"
+                aria-label={item}
+              />
 
-        {/* Show text input when "Other" is selected */}
-        {showOther && (
-          <div className="ml-8 mt-2">
-            <input
-              type="text"
-              inputMode="text"
-              value={otherValue}
-              onChange={(e) => handleOtherChange(e.target.value)}
-              disabled={disabled}
-              placeholder="Please specify..."
-              className="block w-full rounded-md border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100"
-            />
-          </div>
-        )}
+              {/* Radio Circle */}
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-full border-2 ${
+                  selectedValue === item
+                    ? 'border-primary-500 bg-primary-500'
+                    : 'border-gray-300 bg-white'
+                }`}
+              >
+                {selectedValue === item && (
+                  <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+              </div>
+
+              <div className="flex-1">
+                <span
+                  className={`text-lg font-semibold ${
+                    selectedValue === item ? 'text-primary-900' : 'text-gray-900'
+                  }`}
+                >
+                  {item}
+                </span>
+              </div>
+            </label>
+          ))}
+        </div>
       </div>
-    </div>
+
+      {/* Show text input when "Other" is selected */}
+      {showOther && (
+        <div className="mt-6">
+          <input
+            type="text"
+            inputMode="text"
+            value={otherValue}
+            onChange={(e) => handleOtherChange(e.target.value)}
+            disabled={disabled}
+            placeholder="Please specify..."
+            className="block w-full rounded-2xl border-2 border-gray-200 bg-gray-50 px-6 py-5 text-lg transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-40"
+          />
+        </div>
+      )}
+    </fieldset>
   );
 }
