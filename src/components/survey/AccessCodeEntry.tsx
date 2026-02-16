@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Lock, Clock, CheckCircle } from 'lucide-react';
-import CaptchaVerification from './CaptchaVerification';
 import { generateBrowserFingerprint } from '@/lib/fingerprint';
 
 interface AccessCodeEntryProps {
@@ -16,7 +15,6 @@ interface AccessCodeEntryProps {
  *
  * Welcome screen for anonymous surveys:
  * - Shows anonymity guarantee messaging
- * - CAPTCHA verification
  * - Begins survey session
  */
 export default function AccessCodeEntry({
@@ -24,21 +22,10 @@ export default function AccessCodeEntry({
   surveyTitle,
 }: AccessCodeEntryProps) {
   const router = useRouter();
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-submit when CAPTCHA is verified
-  useEffect(() => {
-    if (captchaToken) {
-      handleBeginSurvey();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [captchaToken]);
-
   const handleBeginSurvey = async () => {
-    if (!captchaToken) return;
-
     setIsLoading(true);
     setError(null);
 
@@ -52,7 +39,7 @@ export default function AccessCodeEntry({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accessCode,
-          captchaToken,
+          captchaToken: '', // No captcha
           browserFingerprint,
           device: getDeviceType(),
           userAgent: navigator.userAgent,
@@ -75,17 +62,7 @@ export default function AccessCodeEntry({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setIsLoading(false);
-      setCaptchaToken(null); // Reset CAPTCHA
     }
-  };
-
-  const handleCaptchaVerify = (token: string) => {
-    setCaptchaToken(token);
-  };
-
-  const handleCaptchaError = (errorMsg: string) => {
-    setError(errorMsg);
-    setCaptchaToken(null);
   };
 
   return (
@@ -146,14 +123,6 @@ export default function AccessCodeEntry({
           <span>Estimated time: 10-15 minutes</span>
         </div>
 
-        {/* CAPTCHA */}
-        <div className="mb-6">
-          <CaptchaVerification
-            onVerify={handleCaptchaVerify}
-            onError={handleCaptchaError}
-          />
-        </div>
-
         {/* Error Message */}
         {error && (
           <div
@@ -164,9 +133,21 @@ export default function AccessCodeEntry({
           </div>
         )}
 
+        {/* Begin Survey Button */}
+        {!isLoading && (
+          <div className="mb-6">
+            <button
+              onClick={handleBeginSurvey}
+              className="w-full rounded-lg bg-blue-600 px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Begin Survey
+            </button>
+          </div>
+        )}
+
         {/* Loading State */}
         {isLoading && (
-          <div className="text-center">
+          <div className="mb-6 text-center">
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-600"></div>
             <p className="text-gray-600">Starting your survey...</p>
           </div>
@@ -178,7 +159,7 @@ export default function AccessCodeEntry({
             <strong>Before you begin:</strong>
           </p>
           <ul className="list-inside list-disc space-y-1">
-            <li>Complete the CAPTCHA verification above to begin</li>
+            <li>Click &quot;Begin Survey&quot; to start</li>
             <li>You can save your progress and return later</li>
             <li>Your session is valid until the survey closes</li>
             <li>
