@@ -98,23 +98,24 @@ export async function GET(
       );
     }
 
-    // Check anonymity threshold
-    const meetsThreshold = isAnonymous
-      ? campaign.anonymousResponses.length >= 5
-      : await checkAnonymityThreshold(campaign.id, survey.surveyType);
-
-    if (!meetsThreshold) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient respondents',
-          message:
-            'This survey requires a minimum of 5 completed responses before viewing results to protect respondent anonymity.',
-          requiresAnonymity: true,
-          threshold: 5,
-        },
-        { status: 403 }
-      );
-    }
+    // DISABLED: Anonymity threshold check removed per user request
+    // Users want to view reports immediately regardless of response count
+    // const meetsThreshold = isAnonymous
+    //   ? campaign.anonymousResponses.length >= 5
+    //   : await checkAnonymityThreshold(campaign.id, survey.surveyType);
+    //
+    // if (!meetsThreshold) {
+    //   return NextResponse.json(
+    //     {
+    //       error: 'Insufficient respondents',
+    //       message:
+    //         'This survey requires a minimum of 5 completed responses before viewing results to protect respondent anonymity.',
+    //       requiresAnonymity: true,
+    //       threshold: 5,
+    //     },
+    //     { status: 403 }
+    //   );
+    // }
 
     // Get filter options for demographics
     const filterOptions = isAnonymous
@@ -135,27 +136,28 @@ export async function GET(
     if (timeAtBank) filters.timeAtBank = timeAtBank;
     if (bankExperience) filters.bankExperience = bankExperience;
 
-    // Validate filters maintain anonymity
-    if (Object.keys(filters).length > 0) {
-      const validation = isAnonymous
-        ? await validateFilteredAnonymityAnonymous(campaign.id, filters)
-        : await validateFilteredAnonymity(
-            campaign.id,
-            survey.surveyType,
-            filters
-          );
-
-      if (!validation.valid) {
-        return NextResponse.json(
-          {
-            error: 'Filter results in too few respondents',
-            message: `Only ${validation.count} respondents match these filters. Minimum 5 required for anonymity protection.`,
-            count: validation.count,
-          },
-          { status: 400 }
-        );
-      }
-    }
+    // DISABLED: Filter anonymity validation removed per user request
+    // Users want to view all reports regardless of respondent count
+    // if (Object.keys(filters).length > 0) {
+    //   const validation = isAnonymous
+    //     ? await validateFilteredAnonymityAnonymous(campaign.id, filters)
+    //     : await validateFilteredAnonymity(
+    //         campaign.id,
+    //         survey.surveyType,
+    //         filters
+    //       );
+    //
+    //   if (!validation.valid) {
+    //     return NextResponse.json(
+    //       {
+    //         error: 'Filter results in too few respondents',
+    //         message: `Only ${validation.count} respondents match these filters. Minimum 5 required for anonymity protection.`,
+    //         count: validation.count,
+    //       },
+    //       { status: 400 }
+    //     );
+    //   }
+    // }
 
     // Extract all questions with their metadata
     const questions = survey.sections.flatMap((section) =>
