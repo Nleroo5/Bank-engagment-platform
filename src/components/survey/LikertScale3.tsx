@@ -57,11 +57,6 @@ export function LikertScale3({
         {anchorText && (
           <p className="mt-3 text-base italic text-gray-500">{anchorText}</p>
         )}
-        {isReversed && (
-          <span className="mt-3 inline-block rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600">
-            ⚠️ Reverse scored
-          </span>
-        )}
       </div>
 
       {/* Desktop view - iOS-style Cards */}
