@@ -44,6 +44,16 @@ export async function GET(request: NextRequest) {
           },
           orderBy: { sortOrder: 'asc' },
         },
+        questions: {
+          include: {
+            categories: {
+              include: {
+                category: true,
+              },
+            },
+          },
+          orderBy: { questionNumber: 'asc' },
+        },
       },
     });
 
@@ -52,6 +62,23 @@ export async function GET(request: NextRequest) {
         { error: 'Survey not found' },
         { status: 404 }
       );
+    }
+
+    // If survey has no sections, create a virtual section with all questions
+    let sectionsData = survey.sections;
+    if (sectionsData.length === 0 && survey.questions.length > 0) {
+      sectionsData = [
+        {
+          id: 'virtual-section',
+          surveyId: survey.id,
+          title: survey.title,
+          description: survey.description,
+          sortOrder: 1,
+          createdAt: survey.createdAt,
+          updatedAt: survey.updatedAt,
+          questions: survey.questions,
+        },
+      ];
     }
 
     // Transform to match the expected Sanity format
@@ -76,7 +103,7 @@ export async function GET(request: NextRequest) {
             labels: survey.scale.labels || [],
           }
         : null,
-      sections: survey.sections.map((section) => ({
+      sections: sectionsData.map((section) => ({
         _id: section.id,
         _type: 'section',
         title: section.title,
