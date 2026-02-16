@@ -11,6 +11,7 @@ export default withAuth(
       path.startsWith('/s/') || // Survey token URLs
       path.startsWith('/a/') || // Anonymous access code URLs
       path.startsWith('/api/anonymous/') || // Anonymous API endpoints
+      path.startsWith('/api/sanity/') || // Sanity CMS data (surveys, questions) - needed for survey rendering
       path.startsWith('/api/responses') || // Public response submission (uses token validation)
       path === '/' || // Home page
       path === '/admin/login' // Login page
