@@ -148,9 +148,12 @@ export async function GET(
       // Extract demographics data from each response
       const demographicsData: Record<string, unknown>[] = responses.map((r) => {
         if (isAnonymous) {
-          return (r as any).demographics as Record<string, unknown> || {};
+          // For anonymous responses, extract demographics JSON field
+          const anonResp = r as typeof campaign.anonymousResponses[number];
+          return (anonResp.demographics as Record<string, unknown>) || {};
         } else {
-          const invitation = r as any;
+          // For tracked invitations, extract user demographic fields
+          const invitation = r as typeof campaign.invitations[number];
           return {
             bankName: invitation.user.bankName,
             country: invitation.user.country,
