@@ -89,7 +89,9 @@ export async function POST(request: NextRequest) {
     // ============================================
     // 2. Lookup campaign by access code
     // ============================================
-    const campaign = await prisma.surveyCampaign.findUnique({
+    // Use findFirst (not findUnique) to allow deletedAt filter
+    // accessCode is unique, but Prisma requires findFirst for compound filters
+    const campaign = await prisma.surveyCampaign.findFirst({
       where: {
         accessCode: accessCode.toUpperCase(),
         deletedAt: null,
@@ -200,9 +202,21 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    // Enhanced error logging for debugging
     console.error('Error validating anonymous survey access:', error);
+    console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+
     return NextResponse.json(
-      { error: 'An error occurred while validating access code.' },
+      {
+        error: 'An error occurred while validating access code.',
+        // Include error details in development
+        ...(process.env.NODE_ENV === 'development' && {
+          details: error instanceof Error ? error.message : String(error),
+          errorType: error instanceof Error ? error.name : 'Unknown',
+        }),
+      },
       { status: 500 }
     );
   }
