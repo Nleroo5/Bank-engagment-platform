@@ -129,7 +129,8 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
   return (
     <>
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -160,16 +161,19 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
               const responseRate = getResponseRate(campaign);
               return (
                 <tr key={campaign.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4">
+                  <td className="px-6 py-4">
                     <Link
                       href={`/admin/campaigns/${campaign.id}`}
-                      className="font-medium text-gray-900 hover:text-primary-600"
+                      className="block max-w-xs truncate font-medium text-gray-900 hover:text-primary-600"
+                      title={campaign.surveyTitle}
                     >
                       {campaign.surveyTitle}
                     </Link>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {campaign.organization.name}
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    <div className="max-w-xs truncate" title={campaign.organization.name}>
+                      {campaign.organization.name}
+                    </div>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
                     <span
@@ -225,6 +229,7 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {deleteDialog.campaign && (

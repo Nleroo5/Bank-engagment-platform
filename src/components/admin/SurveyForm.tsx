@@ -110,7 +110,7 @@ export function SurveyForm({ scales, categories, survey }: SurveyFormProps) {
           Survey Details
         </h2>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Title */}
           <div className="md:col-span-2">
             <label

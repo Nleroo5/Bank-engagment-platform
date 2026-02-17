@@ -232,7 +232,7 @@ export function NewCampaignForm({
       </div>
 
       {/* Date Range */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <label
             htmlFor="startDate"
@@ -281,7 +281,7 @@ export function NewCampaignForm({
         <h3 className="mb-4 font-medium text-gray-900">
           Response Limits (Optional)
         </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label
               htmlFor="maxResponses"

@@ -32,7 +32,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             alt="Bank Engagement Survey Platform"
             width={160}
             height={53}
-            className="h-14 w-auto"
+            className="h-10 w-auto sm:h-12 md:h-14"
             priority
           />
           <div className="hidden border-l border-primary-400 pl-3 lg:block">

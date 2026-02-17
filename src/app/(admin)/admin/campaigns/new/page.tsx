@@ -17,7 +17,6 @@ export default async function NewCampaignPage() {
   let surveyError: string | null = null;
 
   try {
-    console.log('[NewCampaignPage] Fetching surveys from PostgreSQL...');
     const surveys = await prisma.survey.findMany({
       where: {
         status: 'ACTIVE',
@@ -33,8 +32,6 @@ export default async function NewCampaignPage() {
         createdAt: 'desc',
       },
     });
-
-    console.log(`[NewCampaignPage] Got ${surveys.length} active surveys`);
 
     // Transform to match SurveyListItem type
     activeSurveys = surveys.map((survey) => ({

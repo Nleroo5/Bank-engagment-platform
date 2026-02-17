@@ -59,7 +59,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 px-3 py-4">
+          <nav className="flex-1 space-y-1 px-3 py-4" aria-label="Main navigation">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -83,12 +83,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-gray-800 p-4">
+          <footer className="border-t border-gray-800 p-4">
             <p className="text-xs text-gray-500">
               Bank Engagement Survey Platform
             </p>
             <p className="text-xs text-gray-600">v0.1.0</p>
-          </div>
+          </footer>
         </div>
       </div>
     </>

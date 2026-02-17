@@ -1,0 +1,21 @@
+# Bank Engagement Survey Platform - Robots.txt
+
+# Allow all crawlers
+User-agent: *
+
+# Public pages - allow indexing
+Allow: /
+
+# Protected admin area - block indexing
+Disallow: /admin/
+Disallow: /api/
+
+# Survey response pages - block indexing (privacy)
+Disallow: /s/
+Disallow: /a/
+
+# Sitemap location
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# Crawl delay (be nice to servers)
+Crawl-delay: 1
