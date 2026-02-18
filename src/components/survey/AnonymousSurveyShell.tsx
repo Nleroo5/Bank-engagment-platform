@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Shield, ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import { SurveyProgress } from './SurveyProgress';
 import { SectionHeader } from './SectionHeader';
 import { LikertScale5 } from './LikertScale5';
 import { LikertScale3 } from './LikertScale3';
 import { DemographicsField } from './DemographicsField';
+import { ConfettiEffect } from './ConfettiEffect';
 import type { Survey } from '@/types/survey';
 
 interface AnonymousSurveyShellProps {
@@ -330,22 +332,60 @@ export default function AnonymousSurveyShell({
   if (stage === 'completed') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white px-4">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-          <div className="mb-6 flex justify-center">
-            <div className="rounded-full bg-green-100 p-4">
-              <Shield className="h-12 w-12 text-green-600" />
+        <ConfettiEffect />
+        <div className="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
+          <motion.div
+            className="mb-6 flex justify-center"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
+          >
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-100">
+              <motion.svg
+                className="h-12 w-12 text-green-600"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <motion.path
+                  d="M5 13l4 4L19 7"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.5, delay: 0.35, ease: 'easeOut' }}
+                />
+              </motion.svg>
             </div>
-          </div>
-          <h1 className="mb-4 text-center text-2xl font-bold text-green-600">
+          </motion.div>
+
+          <motion.h1
+            className="mb-4 text-2xl font-bold text-gray-900"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.45 }}
+          >
             Thank You!
-          </h1>
-          <p className="mb-4 text-center text-gray-700">
-            Your anonymous responses have been recorded.
-          </p>
-          <p className="text-center text-sm text-gray-600">
-            You may now close this window. Your feedback is valuable and will
-            help improve our organization.
-          </p>
+          </motion.h1>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.6 }}
+          >
+            <p className="mb-4 text-gray-700">
+              Your anonymous responses have been recorded.
+            </p>
+            <div className="mb-4 flex items-center justify-center gap-2 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">
+              <Shield className="h-4 w-4 shrink-0" />
+              Your identity is fully protected.
+            </div>
+            <p className="text-sm text-gray-500">
+              You may now close this window. Your feedback is valuable and will
+              help improve our organization.
+            </p>
+          </motion.div>
         </div>
       </div>
     );
