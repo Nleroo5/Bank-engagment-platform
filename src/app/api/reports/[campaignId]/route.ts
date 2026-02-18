@@ -347,15 +347,21 @@ export async function GET(
         }));
     }
 
+    // Build a set of valid question IDs from the current survey definition
+    const validQuestionIds = new Set(questions.map((q) => q._id));
+
     // Calculate weighted scores for each respondent
     const individualResults = filteredData.map((data) => {
-      // Prepare responses for scoring
+      // Prepare responses for scoring — filter out null values and responses for
+      // questions that no longer exist in the survey (e.g. deleted from Sanity CMS)
       const preparedResponses = prepareResponsesForScoring(
-        data.responses.map((r) => ({
-          questionId: r.questionId,
-          questionNumber: r.questionNumber,
-          value: r.value!,
-        })),
+        data.responses
+          .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
+          .map((r) => ({
+            questionId: r.questionId,
+            questionNumber: r.questionNumber,
+            value: r.value!,
+          })),
         questions
       );
 
@@ -388,6 +394,25 @@ export async function GET(
         )
         .filter((cs) => cs !== undefined);
 
+      // Guard: no respondents have scores for this category
+      if (categoryScores.length === 0) {
+        return {
+          categoryId: category._id,
+          categoryName: category.name,
+          categoryWeight: category.weight,
+          colorCode: category.colorCode,
+          sortOrder: category.sortOrder,
+          respondentCount: 0,
+          questionCount: 0,
+          averageWeightedScore: 0,
+          minWeightedScore: 0,
+          maxWeightedScore: 0,
+          standardDeviation: 0,
+          averageRawScore: 0,
+          averagePercentage: 0,
+        };
+      }
+
       const weightedScores = categoryScores.map((cs) => cs!.weightedScore);
       const rawScores = categoryScores.map((cs) => cs!.rawTotal);
 
@@ -407,6 +432,8 @@ export async function GET(
         weightedScores.length;
       const stdDev = Math.sqrt(variance);
 
+      const maxPossibleWeighted = categoryScores[0]?.maxPossibleWeighted || 1;
+
       return {
         categoryId: category._id,
         categoryName: category.name,
@@ -416,16 +443,12 @@ export async function GET(
         respondentCount: weightedScores.length,
         questionCount: categoryScores[0]?.questionCount || 0,
         averageWeightedScore: Math.round(averageWeighted * 10) / 10,
-        minWeightedScore: Math.min(...weightedScores),
-        maxWeightedScore: Math.max(...weightedScores),
+        minWeightedScore: weightedScores.length > 0 ? Math.min(...weightedScores) : 0,
+        maxWeightedScore: weightedScores.length > 0 ? Math.max(...weightedScores) : 0,
         standardDeviation: Math.round(stdDev * 10) / 10,
         averageRawScore: Math.round(averageRaw * 10) / 10,
         averagePercentage:
-          Math.round(
-            (averageWeighted / categoryScores[0]!.maxPossibleWeighted) *
-              100 *
-              10
-          ) / 10,
+          Math.round((averageWeighted / maxPossibleWeighted) * 100 * 10) / 10,
       };
     });
 

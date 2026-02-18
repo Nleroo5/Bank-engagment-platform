@@ -53,7 +53,16 @@ export async function GET(
     }
 
     // Fetch survey from Sanity
-    const survey = await getSurveyById(campaign.surveyId);
+    let survey;
+    try {
+      survey = await getSurveyById(campaign.surveyId);
+    } catch (sanityError) {
+      console.error('[export] Sanity fetch error:', sanityError);
+      return NextResponse.json(
+        { error: 'Survey content could not be loaded from Sanity CMS.' },
+        { status: 503 }
+      );
+    }
 
     if (!survey || !survey.scale) {
       return NextResponse.json(
@@ -109,14 +118,20 @@ export async function GET(
       return a.name.localeCompare(b.name);
     });
 
+    // Build a set of valid question IDs from the current survey definition
+    const validQuestionIds = new Set(questions.map((q) => q._id));
+
     // Calculate weighted scores for each respondent
     const individualResults = campaign.invitations.map((invitation) => {
+      // Filter out null values and responses for questions no longer in the survey
       const preparedResponses = prepareResponsesForScoring(
-        invitation.responses.map((r) => ({
-          questionId: r.questionId,
-          questionNumber: r.questionNumber,
-          value: r.value!,
-        })),
+        invitation.responses
+          .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
+          .map((r) => ({
+            questionId: r.questionId,
+            questionNumber: r.questionNumber,
+            value: r.value!,
+          })),
         questions
       );
 
@@ -145,6 +160,22 @@ export async function GET(
         )
         .filter((cs) => cs !== undefined);
 
+      // Guard: no respondents have scores for this category
+      if (categoryScores.length === 0) {
+        return {
+          categoryName: category.name,
+          categoryWeight: category.weight,
+          questionCount: 0,
+          respondentCount: 0,
+          averageWeightedScore: 0,
+          averageRawScore: 0,
+          minWeightedScore: 0,
+          maxWeightedScore: 0,
+          standardDeviation: 0,
+          averagePercentage: 0,
+        };
+      }
+
       const weightedScores = categoryScores.map((cs) => cs!.weightedScore);
       const rawScores = categoryScores.map((cs) => cs!.rawTotal);
 
@@ -163,6 +194,8 @@ export async function GET(
         weightedScores.length;
       const stdDev = Math.sqrt(variance);
 
+      const maxPossibleWeighted = categoryScores[0]?.maxPossibleWeighted || 1;
+
       return {
         categoryName: category.name,
         categoryWeight: category.weight,
@@ -170,15 +203,11 @@ export async function GET(
         respondentCount: weightedScores.length,
         averageWeightedScore: Math.round(averageWeighted * 10) / 10,
         averageRawScore: Math.round(averageRaw * 10) / 10,
-        minWeightedScore: Math.min(...weightedScores),
-        maxWeightedScore: Math.max(...weightedScores),
+        minWeightedScore: weightedScores.length > 0 ? Math.min(...weightedScores) : 0,
+        maxWeightedScore: weightedScores.length > 0 ? Math.max(...weightedScores) : 0,
         standardDeviation: Math.round(stdDev * 10) / 10,
         averagePercentage:
-          Math.round(
-            (averageWeighted / categoryScores[0]!.maxPossibleWeighted) *
-              100 *
-              10
-          ) / 10,
+          Math.round((averageWeighted / maxPossibleWeighted) * 100 * 10) / 10,
       };
     });
 
