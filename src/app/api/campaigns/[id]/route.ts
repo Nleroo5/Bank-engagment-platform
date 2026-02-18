@@ -56,7 +56,8 @@ export async function GET(
 
     return NextResponse.json({ campaign });
   } catch (error) {
-    console.error('Error fetching campaign:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[GET /api/campaigns/:id] Error:', message, error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -84,14 +85,21 @@ export async function PUT(
       );
     }
 
-    // Update the campaign
-    const campaign = await prisma.surveyCampaign.update({
+    // Run the update without an inline include — avoids UPDATE...RETURNING
+    // issues with pgbouncer and ensures the write succeeds independently.
+    await prisma.surveyCampaign.update({
       where: { id: params.id },
       data: {
         ...data,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
       },
+    });
+
+    // Fetch the updated campaign in a separate read query (same pattern the
+    // page uses, which is known to work in production).
+    const campaign = await prisma.surveyCampaign.findUnique({
+      where: { id: params.id },
       include: {
         organization: true,
         invitations: true,
@@ -107,7 +115,8 @@ export async function PUT(
       );
     }
 
-    console.error('Error updating campaign:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[PUT /api/campaigns/:id] Error:', message, error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -168,7 +177,8 @@ export async function DELETE(
       completedResponses: campaign.invitations.length,
     });
   } catch (error) {
-    console.error('Error deleting campaign:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[DELETE /api/campaigns/:id] Error:', message, error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
