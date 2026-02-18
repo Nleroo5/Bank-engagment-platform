@@ -46,9 +46,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex h-full flex-col">
           {/* Logo/Title */}
           <div className="flex h-16 items-center justify-between px-6 lg:justify-center">
-            <h1 className="text-lg font-semibold text-white">
-              Bank Survey Admin
-            </h1>
             <button
               onClick={onClose}
               className="rounded-md p-3 text-gray-400 hover:text-white lg:hidden"
