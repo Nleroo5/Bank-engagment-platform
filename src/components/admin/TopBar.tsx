@@ -17,11 +17,11 @@ const mockUser = {
 
 export function TopBar({ onMenuClick }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-primary-200 bg-primary-500 px-4 shadow-sm">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-accent-600 bg-accent-500 px-4 shadow-sm">
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
-          className="rounded-md p-3 text-white hover:bg-primary-600 lg:hidden"
+          className="rounded-md p-3 text-white hover:bg-accent-600 lg:hidden"
           aria-label="Open menu"
         >
           <Menu className="h-6 w-6" />
@@ -35,7 +35,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             className="h-10 w-auto sm:h-12 md:h-14"
             priority
           />
-          <div className="hidden border-l border-primary-400 pl-3 lg:block">
+          <div className="hidden border-l border-accent-400 pl-3 lg:block">
             <h2 className="text-lg font-semibold text-white">
               Admin Dashboard
             </h2>
@@ -45,10 +45,10 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
       <div className="flex items-center gap-4">
         <div className="hidden items-center gap-2 text-sm sm:flex">
-          <User className="h-4 w-4 text-primary-100" />
+          <User className="h-4 w-4 text-accent-100" />
           <div className="text-right">
             <p className="font-medium text-white">{mockUser.name}</p>
-            <p className="text-xs text-primary-100">{mockUser.role}</p>
+            <p className="text-xs text-accent-100">{mockUser.role}</p>
           </div>
         </div>
       </div>
