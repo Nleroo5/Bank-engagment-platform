@@ -28,7 +28,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         </button>
         <Link href="/admin/dashboard" className="flex items-center gap-3">
           <Image
-            src="/logo-red.png"
+            src="/dashboard-logo.png"
             alt="Bank Engagement Survey Platform"
             width={160}
             height={53}

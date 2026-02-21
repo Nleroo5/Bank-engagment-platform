@@ -354,7 +354,7 @@ export function SingleQuestionSurveyShell({
         {/* Logo Header */}
         <div className="mb-8 flex justify-center">
           <Image
-            src="/logo-red.png"
+            src="/header-logo.png"
             alt="Logo"
             width={180}
             height={60}
