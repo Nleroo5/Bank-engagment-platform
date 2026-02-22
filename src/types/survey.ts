@@ -1,5 +1,13 @@
 import { PortableTextBlock } from '@portabletext/types';
 
+// Demographics question shown as inline preamble before every survey
+export type DemographicsQuestion = {
+  _id: string;
+  number: number;
+  text: string;
+  fieldType: string;
+};
+
 // Scale label for rating scales
 export interface ScaleLabel {
   value: number;

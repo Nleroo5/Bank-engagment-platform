@@ -3,20 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import type { Survey } from '@/types/survey';
+import type { Survey, DemographicsQuestion } from '@/types/survey';
 import { WelcomeScreen } from './WelcomeScreen';
 import { CompletionScreen } from './CompletionScreen';
 import { LikertScale5 } from './LikertScale5';
 import { LikertScale3 } from './LikertScale3';
 import { DemographicsField } from './DemographicsField';
 import { ChevronLeft, Save, CheckCircle2 } from 'lucide-react';
-
-type DemographicsQuestion = {
-  _id: string;
-  number: number;
-  text: string;
-  fieldType: string;
-};
 
 interface SingleQuestionSurveyShellProps {
   survey: Survey;
@@ -84,6 +77,7 @@ export function SingleQuestionSurveyShell({
   const [isSaving, setIsSaving] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [justAnswered, setJustAnswered] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // ── Refs ──────────────────────────────────────────────────────────────────
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -317,6 +311,7 @@ export function SingleQuestionSurveyShell({
   const handleSubmit = async () => {
     try {
       setIsSaving(true);
+      setSubmitError(null);
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
       const response = await fetch('/api/responses/submit', {
@@ -332,7 +327,7 @@ export function SingleQuestionSurveyShell({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Error submitting survey:', error);
-      alert('Failed to submit survey. Please try again.');
+      setSubmitError('Failed to submit your survey. Please check your connection and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -664,6 +659,13 @@ export function SingleQuestionSurveyShell({
             </motion.button>
           )}
         </div>
+
+        {/* Submit error */}
+        {submitError && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-700">
+            {submitError}
+          </div>
+        )}
 
         {/* Auto-advance hint */}
         {!isLastQuestion && !answers[currentQuestion._id] && (

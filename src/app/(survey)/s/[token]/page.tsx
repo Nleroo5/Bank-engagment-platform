@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/surveys/queries';
 import { SingleQuestionSurveyShell } from '@/components/survey/SingleQuestionSurveyShell';
 import { SurveyError } from '@/components/survey/SurveyError';
+import type { DemographicsQuestion } from '@/types/survey';
 
 interface SurveyPageProps {
   params: {
@@ -59,6 +60,17 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
         title="Survey Already Completed"
         message="You have already submitted your responses for this survey. Thank you for your participation!"
         details={`Completed on ${completedDate}`}
+      />
+    );
+  }
+
+  // Check if invitation has been explicitly expired
+  if (invitation.status === 'EXPIRED') {
+    return (
+      <SurveyError
+        icon="locked"
+        title="Survey Invitation Expired"
+        message="This survey invitation has expired and can no longer be accessed."
       />
     );
   }
@@ -132,13 +144,6 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   // them via the invitationId+questionId unique constraint without
   // needing a matching row in the questions table.
   // ============================================================
-  type DemographicsQuestion = {
-    _id: string;
-    number: number;
-    text: string;
-    fieldType: string;
-  };
-
   const DEMOGRAPHICS_QUESTIONS: DemographicsQuestion[] = [
     { _id: 'demo_bankName', number: 1, text: 'Name of Bank', fieldType: 'bankName' },
     { _id: 'demo_country', number: 2, text: 'Country', fieldType: 'country' },

@@ -11,6 +11,30 @@ const patchSchema = z.object({
   questionNumber: z.number().int().optional(),
 });
 
+/** Maps a demographics questionId to its user profile field and updates the user record. */
+async function syncUserProfileField(
+  userId: string,
+  questionId: string,
+  value: string
+) {
+  const id = questionId.toLowerCase();
+  let field: string | null = null;
+
+  if (id.includes('division')) field = 'division';
+  else if (id.includes('jobrole')) field = 'jobRole';
+  else if (id.includes('employmentstatus')) field = 'employmentStatus';
+  else if (id.includes('gender')) field = 'gender';
+  else if (id.includes('timeatbank')) field = 'timeAtBank';
+  else if (id.includes('bankexperience')) field = 'bankExperience';
+
+  if (field) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { [field]: value },
+    });
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
@@ -103,30 +127,8 @@ export async function PATCH(request: NextRequest) {
       });
 
       // Update user profile fields from demographics answers
-      if (invitation.user) {
-        const questionLower = questionId.toLowerCase();
-        let updateData: Record<string, string> = {};
-
-        if (questionLower.includes('division')) {
-          updateData = { division: value as string };
-        } else if (questionLower.includes('jobrole')) {
-          updateData = { jobRole: value as string };
-        } else if (questionLower.includes('employmentstatus')) {
-          updateData = { employmentStatus: value as string };
-        } else if (questionLower.includes('gender')) {
-          updateData = { gender: value as string };
-        } else if (questionLower.includes('timeatbank')) {
-          updateData = { timeAtBank: value as string };
-        } else if (questionLower.includes('bankexperience')) {
-          updateData = { bankExperience: value as string };
-        }
-
-        if (Object.keys(updateData).length > 0) {
-          await prisma.user.update({
-            where: { id: invitation.userId },
-            data: updateData,
-          });
-        }
+      if (invitation.user && invitation.userId) {
+        await syncUserProfileField(invitation.userId, questionId, value as string);
       }
 
       // Mark invitation as IN_PROGRESS
@@ -207,31 +209,8 @@ export async function PATCH(request: NextRequest) {
     });
 
     // For demographics questions, also update the user profile
-    if (!isNumeric && invitation.user && typeof value === 'string') {
-      // Map of questionId patterns to user profile fields
-      const questionLower = questionId.toLowerCase();
-      let updateData: Record<string, string> = {};
-
-      if (questionLower.includes('division')) {
-        updateData = { division: value };
-      } else if (questionLower.includes('jobrole')) {
-        updateData = { jobRole: value };
-      } else if (questionLower.includes('employmentstatus')) {
-        updateData = { employmentStatus: value };
-      } else if (questionLower.includes('gender')) {
-        updateData = { gender: value };
-      } else if (questionLower.includes('timeatbank')) {
-        updateData = { timeAtBank: value };
-      } else if (questionLower.includes('bankexperience')) {
-        updateData = { bankExperience: value };
-      }
-
-      if (Object.keys(updateData).length > 0) {
-        await prisma.user.update({
-          where: { id: invitation.userId },
-          data: updateData,
-        });
-      }
+    if (!isNumeric && invitation.user && invitation.userId && typeof value === 'string') {
+      await syncUserProfileField(invitation.userId, questionId, value);
     }
 
     // Update invitation status to IN_PROGRESS if it's still PENDING or SENT
