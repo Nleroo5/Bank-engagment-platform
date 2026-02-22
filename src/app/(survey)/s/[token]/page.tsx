@@ -164,7 +164,7 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
     invitation.campaign.survey.surveyType === 'demographics';
 
   const demographicsQuestions: DemographicsQuestion[] =
-    !isDemographicsSurvey && invitation.demographicsCompletedAt === null
+    !isDemographicsSurvey && !invitation.demographicsCompletedAt
       ? DEMOGRAPHICS_QUESTIONS
       : [];
   // ============================================================
