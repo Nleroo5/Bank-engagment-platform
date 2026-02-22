@@ -356,7 +356,7 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                         />
                       </label>
                       <p className="mt-1 text-xs text-gray-500">
-                        JPG, PNG or WebP · max 2 MB
+                        JPG, PNG or WebP · max 4 MB
                       </p>
                     </div>
                   </div>

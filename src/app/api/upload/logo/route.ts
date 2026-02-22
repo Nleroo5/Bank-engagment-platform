@@ -7,7 +7,7 @@ const ALLOWED_TYPES = new Set([
   'image/webp',
 ]);
 
-const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+const MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4 MB
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (file.size > MAX_SIZE_BYTES) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 2 MB.' },
+        { error: 'File too large. Maximum size is 4 MB.' },
         { status: 400 }
       );
     }
