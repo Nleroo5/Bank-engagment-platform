@@ -60,6 +60,10 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
   );
 }
 
+// Deterministic bar heights — Math.random() in render causes React hydration mismatches
+// (server produces different values than the client re-render, triggering errors #418/#423/#425)
+const SKELETON_BAR_HEIGHTS = [120, 80, 150, 60, 130, 90, 110];
+
 export function SkeletonChart() {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -69,7 +73,7 @@ export function SkeletonChart() {
           <div key={i} className="flex-1">
             <Skeleton
               className="mb-2 w-full"
-              style={{ height: `${Math.random() * 150 + 50}px` }}
+              style={{ height: `${SKELETON_BAR_HEIGHTS[i % SKELETON_BAR_HEIGHTS.length]}px` }}
             />
             <Skeleton className="h-3 w-full" />
           </div>

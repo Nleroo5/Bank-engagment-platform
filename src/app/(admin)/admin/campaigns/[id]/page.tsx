@@ -178,7 +178,7 @@ export default async function CampaignDetailPage({
           <p className="text-sm text-gray-500">Start Date</p>
           <p className="mt-1 text-lg font-semibold text-gray-900">
             {campaign.startDate
-              ? new Date(campaign.startDate).toLocaleDateString()
+              ? new Date(campaign.startDate).toLocaleDateString('en-US', { timeZone: 'UTC' })
               : 'Not set'}
           </p>
         </div>
@@ -187,7 +187,7 @@ export default async function CampaignDetailPage({
           <p className="text-sm text-gray-500">End Date</p>
           <p className="mt-1 text-lg font-semibold text-gray-900">
             {campaign.endDate
-              ? new Date(campaign.endDate).toLocaleDateString()
+              ? new Date(campaign.endDate).toLocaleDateString('en-US', { timeZone: 'UTC' })
               : 'No expiration'}
           </p>
         </div>
@@ -356,17 +356,17 @@ export default async function CampaignDetailPage({
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                         {invitation.sentAt
-                          ? new Date(invitation.sentAt).toLocaleString()
+                          ? new Date(invitation.sentAt).toLocaleString('en-US', { timeZone: 'UTC' })
                           : '—'}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                         {invitation.openedAt
-                          ? new Date(invitation.openedAt).toLocaleString()
+                          ? new Date(invitation.openedAt).toLocaleString('en-US', { timeZone: 'UTC' })
                           : '—'}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                         {invitation.completedAt
-                          ? new Date(invitation.completedAt).toLocaleString()
+                          ? new Date(invitation.completedAt).toLocaleString('en-US', { timeZone: 'UTC' })
                           : '—'}
                       </td>
                     </tr>
