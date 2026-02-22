@@ -141,12 +141,17 @@ export function SingleQuestionSurveyShell({
   // 2. SAVE DEMOGRAPHICS ANSWER TO SERVER
   // ============================================================
   const saveDemoToServer = useCallback(
-    async (questionId: string, value: string) => {
+    async (questionId: string, value: string, questionNumber: number) => {
       try {
         await fetch('/api/responses', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: invitationToken, questionId, value }),
+          body: JSON.stringify({
+            token: invitationToken,
+            questionId,
+            value,
+            questionNumber,
+          }),
         });
       } catch (error) {
         console.error('Error saving demographics answer:', error);
@@ -201,7 +206,7 @@ export function SingleQuestionSurveyShell({
       if (isDemoAdvancing || isDemoCompleting) return;
 
       setDemoAnswers((prev) => ({ ...prev, [questionId]: value }));
-      void saveDemoToServer(questionId, value);
+      void saveDemoToServer(questionId, value, currentDemoQuestion?.number ?? 0);
 
       const fieldType = currentDemoQuestion?.fieldType ?? '';
       if (AUTO_ADVANCE_FIELDS.has(fieldType)) {

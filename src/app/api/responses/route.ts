@@ -6,12 +6,16 @@ const patchSchema = z.object({
   token: z.string().uuid(),
   questionId: z.string(),
   value: z.union([z.number().int(), z.string()]), // Relaxed validation - will validate against actual scale
+  // Provided by the client for inline demographics fields (demo_* IDs) that
+  // don't have matching rows in the questions table.
+  questionNumber: z.number().int().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, questionId, value } = patchSchema.parse(body);
+    const { token, questionId, value, questionNumber: clientQuestionNumber } =
+      patchSchema.parse(body);
 
     // Look up invitation by token
     const invitation = await prisma.invitation.findUnique({
@@ -56,7 +60,8 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Fetch question to get questionNumber and check if reversed
+    // Fetch question to get questionNumber and check if reversed.
+    // May return null for inline demographics fields (demo_* IDs) — handled below.
     const question = await prisma.question.findUnique({
       where: { id: questionId },
       include: {
@@ -66,17 +71,91 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
+    // Determine if value is numeric (Likert) or text (demographics)
+    const isNumeric = typeof value === 'number';
+
     if (!question) {
-      return NextResponse.json(
-        { error: 'Invalid question ID' },
-        { status: 400 }
-      );
+      // Only inline demographics text fields (demo_* prefix) are allowed to skip
+      // the question lookup. Numeric values always require a real question record.
+      const isDemographicsField = questionId.startsWith('demo_');
+      if (isNumeric || !isDemographicsField || clientQuestionNumber === undefined) {
+        return NextResponse.json(
+          { error: 'Invalid question ID' },
+          { status: 400 }
+        );
+      }
+
+      // Save demographics text response without a DB question record
+      const response = await prisma.response.upsert({
+        where: {
+          invitationId_questionId: {
+            invitationId: invitation.id,
+            questionId,
+          },
+        },
+        update: { textValue: value as string, submittedAt: new Date() },
+        create: {
+          invitationId: invitation.id,
+          questionId,
+          questionNumber: clientQuestionNumber,
+          textValue: value as string,
+        },
+      });
+
+      // Update user profile fields from demographics answers
+      if (invitation.user) {
+        const questionLower = questionId.toLowerCase();
+        let updateData: Record<string, string> = {};
+
+        if (questionLower.includes('division')) {
+          updateData = { division: value as string };
+        } else if (questionLower.includes('jobrole')) {
+          updateData = { jobRole: value as string };
+        } else if (questionLower.includes('employmentstatus')) {
+          updateData = { employmentStatus: value as string };
+        } else if (questionLower.includes('gender')) {
+          updateData = { gender: value as string };
+        } else if (questionLower.includes('timeatbank')) {
+          updateData = { timeAtBank: value as string };
+        } else if (questionLower.includes('bankexperience')) {
+          updateData = { bankExperience: value as string };
+        }
+
+        if (Object.keys(updateData).length > 0) {
+          await prisma.user.update({
+            where: { id: invitation.userId },
+            data: updateData,
+          });
+        }
+      }
+
+      // Mark invitation as IN_PROGRESS
+      if (
+        invitation.status === 'PENDING' ||
+        invitation.status === 'SENT' ||
+        invitation.status === 'OPENED'
+      ) {
+        await prisma.invitation.update({
+          where: { id: invitation.id },
+          data: { status: 'IN_PROGRESS' },
+        });
+      }
+
+      // Update response session
+      await prisma.responseSession.upsert({
+        where: { invitationId: invitation.id },
+        update: { lastActiveAt: new Date() },
+        create: {
+          invitationId: invitation.id,
+          startedAt: new Date(),
+          lastActiveAt: new Date(),
+        },
+      });
+
+      return NextResponse.json({ success: true, response });
     }
 
     const questionNumber = question.questionNumber;
-
-    // Determine if value is numeric (Likert) or text (demographics)
-    const isNumeric = typeof value === 'number';
 
     // Scale-specific validation for numeric values
     if (isNumeric) {

@@ -126,10 +126,11 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   // ============================================================
   // DEMOGRAPHICS — shown inline before every non-demographics survey
   //
-  // If the user hasn't completed demographics yet, fetch the
-  // demographics questions from the published demographics survey
-  // and pass them to the shell. The shell shows them as stage 1
-  // before the actual survey questions.
+  // Demographics questions are hardcoded here — they never change
+  // and do not depend on a survey record existing in the database.
+  // Stable IDs (demo_*) are used so PATCH /api/responses can upsert
+  // them via the invitationId+questionId unique constraint without
+  // needing a matching row in the questions table.
   // ============================================================
   type DemographicsQuestion = {
     _id: string;
@@ -138,34 +139,29 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
     fieldType: string;
   };
 
+  const DEMOGRAPHICS_QUESTIONS: DemographicsQuestion[] = [
+    { _id: 'demo_bankName', number: 1, text: 'Name of Bank', fieldType: 'bankName' },
+    { _id: 'demo_country', number: 2, text: 'Country', fieldType: 'country' },
+    { _id: 'demo_state', number: 3, text: 'State / Province', fieldType: 'state' },
+    { _id: 'demo_metroArea', number: 4, text: 'Metro City Area', fieldType: 'metroArea' },
+    { _id: 'demo_city', number: 5, text: 'City', fieldType: 'city' },
+    { _id: 'demo_bankSize', number: 6, text: 'Size of Bank (Assets)', fieldType: 'bankSize' },
+    { _id: 'demo_device', number: 7, text: 'Device Used', fieldType: 'device' },
+    { _id: 'demo_employmentStatus', number: 8, text: 'Employment Status', fieldType: 'employmentStatus' },
+    { _id: 'demo_gender', number: 9, text: 'Gender', fieldType: 'gender' },
+    { _id: 'demo_timeAtBank', number: 10, text: 'Time at This Bank', fieldType: 'timeAtBank' },
+    { _id: 'demo_bankExperience', number: 11, text: 'Total Banking Industry Experience', fieldType: 'bankExperience' },
+    { _id: 'demo_division', number: 12, text: 'Bank Division', fieldType: 'division' },
+    { _id: 'demo_jobRole', number: 13, text: 'Job Role', fieldType: 'jobRole' },
+  ];
+
   const isDemographicsSurvey =
     invitation.campaign.survey.surveyType === 'demographics';
 
-  let demographicsQuestions: DemographicsQuestion[] = [];
-
-  if (!isDemographicsSurvey && invitation.demographicsCompletedAt === null) {
-    const demoSurvey = await prisma.survey.findFirst({
-      where: { surveyType: 'demographics', status: 'PUBLISHED' },
-      include: {
-        questions: {
-          orderBy: { questionNumber: 'asc' },
-          select: { id: true, questionNumber: true, text: true, config: true },
-        },
-      },
-    });
-
-    if (demoSurvey) {
-      demographicsQuestions = demoSurvey.questions
-        .map((q) => ({
-          _id: q.id,
-          number: q.questionNumber,
-          text: q.text,
-          fieldType:
-            ((q.config as { fieldType?: string }) ?? {}).fieldType ?? '',
-        }))
-        .filter((q) => q.fieldType !== '');
-    }
-  }
+  const demographicsQuestions: DemographicsQuestion[] =
+    !isDemographicsSurvey && invitation.demographicsCompletedAt === null
+      ? DEMOGRAPHICS_QUESTIONS
+      : [];
   // ============================================================
 
   // Update invitation status to OPENED if it's still PENDING or SENT
