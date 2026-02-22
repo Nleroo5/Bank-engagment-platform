@@ -43,6 +43,7 @@ export default async function AnonymousSurveyPage({
       startDate: true,
       endDate: true,
       maxResponses: true,
+      splashConfig: true,
     },
   });
 

@@ -5,6 +5,10 @@ import { CategoryBarChart } from '@/components/charts/CategoryBarChart';
 import { CategoryRadarChart } from '@/components/charts/CategoryRadarChart';
 import { DemographicFilters } from './DemographicFilters';
 import { DemographicsReportView } from './DemographicsReportView';
+import {
+  RespondentDemographicsSection,
+  RespondentDemographicsData,
+} from './RespondentDemographicsSection';
 import { AlertCircle, Users, TrendingUp } from 'lucide-react';
 import {
   SkeletonCard,
@@ -45,6 +49,7 @@ interface ReportData {
       responseCount: number;
     }>;
   };
+  respondentDemographics?: RespondentDemographicsData;
   filters: {
     applied: Record<string, string>;
     available: {
@@ -170,6 +175,12 @@ export function ReportView({ campaignId }: ReportViewProps) {
   const scaleMax = data.campaign.surveyType === 'likert3' ? 3 : 5;
 
   return (
+    <div className="space-y-6">
+      {/* Respondent Demographics — collapsed by default */}
+      {data.respondentDemographics && (
+        <RespondentDemographicsSection data={data.respondentDemographics} />
+      )}
+
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
       {/* Main Content - 3 columns */}
       <div className="space-y-6 lg:col-span-3">
@@ -334,6 +345,7 @@ export function ReportView({ campaignId }: ReportViewProps) {
           />
         </div>
       </div>
+    </div>
     </div>
   );
 }

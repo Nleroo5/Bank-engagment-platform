@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import type { Survey, DemographicsQuestion } from '@/types/survey';
+import type { SplashConfig } from '@/types/splash';
 import { WelcomeScreen } from './WelcomeScreen';
 import { CompletionScreen } from './CompletionScreen';
 import { LikertScale5 } from './LikertScale5';
@@ -17,6 +18,8 @@ interface SingleQuestionSurveyShellProps {
   existingResponses: Record<string, number | string>;
   isCompleted: boolean;
   demographicsQuestions?: DemographicsQuestion[];
+  splashConfig?: SplashConfig | null;
+  campaignEndDate?: Date | string | null;
 }
 
 type SurveyStage = 'demographics' | 'welcome' | 'survey' | 'completed';
@@ -53,6 +56,8 @@ export function SingleQuestionSurveyShell({
   existingResponses,
   isCompleted,
   demographicsQuestions = [],
+  splashConfig,
+  campaignEndDate,
 }: SingleQuestionSurveyShellProps) {
   // ── Core state ────────────────────────────────────────────────────────────
   const [stage, setStage] = useState<SurveyStage>(
@@ -391,7 +396,14 @@ export function SingleQuestionSurveyShell({
   if (stage === 'demographics') {
     // Safety: no demographics questions — skip straight to welcome
     if (!currentDemoQuestion) {
-      return <WelcomeScreen survey={survey} onBegin={handleBegin} />;
+      return (
+        <WelcomeScreen
+          survey={survey}
+          splashConfig={splashConfig ?? undefined}
+          campaignEndDate={campaignEndDate}
+          onBegin={handleBegin}
+        />
+      );
     }
 
     const currentDemoAnswer = demoAnswers[currentDemoQuestion._id];
@@ -499,7 +511,14 @@ export function SingleQuestionSurveyShell({
   // RENDER: WELCOME / COMPLETED
   // ============================================================
   if (stage === 'welcome') {
-    return <WelcomeScreen survey={survey} onBegin={handleBegin} />;
+    return (
+        <WelcomeScreen
+          survey={survey}
+          splashConfig={splashConfig ?? undefined}
+          campaignEndDate={campaignEndDate}
+          onBegin={handleBegin}
+        />
+      );
   }
 
   if (stage === 'completed') {

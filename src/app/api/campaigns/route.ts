@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+
+const SplashConfigSchema = z.object({
+  bankName: z.string().max(100).optional(),
+  logoUrl: z.string().url().max(500).optional(),
+  welcomeTitle: z.string().max(200).optional(),
+  welcomeMessage: z.string().max(500).optional(),
+  buttonText: z.string().max(50).optional(),
+}).strict();
 
 export async function GET() {
   try {
@@ -41,6 +51,7 @@ export async function POST(request: NextRequest) {
       isAnonymous,
       accessCode,
       maxResponses,
+      splashConfig,
     } = body;
 
     // Fetch survey from PostgreSQL to get the title
@@ -105,6 +116,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate and sanitize splashConfig if provided
+    let validatedSplashConfig: z.infer<typeof SplashConfigSchema> | null = null;
+    if (splashConfig != null) {
+      const parsed = SplashConfigSchema.safeParse(splashConfig);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: 'Invalid splash configuration: ' + parsed.error.issues[0]?.message },
+          { status: 400 }
+        );
+      }
+      validatedSplashConfig = parsed.data;
+    }
+
     // Create the campaign
     const campaign = await prisma.surveyCampaign.create({
       data: {
@@ -118,6 +142,7 @@ export async function POST(request: NextRequest) {
         isAnonymous: Boolean(isAnonymous),
         accessCode: isAnonymous && accessCode ? accessCode.toUpperCase() : null,
         maxResponses: maxResponses ? parseInt(maxResponses) : null,
+        splashConfig: validatedSplashConfig ?? Prisma.JsonNull,
         // Note: maxInvitationUses would be stored per-invitation, not per-campaign
         // This can be implemented when creating invitations
       },

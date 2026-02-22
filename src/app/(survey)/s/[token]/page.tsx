@@ -4,6 +4,7 @@ import { getSurveyById } from '@/lib/surveys/queries';
 import { SingleQuestionSurveyShell } from '@/components/survey/SingleQuestionSurveyShell';
 import { SurveyError } from '@/components/survey/SurveyError';
 import type { DemographicsQuestion } from '@/types/survey';
+import { parseSplashConfig } from '@/types/splash';
 
 interface SurveyPageProps {
   params: {
@@ -42,6 +43,7 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
           endDate: true,
           surveyId: true,
           organizationId: true,
+          splashConfig: true,
           survey: {
             select: { surveyType: true },
           },
@@ -253,6 +255,8 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
         existingResponses={existingResponses}
         isCompleted={invitation.status === 'COMPLETED'}
         demographicsQuestions={demographicsQuestions}
+        splashConfig={parseSplashConfig(invitation.campaign.splashConfig)}
+        campaignEndDate={invitation.campaign.endDate}
       />
     </div>
   );

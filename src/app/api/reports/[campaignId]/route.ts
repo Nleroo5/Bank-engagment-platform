@@ -347,6 +347,69 @@ export async function GET(
         }));
     }
 
+    // ============================================
+    // BUILD RESPONDENT DEMOGRAPHICS SUMMARY
+    // ============================================
+    const DEMO_FIELDS = [
+      { key: 'bankSize', label: 'Bank Size' },
+      { key: 'device', label: 'Device Used' },
+      { key: 'employmentStatus', label: 'Employment Status' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'timeAtBank', label: 'Time at Bank' },
+      { key: 'bankExperience', label: 'Banking Industry Experience' },
+      { key: 'division', label: 'Division' },
+      { key: 'jobRole', label: 'Job Role / Title' },
+    ];
+
+    const respondentDemoData: Record<string, unknown>[] = filteredData.map(
+      (item) => {
+        if (isAnonymous) {
+          return (item.demographics as Record<string, unknown>) || {};
+        }
+        // Tracked: pull from User model fields (spread into item.user)
+        const user = item.user as Record<string, unknown> | undefined;
+        return {
+          bankSize: user?.bankSize,
+          device: user?.device,
+          employmentStatus: user?.employmentStatus,
+          gender: user?.gender,
+          timeAtBank: user?.timeAtBank,
+          bankExperience: user?.bankExperience,
+          division: user?.division,
+          jobRole: user?.jobRole,
+        };
+      }
+    );
+
+    const respondentDemographics = {
+      respondentCount: filteredData.length,
+      distributions: DEMO_FIELDS.map((field) => {
+        const counts = new Map<string, number>();
+        respondentDemoData.forEach((demo) => {
+          const value = demo[field.key];
+          if (value && typeof value === 'string') {
+            counts.set(value, (counts.get(value) || 0) + 1);
+          }
+        });
+
+        const total = filteredData.length;
+        const distribution = Array.from(counts.entries())
+          .map(([value, count]) => ({
+            value,
+            count,
+            percentage: Math.round((count / total) * 1000) / 10,
+          }))
+          .sort((a, b) => b.count - a.count);
+
+        return {
+          field: field.key,
+          label: field.label,
+          total,
+          distribution,
+        };
+      }),
+    };
+
     // Build a set of valid question IDs from the current survey definition
     const validQuestionIds = new Set(questions.map((q) => q._id));
 
@@ -551,6 +614,7 @@ export async function GET(
       },
       categoryAggregates: aggregateStats,
       individualScores: showIndividualScores ? individualResults : undefined,
+      respondentDemographics,
       filters: {
         applied: filters,
         available: filterOptions,

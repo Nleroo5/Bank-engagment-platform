@@ -202,6 +202,9 @@ model SurveyCampaign {
   accessCode   String? @unique
   maxResponses Int?
 
+  // Splash / welcome screen customization
+  splashConfig Json?
+
   invitations        Invitation[]
   anonymousResponses AnonymousResponse[]
 

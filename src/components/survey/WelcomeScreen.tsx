@@ -2,43 +2,95 @@
 
 import Image from 'next/image';
 import type { Survey } from '@/types/survey';
-import { Clock } from 'lucide-react';
+import type { SplashConfig } from '@/types/splash';
+import { Clock, Calendar, Shield } from 'lucide-react';
 
 interface WelcomeScreenProps {
   survey: Survey;
   onBegin: () => void;
+  splashConfig?: SplashConfig;
+  isAnonymous?: boolean;
+  campaignEndDate?: Date | string | null;
 }
 
-export function WelcomeScreen({ survey, onBegin }: WelcomeScreenProps) {
+function formatEndDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+export function WelcomeScreen({
+  survey,
+  onBegin,
+  splashConfig,
+  isAnonymous,
+  campaignEndDate,
+}: WelcomeScreenProps) {
+  const title = splashConfig?.welcomeTitle || survey.title;
+  const message = splashConfig?.welcomeMessage || survey.welcomeMessage;
+  const buttonText = splashConfig?.buttonText || 'Begin Survey';
+  const bankName = splashConfig?.bankName;
+  const logoUrl = splashConfig?.logoUrl;
+
   return (
     <div className="mx-auto max-w-2xl">
       {/* Logo Header */}
-      <div className="mb-8 flex justify-center">
-        <Image
-          src="/header-logo.png"
-          alt="Logo"
-          width={260}
-          height={87}
-          priority
-          className="h-auto w-auto"
-        />
+      <div className="mb-8 flex flex-col items-center gap-2">
+        {logoUrl ? (
+          <div className="relative h-16 w-[220px]">
+            <Image
+              src={logoUrl}
+              alt={bankName ? `${bankName} logo` : 'Organization logo'}
+              fill
+              className="object-contain"
+              unoptimized={false}
+            />
+          </div>
+        ) : (
+          <Image
+            src="/header-logo.png"
+            alt="Logo"
+            width={260}
+            height={87}
+            priority
+            className="h-auto w-auto"
+          />
+        )}
+        {bankName && (
+          <p className="text-sm font-medium text-gray-500">{bankName}</p>
+        )}
       </div>
 
       <div className="rounded-lg bg-white p-8 shadow-lg">
-        <h1 className="mb-4 text-3xl font-bold text-gray-900">
-          {survey.title}
-        </h1>
+        <h1 className="mb-4 text-3xl font-bold text-gray-900">{title}</h1>
 
-        {survey.welcomeMessage && (
-          <p className="mb-6 text-lg text-gray-700">{survey.welcomeMessage}</p>
+        {message && (
+          <p className="mb-6 text-lg text-gray-700">{message}</p>
         )}
 
-        {survey.estimatedMinutes && (
-          <div className="mb-6 flex items-center gap-2 text-gray-600">
-            <Clock className="h-5 w-5" />
-            <span>Estimated time: {survey.estimatedMinutes} minutes</span>
-          </div>
-        )}
+        {/* Logistics */}
+        <div className="mb-6 space-y-2">
+          {survey.estimatedMinutes && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Clock className="h-5 w-5 shrink-0" aria-hidden="true" />
+              <span>Estimated time: {survey.estimatedMinutes} minutes</span>
+            </div>
+          )}
+          {campaignEndDate && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Calendar className="h-5 w-5 shrink-0" aria-hidden="true" />
+              <span>Survey closes: {formatEndDate(campaignEndDate)}</span>
+            </div>
+          )}
+          {isAnonymous && (
+            <div className="flex items-center gap-2 text-green-700">
+              <Shield className="h-5 w-5 shrink-0" aria-hidden="true" />
+              <span>Anonymous — individual answers are never visible to anyone</span>
+            </div>
+          )}
+        </div>
 
         {survey.instructions && (
           <div className="mb-6 rounded-md bg-blue-50 p-4">
@@ -57,10 +109,9 @@ export function WelcomeScreen({ survey, onBegin }: WelcomeScreenProps) {
         )}
 
         <div className="mb-6 space-y-2 text-base text-gray-600">
-          <p>
-            • Your responses are confidential and will be aggregated with others
-          </p>
-          <p>• You can save your progress and return later</p>
+          {!isAnonymous && (
+            <p>• Your responses are confidential and will be aggregated with others</p>
+          )}
           <p>• All questions must be answered to complete the survey</p>
         </div>
 
@@ -68,7 +119,7 @@ export function WelcomeScreen({ survey, onBegin }: WelcomeScreenProps) {
           onClick={onBegin}
           className="w-full rounded-md bg-primary-600 px-6 py-3 text-lg font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
-          Begin Survey
+          {buttonText}
         </button>
       </div>
     </div>

@@ -62,6 +62,7 @@ export const createMockCampaign = (
   isAnonymous: false,
   accessCode: null,
   maxResponses: null,
+  splashConfig: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides,
