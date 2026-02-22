@@ -28,47 +28,71 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   // demographicsInvitationId are excluded from the SQL SELECT. This means
   // the query succeeds even if those columns haven't been migrated to the DB
   // yet. Demographics completion is checked via saved responses instead.
-  const invitation = await prisma.invitation.findUnique({
-    where: { token },
-    select: {
-      id: true,
-      status: true,
-      completedAt: true,
-      userId: true,
-      campaign: {
-        select: {
-          id: true,
-          status: true,
-          startDate: true,
-          endDate: true,
-          surveyId: true,
-          organizationId: true,
-          splashConfig: true,
-          survey: {
-            select: { surveyType: true },
-          },
-        },
-      },
-      responses: {
-        select: {
-          questionId: true,
-          value: true,
-          textValue: true,
-        },
-      },
-      user: {
-        select: {
-          id: true,
-          division: true,
-          jobRole: true,
-          employmentStatus: true,
-          gender: true,
-          timeAtBank: true,
-          bankExperience: true,
+  // splashConfig is fetched with a fallback: if the column doesn't exist in the
+  // DB yet, the query retries without it (returns null for splashConfig).
+  const baseSelect = {
+    id: true,
+    status: true,
+    completedAt: true,
+    userId: true,
+    campaign: {
+      select: {
+        id: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        surveyId: true,
+        organizationId: true,
+        survey: {
+          select: { surveyType: true },
         },
       },
     },
-  });
+    responses: {
+      select: {
+        questionId: true,
+        value: true,
+        textValue: true,
+      },
+    },
+    user: {
+      select: {
+        id: true,
+        division: true,
+        jobRole: true,
+        employmentStatus: true,
+        gender: true,
+        timeAtBank: true,
+        bankExperience: true,
+      },
+    },
+  } as const;
+
+  const invitationRaw = await (async () => {
+    try {
+      return await prisma.invitation.findUnique({
+        where: { token },
+        select: {
+          ...baseSelect,
+          campaign: {
+            select: {
+              ...baseSelect.campaign.select,
+              splashConfig: true,
+            },
+          },
+        },
+      });
+    } catch {
+      // splashConfig column may not exist yet — retry without it
+      const row = await prisma.invitation.findUnique({
+        where: { token },
+        select: baseSelect,
+      });
+      if (!row) return null;
+      return { ...row, campaign: { ...row.campaign, splashConfig: null } };
+    }
+  })();
+  const invitation = invitationRaw;
 
   if (!invitation) {
     return (

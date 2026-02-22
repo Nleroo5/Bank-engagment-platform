@@ -29,23 +29,44 @@ export default async function AnonymousSurveyPage({
   // ============================================
   // 1. Lookup campaign by access code
   // ============================================
-  const campaign = await prisma.surveyCampaign.findFirst({
-    where: {
-      accessCode: normalizedCode,
-      deletedAt: null,
-    },
-    select: {
-      id: true,
-      surveyTitle: true,
-      surveyId: true,
-      isAnonymous: true,
-      status: true,
-      startDate: true,
-      endDate: true,
-      maxResponses: true,
-      splashConfig: true,
-    },
-  });
+  // Fetch campaign — splashConfig is a nullable JSON column added via manual
+  // migration. If the column is missing in the DB (migration not yet run),
+  // fall back to a query without it so the survey still loads.
+  const campaignBase = await (async () => {
+    try {
+      return await prisma.surveyCampaign.findFirst({
+        where: { accessCode: normalizedCode, deletedAt: null },
+        select: {
+          id: true,
+          surveyTitle: true,
+          surveyId: true,
+          isAnonymous: true,
+          status: true,
+          startDate: true,
+          endDate: true,
+          maxResponses: true,
+          splashConfig: true,
+        },
+      });
+    } catch {
+      // splashConfig column may not exist yet — retry without it
+      const row = await prisma.surveyCampaign.findFirst({
+        where: { accessCode: normalizedCode, deletedAt: null },
+        select: {
+          id: true,
+          surveyTitle: true,
+          surveyId: true,
+          isAnonymous: true,
+          status: true,
+          startDate: true,
+          endDate: true,
+          maxResponses: true,
+        },
+      });
+      return row ? { ...row, splashConfig: null } : null;
+    }
+  })();
+  const campaign = campaignBase;
 
   if (!campaign) {
     notFound();
