@@ -39,7 +39,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-accent-500 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-black transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -48,7 +48,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex h-16 items-center justify-between px-6 lg:justify-center">
             <button
               onClick={onClose}
-              className="rounded-md p-3 text-accent-200 hover:text-white lg:hidden"
+              className="rounded-md p-3 text-gray-400 hover:text-white lg:hidden"
               aria-label="Close sidebar"
             >
               <X className="h-6 w-6" />
@@ -68,8 +68,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   onClick={onClose}
                   className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-accent-700 text-white'
-                      : 'text-accent-100 hover:bg-accent-600 hover:text-white'
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -80,11 +80,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </nav>
 
           {/* Footer */}
-          <footer className="border-t border-accent-600 p-4">
-            <p className="text-xs text-accent-200">
+          <footer className="border-t border-gray-800 p-4">
+            <p className="text-xs text-gray-400">
               Bank Engagement Survey Platform
             </p>
-            <p className="text-xs text-accent-300">v0.1.0</p>
+            <p className="text-xs text-gray-500">v0.1.0</p>
           </footer>
         </div>
       </div>
