@@ -68,8 +68,25 @@ export function SingleQuestionSurveyShell({
   );
 
   // ── Demographics state ────────────────────────────────────────────────────
-  const [currentDemoIndex, setCurrentDemoIndex] = useState(0);
-  const [demoAnswers, setDemoAnswers] = useState<Record<string, string>>({});
+  // Resume at the first unanswered demo question (skip already-saved answers)
+  const [currentDemoIndex, setCurrentDemoIndex] = useState(() => {
+    for (let i = 0; i < demographicsQuestions.length; i++) {
+      const q = demographicsQuestions[i];
+      if (q && existingResponses[q._id] === undefined) return i;
+    }
+    return 0;
+  });
+  // Pre-populate from saved responses so fields aren't blank on resume
+  const [demoAnswers, setDemoAnswers] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    for (const q of demographicsQuestions) {
+      const existing = existingResponses[q._id];
+      if (existing !== undefined && existing !== null) {
+        init[q._id] = String(existing);
+      }
+    }
+    return init;
+  });
   const [isDemoAdvancing, setIsDemoAdvancing] = useState(false);
   const [isDemoCompleting, setIsDemoCompleting] = useState(false);
 
