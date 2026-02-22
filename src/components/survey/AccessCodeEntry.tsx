@@ -3,28 +3,40 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Shield, Lock, Clock, CheckCircle } from 'lucide-react';
+import { Shield, Lock, Clock, Calendar, CheckCircle } from 'lucide-react';
 import { generateBrowserFingerprint } from '@/lib/fingerprint';
+import type { SplashConfig } from '@/types/splash';
 
 interface AccessCodeEntryProps {
   accessCode: string;
   surveyTitle: string;
+  splashConfig?: SplashConfig | null;
+  campaignEndDate?: Date | null;
 }
 
 /**
  * Access Code Entry Screen
  *
  * Welcome screen for anonymous surveys:
+ * - Shows campaign branding (logo, bank name, custom text) from splashConfig
  * - Shows anonymity guarantee messaging
  * - Begins survey session
  */
 export default function AccessCodeEntry({
   accessCode,
   surveyTitle,
+  splashConfig,
+  campaignEndDate,
 }: AccessCodeEntryProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const title = splashConfig?.welcomeTitle || surveyTitle;
+  const message = splashConfig?.welcomeMessage;
+  const buttonText = splashConfig?.buttonText || 'Begin Survey';
+  const bankName = splashConfig?.bankName;
+  const logoUrl = splashConfig?.logoUrl;
 
   const handleBeginSurvey = async () => {
     setIsLoading(true);
@@ -69,30 +81,57 @@ export default function AccessCodeEntry({
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4 py-12">
       <div className="w-full max-w-2xl rounded-xl bg-white p-8 shadow-2xl md:p-12">
-        {/* Logo Header */}
-        <div className="mb-8 flex justify-center">
-          <Image
-            src="/header-logo.png"
-            alt="Logo"
-            width={260}
-            height={87}
-            priority
-            className="h-auto w-auto"
-          />
+        {/* Logo / Branding */}
+        <div className="mb-8 flex flex-col items-center gap-2">
+          {logoUrl ? (
+            <div className="relative h-16 w-[220px]">
+              <Image
+                src={logoUrl}
+                alt={bankName ? `${bankName} logo` : 'Organization logo'}
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          ) : (
+            <Image
+              src="/header-logo.png"
+              alt="Logo"
+              width={260}
+              height={87}
+              priority
+              className="h-auto w-auto"
+            />
+          )}
+          {bankName && (
+            <p className="text-sm font-medium text-gray-500">{bankName}</p>
+          )}
         </div>
 
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-blue-100 p-4">
-              <Shield className="h-12 w-12 text-blue-600" />
-            </div>
-          </div>
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            {surveyTitle}
-          </h1>
-          <p className="text-lg text-gray-600">Anonymous Survey</p>
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">{title}</h1>
+          {message ? (
+            <p className="text-lg text-gray-600">{message}</p>
+          ) : (
+            <p className="text-lg text-gray-600">Anonymous Survey</p>
+          )}
         </div>
+
+        {/* Logistics */}
+        {campaignEndDate && (
+          <div className="mb-6 flex items-center justify-center gap-2 text-gray-600">
+            <Calendar className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <span>
+              Survey closes:{' '}
+              {new Date(campaignEndDate).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </span>
+          </div>
+        )}
 
         {/* Anonymity Guarantees */}
         <div className="mb-8 space-y-4 rounded-lg bg-green-50 p-6">
@@ -122,7 +161,7 @@ export default function AccessCodeEntry({
             <div className="flex items-start">
               <CheckCircle className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0" />
               <p>
-                <strong>Secure & Confidential:</strong> All data is encrypted
+                <strong>Secure &amp; Confidential:</strong> All data is encrypted
                 and stored securely. Only authorized personnel can access
                 aggregate reports.
               </p>
@@ -131,8 +170,8 @@ export default function AccessCodeEntry({
         </div>
 
         {/* Estimated Time */}
-        <div className="mb-8 flex items-center justify-center text-gray-600">
-          <Clock className="mr-2 h-5 w-5" />
+        <div className="mb-8 flex items-center justify-center gap-2 text-gray-600">
+          <Clock className="h-5 w-5" aria-hidden="true" />
           <span>Estimated time: 10-15 minutes</span>
         </div>
 
@@ -151,9 +190,10 @@ export default function AccessCodeEntry({
           <div className="mb-6">
             <button
               onClick={handleBeginSurvey}
-              className="w-full rounded-lg bg-blue-600 px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full rounded-lg bg-primary-600 px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             >
-              Begin Survey
+              <Shield className="mr-2 inline-block h-5 w-5" aria-hidden="true" />
+              {buttonText}
             </button>
           </div>
         )}
@@ -161,7 +201,7 @@ export default function AccessCodeEntry({
         {/* Loading State */}
         {isLoading && (
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-600"></div>
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary-600"></div>
             <p className="text-gray-600">Starting your survey...</p>
           </div>
         )}
@@ -172,7 +212,7 @@ export default function AccessCodeEntry({
             <strong>Before you begin:</strong>
           </p>
           <ul className="list-inside list-disc space-y-1">
-            <li>Click &quot;Begin Survey&quot; to start</li>
+            <li>Click &quot;{buttonText}&quot; to start</li>
             <li>You can save your progress and return later</li>
             <li>Your session is valid until the survey closes</li>
             <li>

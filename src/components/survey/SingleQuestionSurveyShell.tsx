@@ -61,11 +61,7 @@ export function SingleQuestionSurveyShell({
 }: SingleQuestionSurveyShellProps) {
   // ── Core state ────────────────────────────────────────────────────────────
   const [stage, setStage] = useState<SurveyStage>(
-    isCompleted
-      ? 'completed'
-      : demographicsQuestions.length > 0
-        ? 'demographics'
-        : 'welcome'
+    isCompleted ? 'completed' : 'welcome'
   );
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | string>>(
@@ -187,7 +183,7 @@ export function SingleQuestionSurveyShell({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: invitationToken }),
       });
-      setStage('welcome');
+      setStage('survey');
     } catch (error) {
       console.error('Error completing demographics:', error);
     } finally {
@@ -325,7 +321,8 @@ export function SingleQuestionSurveyShell({
     }
   }, [currentQuestionIndex, isAdvancing]);
 
-  const handleBegin = () => setStage('survey');
+  const handleBegin = () =>
+    setStage(demographicsQuestions.length > 0 ? 'demographics' : 'survey');
 
   // ============================================================
   // 10. SUBMIT SURVEY

@@ -16,7 +16,8 @@ ALTER TABLE "survey_campaigns"
   ADD COLUMN IF NOT EXISTS "deletedBy"   TEXT,
   ADD COLUMN IF NOT EXISTS "isAnonymous" BOOLEAN NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS "accessCode"  TEXT,
-  ADD COLUMN IF NOT EXISTS "maxResponses" INTEGER;
+  ADD COLUMN IF NOT EXISTS "maxResponses" INTEGER,
+  ADD COLUMN IF NOT EXISTS "splashConfig" JSONB;
 
 -- Indexes for the columns added above (idempotent)
 CREATE INDEX IF NOT EXISTS "survey_campaigns_surveyId_idx"   ON "survey_campaigns"("surveyId");

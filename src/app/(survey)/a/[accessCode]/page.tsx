@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { parseSplashConfig } from '@/types/splash';
 import { SingleQuestionAnonymousSurveyShell } from '@/components/survey/SingleQuestionAnonymousSurveyShell';
 import AccessCodeEntry from '@/components/survey/AccessCodeEntry';
 
@@ -203,6 +204,8 @@ export default async function AnonymousSurveyPage({
     <AccessCodeEntry
       accessCode={normalizedCode}
       surveyTitle={campaign.surveyTitle}
+      splashConfig={parseSplashConfig(campaign.splashConfig)}
+      campaignEndDate={campaign.endDate}
     />
   );
 }
