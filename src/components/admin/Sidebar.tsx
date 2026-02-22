@@ -39,7 +39,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-primary-500 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-primary-800 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -68,7 +68,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   onClick={onClose}
                   className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-primary-700 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'text-primary-100 hover:bg-primary-700 hover:text-white'
                   }`}
                 >
@@ -80,7 +80,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </nav>
 
           {/* Footer */}
-          <footer className="border-t border-primary-700 p-4">
+          <footer className="border-t border-primary-700/50 p-4">
             <p className="text-xs text-primary-200">
               Bank Engagement Survey Platform
             </p>
