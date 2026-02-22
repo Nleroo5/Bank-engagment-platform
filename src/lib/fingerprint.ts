@@ -86,8 +86,12 @@ export async function generateBrowserFingerprint(): Promise<string> {
 /**
  * Hash IP address for storage
  *
- * Server-side function to hash IP addresses
- * Uses SHA-256 with campaign ID as salt
+ * Uses the Web Crypto API (crypto.subtle) which is available in:
+ * - Node.js 18+ (Vercel runtime) via the globalThis.crypto standard
+ * - All modern browsers
+ *
+ * Avoids dynamic import('crypto') which can fail in webpack-bundled
+ * Next.js server environments due to CJS/ESM interop issues.
  */
 export async function hashIpAddress(
   ipAddress: string,
@@ -96,13 +100,6 @@ export async function hashIpAddress(
   // Combine IP with campaign ID as salt
   const saltedIp = `${ipAddress}:${campaignId}`;
 
-  // In Node.js environment, use crypto module
-  if (typeof window === 'undefined') {
-    const crypto = await import('crypto');
-    return crypto.createHash('sha256').update(saltedIp).digest('hex');
-  }
-
-  // In browser environment (shouldn't happen, but fallback)
   const encoder = new TextEncoder();
   const data = encoder.encode(saltedIp);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);

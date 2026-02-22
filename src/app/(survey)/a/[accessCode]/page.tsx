@@ -29,7 +29,7 @@ export default async function AnonymousSurveyPage({
   // ============================================
   // 1. Lookup campaign by access code
   // ============================================
-  const campaign = await prisma.surveyCampaign.findUnique({
+  const campaign = await prisma.surveyCampaign.findFirst({
     where: {
       accessCode: normalizedCode,
       deletedAt: null,

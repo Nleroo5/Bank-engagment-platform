@@ -166,9 +166,15 @@ export async function POST(request: NextRequest) {
     // 7. Hash IP address for duplicate detection
     // ============================================
     const clientIpForHash = getClientIpFingerprint(request);
-    const ipHash = clientIpForHash
-      ? await hashIpAddress(clientIpForHash, campaign.id)
-      : null;
+    let ipHash: string | null = null;
+    if (clientIpForHash) {
+      try {
+        ipHash = await hashIpAddress(clientIpForHash, campaign.id);
+      } catch (hashError) {
+        // Non-critical: continue without IP hash if hashing fails
+        console.error('Failed to hash IP address:', hashError);
+      }
+    }
 
     // ============================================
     // 8. Create AnonymousResponse session
