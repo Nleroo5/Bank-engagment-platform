@@ -22,15 +22,49 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
     notFound();
   }
 
-  // Look up invitation by token
+  // Look up invitation by token.
+  // Explicit select (not include) so that demographicsCompletedAt and
+  // demographicsInvitationId are excluded from the SQL SELECT. This means
+  // the query succeeds even if those columns haven't been migrated to the DB
+  // yet. Demographics completion is checked via saved responses instead.
   const invitation = await prisma.invitation.findUnique({
     where: { token },
-    include: {
+    select: {
+      id: true,
+      status: true,
+      completedAt: true,
+      userId: true,
       campaign: {
-        include: { survey: true },
+        select: {
+          id: true,
+          status: true,
+          startDate: true,
+          endDate: true,
+          surveyId: true,
+          organizationId: true,
+          survey: {
+            select: { surveyType: true },
+          },
+        },
       },
-      responses: true,
-      user: true,
+      responses: {
+        select: {
+          questionId: true,
+          value: true,
+          textValue: true,
+        },
+      },
+      user: {
+        select: {
+          id: true,
+          division: true,
+          jobRole: true,
+          employmentStatus: true,
+          gender: true,
+          timeAtBank: true,
+          bankExperience: true,
+        },
+      },
     },
   });
 
@@ -163,8 +197,18 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   const isDemographicsSurvey =
     invitation.campaign.survey.surveyType === 'demographics';
 
+  // Check demographics completion via saved responses.
+  // This is robust: works without the demographicsCompletedAt DB column.
+  const demoQuestionIds = new Set(DEMOGRAPHICS_QUESTIONS.map((q) => q._id));
+  const savedDemoIds = new Set(
+    invitation.responses
+      .filter((r) => demoQuestionIds.has(r.questionId))
+      .map((r) => r.questionId)
+  );
+  const demographicsAlreadyCompleted = savedDemoIds.size >= demoQuestionIds.size;
+
   const demographicsQuestions: DemographicsQuestion[] =
-    !isDemographicsSurvey && !invitation.demographicsCompletedAt
+    !isDemographicsSurvey && !demographicsAlreadyCompleted
       ? DEMOGRAPHICS_QUESTIONS
       : [];
   // ============================================================

@@ -45,21 +45,31 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
 
-    // Stamp demographicsCompletedAt on ALL invitations for this user+org
-    // (including the current one) so the demographics preamble is skipped
-    // on every subsequent survey visit.
-    await prisma.invitation.updateMany({
-      where: {
-        userId: invitation.userId,
-        demographicsCompletedAt: null,
-        campaign: {
-          organizationId: invitation.campaign.organizationId,
+    // Stamp demographicsCompletedAt on ALL invitations for this user+org.
+    // Wrapped in try/catch: degrades gracefully if the column hasn't been
+    // migrated to the DB yet (the page uses response-based checking instead).
+    try {
+      await prisma.invitation.updateMany({
+        where: {
+          userId: invitation.userId,
+          demographicsCompletedAt: null,
+          campaign: {
+            organizationId: invitation.campaign.organizationId,
+          },
         },
-      },
-      data: {
-        demographicsCompletedAt: now,
-      },
-    });
+        data: {
+          demographicsCompletedAt: now,
+        },
+      });
+    } catch (stampError) {
+      // Non-fatal: the survey page checks completion via saved responses.
+      // Run the add_demographics_gate.sql migration in Supabase to enable
+      // the fast-path column check.
+      console.warn(
+        'Could not stamp demographicsCompletedAt (column may not exist yet):',
+        stampError
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
