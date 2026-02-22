@@ -80,6 +80,8 @@ export const createMockInvitation = (
   completedAt: null,
   reminderSentAt: null,
   createdAt: new Date(),
+  demographicsCompletedAt: null,
+  demographicsInvitationId: null,
   ...overrides,
 });
 

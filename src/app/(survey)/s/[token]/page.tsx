@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/surveys/queries';
 import { SingleQuestionSurveyShell } from '@/components/survey/SingleQuestionSurveyShell';
@@ -8,25 +8,32 @@ interface SurveyPageProps {
   params: {
     token: string;
   };
+  searchParams: {
+    returnTo?: string;
+  };
 }
 
-export default async function SurveyPage({ params }: SurveyPageProps) {
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function SurveyPage({
+  params,
+  searchParams,
+}: SurveyPageProps) {
   const { token } = params;
 
   // Validate token format
-  if (
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      token
-    )
-  ) {
+  if (!UUID_REGEX.test(token)) {
     notFound();
   }
 
-  // Look up invitation by token
+  // Look up invitation by token — include campaign.survey for gate check
   const invitation = await prisma.invitation.findUnique({
     where: { token },
     include: {
-      campaign: true,
+      campaign: {
+        include: { survey: true },
+      },
       responses: true,
       user: true,
     },
@@ -122,6 +129,76 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
     );
   }
 
+  // ============================================================
+  // DEMOGRAPHICS GATE
+  // Non-demographics surveys require demographics to be completed
+  // first. Gate is enforced here (server) — not just in the UI.
+  // ============================================================
+  const isDemographicsSurvey =
+    invitation.campaign.survey.surveyType === 'demographics';
+
+  if (!isDemographicsSurvey) {
+    const needsGate = invitation.demographicsCompletedAt === null;
+
+    if (needsGate) {
+      const orgId = invitation.campaign.organizationId;
+
+      // Check if demographics was already completed (self-healing for
+      // respondents who existed before this gate was introduced)
+      const completedDemo = await prisma.invitation.findFirst({
+        where: {
+          userId: invitation.userId,
+          status: 'COMPLETED',
+          campaign: {
+            organizationId: orgId,
+            survey: { surveyType: 'demographics' },
+          },
+        },
+        select: { id: true, completedAt: true },
+      });
+
+      if (completedDemo) {
+        // Stamp the flag so future page loads skip this lookup
+        await prisma.invitation.update({
+          where: { id: invitation.id },
+          data: {
+            demographicsCompletedAt: completedDemo.completedAt,
+            demographicsInvitationId: completedDemo.id,
+          },
+        });
+        // Fall through — demographics already done, allow access
+      } else {
+        // Find their pending demographics invitation for this org
+        const pendingDemo = await prisma.invitation.findFirst({
+          where: {
+            userId: invitation.userId,
+            status: { not: 'COMPLETED' },
+            campaign: {
+              organizationId: orgId,
+              survey: { surveyType: 'demographics' },
+            },
+          },
+          select: { token: true },
+        });
+
+        if (pendingDemo) {
+          // Redirect to demographics; returnTo brings them back here after
+          redirect(`/s/${pendingDemo.token}?returnTo=${token}`);
+        }
+
+        // No demographics invitation found — admin needs to create one
+        return (
+          <SurveyError
+            icon="locked"
+            title="Prerequisites Not Set Up"
+            message="You must complete the Demographics survey before accessing this survey. Please contact your survey administrator."
+          />
+        );
+      }
+    }
+  }
+  // ============================================================
+
   // Update invitation status to OPENED if it's still PENDING or SENT
   if (invitation.status === 'PENDING' || invitation.status === 'SENT') {
     await prisma.invitation.update({
@@ -133,7 +210,7 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
     });
   }
 
-  // Fetch the survey from Sanity
+  // Fetch the survey content from Postgres
   const survey = await getSurveyById(invitation.campaign.surveyId);
 
   if (!survey) {
@@ -150,9 +227,14 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
   // Build existing responses map (handle both numeric and text values)
   const existingResponses: Record<string, number | string> = {};
   for (const response of invitation.responses) {
-    // Use textValue if present, otherwise use numeric value
     existingResponses[response.questionId] =
       response.textValue ?? response.value ?? 0;
+  }
+
+  // Validate returnTo param: must be a valid UUID (security: never a full URL)
+  let validatedReturnTo: string | undefined;
+  if (searchParams?.returnTo && UUID_REGEX.test(searchParams.returnTo)) {
+    validatedReturnTo = searchParams.returnTo;
   }
 
   return (
@@ -162,6 +244,7 @@ export default async function SurveyPage({ params }: SurveyPageProps) {
         invitationToken={token}
         existingResponses={existingResponses}
         isCompleted={invitation.status === 'COMPLETED'}
+        returnTo={validatedReturnTo}
       />
     </div>
   );

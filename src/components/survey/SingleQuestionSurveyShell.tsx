@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import type { Survey } from '@/types/survey';
@@ -16,9 +17,10 @@ interface SingleQuestionSurveyShellProps {
   invitationToken: string;
   existingResponses: Record<string, number | string>;
   isCompleted: boolean;
+  returnTo?: string; // UUID token to redirect to after demographics completion
 }
 
-type SurveyStage = 'welcome' | 'survey' | 'completed';
+type SurveyStage = 'welcome' | 'survey' | 'completed' | 'redirecting';
 
 /**
  * Single-Question Auto-Advance Survey Shell
@@ -39,7 +41,9 @@ export function SingleQuestionSurveyShell({
   invitationToken,
   existingResponses,
   isCompleted,
+  returnTo,
 }: SingleQuestionSurveyShellProps) {
+  const router = useRouter();
   // Core state
   const [stage, setStage] = useState<SurveyStage>(
     isCompleted ? 'completed' : 'welcome'
@@ -226,18 +230,29 @@ export function SingleQuestionSurveyShell({
       const response = await fetch('/api/responses/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: invitationToken }),
+        body: JSON.stringify({ token: invitationToken, returnTo }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to submit survey');
       }
 
+      const data = await response.json();
+
       // Clear saved progress
       localStorage.removeItem(`survey-progress-${invitationToken}`);
 
-      setStage('completed');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (data.returnTo) {
+        // Demographics just completed — redirect to the original survey
+        setStage('redirecting');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+          router.push(`/s/${data.returnTo}`);
+        }, 2000);
+      } else {
+        setStage('completed');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } catch (error) {
       console.error('Error submitting survey:', error);
       alert('Failed to submit survey. Please try again.');
@@ -287,6 +302,41 @@ export function SingleQuestionSurveyShell({
 
   if (stage === 'completed') {
     return <CompletionScreen survey={survey} />;
+  }
+
+  if (stage === 'redirecting') {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/header-logo.png"
+            alt="Logo"
+            width={180}
+            height={60}
+            priority
+            className="h-auto w-auto"
+          />
+        </div>
+        <div className="rounded-lg bg-white p-8 text-center shadow-lg">
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+          </div>
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">
+            Demographics Complete!
+          </h1>
+          <p className="mb-6 text-base text-gray-600">
+            Thank you. Redirecting you to your survey now...
+          </p>
+          <div className="flex justify-center">
+            <div className="h-2 w-48 overflow-hidden rounded-full bg-gray-200">
+              <div className="h-2 animate-pulse rounded-full bg-primary-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!currentQuestion) {

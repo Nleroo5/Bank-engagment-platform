@@ -229,6 +229,10 @@ model Invitation {
   reminderSentAt DateTime?
   createdAt      DateTime       @default(now())
 
+  // Demographics gate: set when this respondent has completed demographics for their org
+  demographicsCompletedAt  DateTime?
+  demographicsInvitationId String?
+
   session   ResponseSession?
   responses Response[]
 
