@@ -16,7 +16,10 @@ interface WelcomeScreenProps {
 }
 
 function formatEndDate(date: Date | string): string {
+  // timeZone: 'UTC' ensures server (Vercel/UTC) and browser (any TZ) render the
+  // same date string, preventing React hydration mismatch error #425.
   return new Date(date).toLocaleDateString('en-US', {
+    timeZone: 'UTC',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -42,15 +45,15 @@ export function WelcomeScreen({
       {/* Logo Header */}
       <div className="mb-8 flex flex-col items-center gap-2">
         {logoUrl ? (
-          <div className="relative h-16 w-[220px]">
-            <Image
-              src={logoUrl}
-              alt={bankName ? `${bankName} logo` : 'Organization logo'}
-              fill
-              sizes="220px"
-              className="object-contain"
-            />
-          </div>
+          // Use <img> directly so the Vercel Blob URL loads without being
+          // proxied through /_next/image (which requires remotePatterns and
+          // can silently fail, showing a broken image).
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logoUrl}
+            alt={bankName ? `${bankName} logo` : 'Organization logo'}
+            className="h-16 w-auto max-w-[220px] object-contain"
+          />
         ) : (
           <Image
             src="/header-logo.png"
