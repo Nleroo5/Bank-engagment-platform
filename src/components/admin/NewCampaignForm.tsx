@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Organization } from '@prisma/client';
 import type { SurveyListItem } from '@/types/survey';
@@ -33,6 +33,7 @@ export function NewCampaignForm({
 
   const [accessCodeError, setAccessCodeError] = useState<string | null>(null);
   const [checkingAccessCode, setCheckingAccessCode] = useState(false);
+  const accessCodeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [filteredOrganizations, setFilteredOrganizations] = useState(
     organizations
   );
@@ -68,7 +69,8 @@ export function NewCampaignForm({
     setFormData({ ...formData, accessCode: normalized });
 
     // Debounce access code check
-    setTimeout(() => checkAccessCode(normalized), 500);
+    if (accessCodeDebounceRef.current) clearTimeout(accessCodeDebounceRef.current);
+    accessCodeDebounceRef.current = setTimeout(() => checkAccessCode(normalized), 500);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
