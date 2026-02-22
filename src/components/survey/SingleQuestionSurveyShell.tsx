@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import type { Survey } from '@/types/survey';
@@ -12,21 +11,40 @@ import { LikertScale3 } from './LikertScale3';
 import { DemographicsField } from './DemographicsField';
 import { ChevronLeft, Save, CheckCircle2 } from 'lucide-react';
 
+type DemographicsQuestion = {
+  _id: string;
+  number: number;
+  text: string;
+  fieldType: string;
+};
+
 interface SingleQuestionSurveyShellProps {
   survey: Survey;
   invitationToken: string;
   existingResponses: Record<string, number | string>;
   isCompleted: boolean;
-  returnTo?: string; // UUID token to redirect to after demographics completion
+  demographicsQuestions?: DemographicsQuestion[];
 }
 
-type SurveyStage = 'welcome' | 'survey' | 'completed' | 'redirecting';
+type SurveyStage = 'demographics' | 'welcome' | 'survey' | 'completed';
+
+// Radio-group field types: auto-advance on selection
+const AUTO_ADVANCE_FIELDS = new Set([
+  'device',
+  'employmentStatus',
+  'gender',
+  'timeAtBank',
+  'bankExperience',
+]);
+
+const AUTO_ADVANCE_DELAY = 800; // ms
+const SAVE_DEBOUNCE_DELAY = 500; // ms
 
 /**
  * Single-Question Auto-Advance Survey Shell
  *
  * Features:
- * - Shows one question at a time
+ * - Demographics preamble stage (one question at a time) before every survey
  * - Auto-advances after answer selection (800ms delay)
  * - Debounced to prevent accidental clicks
  * - Auto-saves responses to server + localStorage
@@ -41,32 +59,38 @@ export function SingleQuestionSurveyShell({
   invitationToken,
   existingResponses,
   isCompleted,
-  returnTo,
+  demographicsQuestions = [],
 }: SingleQuestionSurveyShellProps) {
-  const router = useRouter();
-  // Core state
+  // ── Core state ────────────────────────────────────────────────────────────
   const [stage, setStage] = useState<SurveyStage>(
-    isCompleted ? 'completed' : 'welcome'
+    isCompleted
+      ? 'completed'
+      : demographicsQuestions.length > 0
+        ? 'demographics'
+        : 'welcome'
   );
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | string>>(
     existingResponses
   );
 
-  // UI state
+  // ── Demographics state ────────────────────────────────────────────────────
+  const [currentDemoIndex, setCurrentDemoIndex] = useState(0);
+  const [demoAnswers, setDemoAnswers] = useState<Record<string, string>>({});
+  const [isDemoAdvancing, setIsDemoAdvancing] = useState(false);
+  const [isDemoCompleting, setIsDemoCompleting] = useState(false);
+
+  // ── Survey UI state ───────────────────────────────────────────────────────
   const [isSaving, setIsSaving] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [justAnswered, setJustAnswered] = useState(false);
 
-  // Refs
+  // ── Refs ──────────────────────────────────────────────────────────────────
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const advanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const demoAdvanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Constants
-  const AUTO_ADVANCE_DELAY = 800; // milliseconds
-  const SAVE_DEBOUNCE_DELAY = 500; // milliseconds
-
-  // Flatten all questions from all sections
+  // ── Derived: survey questions ─────────────────────────────────────────────
   const allQuestions = survey.sections.flatMap((section) =>
     section.questions.map((q) => ({
       ...q,
@@ -79,35 +103,33 @@ export function SingleQuestionSurveyShell({
   const currentQuestion = allQuestions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   const isFirstQuestion = currentQuestionIndex === 0;
-
-  // Calculate progress percentage
   const progressPercentage = Math.round(
     ((currentQuestionIndex + 1) / totalQuestions) * 100
   );
 
-  // ============================================
-  // 1. AUTO-SAVE TO SERVER
-  // ============================================
+  // ── Derived: demographics ─────────────────────────────────────────────────
+  const totalDemoQuestions = demographicsQuestions.length;
+  const currentDemoQuestion = demographicsQuestions[currentDemoIndex];
+  const demoProgressPercentage =
+    totalDemoQuestions > 0
+      ? Math.round(((currentDemoIndex + 1) / totalDemoQuestions) * 100)
+      : 0;
+
+  // ============================================================
+  // 1. SAVE SURVEY ANSWER TO SERVER
+  // ============================================================
   const saveToServer = useCallback(
     async (questionId: string, value: number | string) => {
       try {
         setIsSaving(true);
-        const response = await fetch('/api/responses', {
+        const res = await fetch('/api/responses', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: invitationToken,
-            questionId,
-            value,
-          }),
+          body: JSON.stringify({ token: invitationToken, questionId, value }),
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to save response');
-        }
+        if (!res.ok) throw new Error('Failed to save response');
       } catch (error) {
-        console.error('Error saving response to server:', error);
-        // Don't block user - local state is saved
+        console.error('Error saving response:', error);
       } finally {
         setIsSaving(false);
       }
@@ -115,35 +137,119 @@ export function SingleQuestionSurveyShell({
     [invitationToken]
   );
 
-  // ============================================
-  // 2. AUTO-SAVE TO LOCALSTORAGE
-  // ============================================
+  // ============================================================
+  // 2. SAVE DEMOGRAPHICS ANSWER TO SERVER
+  // ============================================================
+  const saveDemoToServer = useCallback(
+    async (questionId: string, value: string) => {
+      try {
+        await fetch('/api/responses', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: invitationToken, questionId, value }),
+        });
+      } catch (error) {
+        console.error('Error saving demographics answer:', error);
+      }
+    },
+    [invitationToken]
+  );
+
+  // ============================================================
+  // 3. COMPLETE DEMOGRAPHICS (stamp flag, advance to welcome)
+  // ============================================================
+  const completeDemographics = useCallback(async () => {
+    try {
+      setIsDemoCompleting(true);
+      await fetch('/api/responses/demographics-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: invitationToken }),
+      });
+      setStage('welcome');
+    } catch (error) {
+      console.error('Error completing demographics:', error);
+    } finally {
+      setIsDemoCompleting(false);
+    }
+  }, [invitationToken]);
+
+  // ============================================================
+  // 4. DEMOGRAPHICS NEXT / ADVANCE
+  // ============================================================
+  const handleDemographicsNext = useCallback(async () => {
+    if (isDemoAdvancing || isDemoCompleting) return;
+    const isLast = currentDemoIndex === totalDemoQuestions - 1;
+    if (isLast) {
+      await completeDemographics();
+    } else {
+      setCurrentDemoIndex((prev) => prev + 1);
+    }
+  }, [
+    isDemoAdvancing,
+    isDemoCompleting,
+    currentDemoIndex,
+    totalDemoQuestions,
+    completeDemographics,
+  ]);
+
+  // ============================================================
+  // 5. DEMOGRAPHICS CHANGE HANDLER
+  // ============================================================
+  const handleDemographicsChange = useCallback(
+    (questionId: string, value: string) => {
+      if (isDemoAdvancing || isDemoCompleting) return;
+
+      setDemoAnswers((prev) => ({ ...prev, [questionId]: value }));
+      void saveDemoToServer(questionId, value);
+
+      const fieldType = currentDemoQuestion?.fieldType ?? '';
+      if (AUTO_ADVANCE_FIELDS.has(fieldType)) {
+        setIsDemoAdvancing(true);
+        if (demoAdvanceTimeoutRef.current) {
+          clearTimeout(demoAdvanceTimeoutRef.current);
+        }
+        demoAdvanceTimeoutRef.current = setTimeout(() => {
+          setIsDemoAdvancing(false);
+          void handleDemographicsNext();
+        }, AUTO_ADVANCE_DELAY);
+      }
+    },
+    [
+      isDemoAdvancing,
+      isDemoCompleting,
+      currentDemoQuestion,
+      saveDemoToServer,
+      handleDemographicsNext,
+    ]
+  );
+
+  // ============================================================
+  // 6. AUTO-SAVE SURVEY PROGRESS TO LOCALSTORAGE
+  // ============================================================
   useEffect(() => {
     if (stage === 'survey') {
-      const surveyProgress = {
-        surveyId: survey._id,
-        currentQuestionIndex,
-        answers,
-        timestamp: Date.now(),
-      };
-
       localStorage.setItem(
         `survey-progress-${invitationToken}`,
-        JSON.stringify(surveyProgress)
+        JSON.stringify({
+          surveyId: survey._id,
+          currentQuestionIndex,
+          answers,
+          timestamp: Date.now(),
+        })
       );
     }
   }, [answers, currentQuestionIndex, stage, survey._id, invitationToken]);
 
-  // ============================================
-  // 3. RESTORE PROGRESS ON MOUNT
-  // ============================================
+  // ============================================================
+  // 7. RESTORE SURVEY PROGRESS ON MOUNT
+  // ============================================================
   useEffect(() => {
     const saved = localStorage.getItem(`survey-progress-${invitationToken}`);
     if (saved && stage === 'welcome') {
       try {
         const { currentQuestionIndex: savedIndex, answers: savedAnswers } =
           JSON.parse(saved);
-        // Auto-restore if progress exists
         if (savedIndex > 0 || Object.keys(savedAnswers).length > 0) {
           setCurrentQuestionIndex(savedIndex);
           setAnswers(savedAnswers);
@@ -154,43 +260,28 @@ export function SingleQuestionSurveyShell({
     }
   }, [invitationToken, stage]);
 
-  // ============================================
-  // 4. HANDLE ANSWER WITH AUTO-ADVANCE
-  // ============================================
+  // ============================================================
+  // 8. HANDLE SURVEY ANSWER WITH AUTO-ADVANCE
+  // ============================================================
   const handleAnswer = useCallback(
     (questionId: string, value: number | string) => {
-      // Prevent double-triggering during advance animation
       if (isAdvancing) return;
 
-      // Update local state immediately (optimistic UI)
       setAnswers((prev) => ({ ...prev, [questionId]: value }));
       setJustAnswered(true);
 
-      // Clear existing save timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      // Debounced save to server
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(() => {
-        saveToServer(questionId, value);
+        void saveToServer(questionId, value);
       }, SAVE_DEBOUNCE_DELAY);
 
-      // Clear existing advance timeout
-      if (advanceTimeoutRef.current) {
-        clearTimeout(advanceTimeoutRef.current);
-      }
-
-      // Auto-advance after delay (gives user time to see selection)
+      if (advanceTimeoutRef.current) clearTimeout(advanceTimeoutRef.current);
       setIsAdvancing(true);
       advanceTimeoutRef.current = setTimeout(() => {
         setJustAnswered(false);
-
         if (isLastQuestion) {
-          // Don't auto-advance on last question - show submit button
           setIsAdvancing(false);
         } else {
-          // Advance to next question
           setCurrentQuestionIndex((prev) => prev + 1);
           setIsAdvancing(false);
         }
@@ -199,12 +290,11 @@ export function SingleQuestionSurveyShell({
     [isAdvancing, isLastQuestion, saveToServer]
   );
 
-  // ============================================
-  // 5. NAVIGATION HANDLERS
-  // ============================================
+  // ============================================================
+  // 9. SURVEY NAVIGATION
+  // ============================================================
   const handleBack = useCallback(() => {
     if (currentQuestionIndex > 0 && !isAdvancing) {
-      // Clear any pending advance
       if (advanceTimeoutRef.current) {
         clearTimeout(advanceTimeoutRef.current);
         setIsAdvancing(false);
@@ -214,45 +304,27 @@ export function SingleQuestionSurveyShell({
     }
   }, [currentQuestionIndex, isAdvancing]);
 
-  const handleBegin = () => {
-    setStage('survey');
-  };
+  const handleBegin = () => setStage('survey');
 
+  // ============================================================
+  // 10. SUBMIT SURVEY
+  // ============================================================
   const handleSubmit = async () => {
     try {
       setIsSaving(true);
-
-      // Force save any pending response
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
       const response = await fetch('/api/responses/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: invitationToken, returnTo }),
+        body: JSON.stringify({ token: invitationToken }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit survey');
-      }
+      if (!response.ok) throw new Error('Failed to submit survey');
 
-      const data = await response.json();
-
-      // Clear saved progress
       localStorage.removeItem(`survey-progress-${invitationToken}`);
-
-      if (data.returnTo) {
-        // Demographics just completed — redirect to the original survey
-        setStage('redirecting');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => {
-          router.push(`/s/${data.returnTo}`);
-        }, 2000);
-      } else {
-        setStage('completed');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      setStage('completed');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Error submitting survey:', error);
       alert('Failed to submit survey. Please try again.');
@@ -261,18 +333,19 @@ export function SingleQuestionSurveyShell({
     }
   };
 
-  // ============================================
-  // 6. KEYBOARD NAVIGATION
-  // ============================================
+  // ============================================================
+  // 11. KEYBOARD NAVIGATION
+  // ============================================================
   useEffect(() => {
     if (stage !== 'survey') return;
 
     const handleKeyPress = (e: KeyboardEvent) => {
-      // Prevent if user is typing in text field
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
-
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         handleBack();
@@ -283,19 +356,131 @@ export function SingleQuestionSurveyShell({
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [stage, handleBack]);
 
-  // ============================================
-  // 7. CLEANUP TIMEOUTS ON UNMOUNT
-  // ============================================
+  // ============================================================
+  // 12. CLEANUP TIMEOUTS ON UNMOUNT
+  // ============================================================
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (advanceTimeoutRef.current) clearTimeout(advanceTimeoutRef.current);
+      if (demoAdvanceTimeoutRef.current)
+        clearTimeout(demoAdvanceTimeoutRef.current);
     };
   }, []);
 
-  // ============================================
-  // RENDER STAGES
-  // ============================================
+  // ============================================================
+  // RENDER: DEMOGRAPHICS STAGE
+  // ============================================================
+  if (stage === 'demographics') {
+    // Safety: no demographics questions — skip straight to welcome
+    if (!currentDemoQuestion) {
+      return <WelcomeScreen survey={survey} onBegin={handleBegin} />;
+    }
+
+    const currentDemoAnswer = demoAnswers[currentDemoQuestion._id];
+    const isAutoAdvanceField = AUTO_ADVANCE_FIELDS.has(
+      currentDemoQuestion.fieldType
+    );
+    const canAdvance = Boolean(currentDemoAnswer);
+    const isLastDemo = currentDemoIndex === totalDemoQuestions - 1;
+
+    return (
+      <div className="min-h-screen bg-white px-4 py-12">
+        <div className="mx-auto max-w-2xl">
+          {/* Logo */}
+          <div className="mb-8 flex justify-center">
+            <Image
+              src="/header-logo.png"
+              alt="Logo"
+              width={180}
+              height={60}
+              priority
+              className="h-auto w-auto"
+            />
+          </div>
+
+          {/* Progress */}
+          <div className="mb-12">
+            <div className="mb-3 flex items-center justify-between text-sm">
+              <span className="font-medium text-gray-600">
+                Demographics: {currentDemoIndex + 1} of {totalDemoQuestions}
+              </span>
+              <span className="font-semibold text-primary-600">
+                {demoProgressPercentage}%
+              </span>
+            </div>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-600 ease-out"
+                style={{ width: `${demoProgressPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Question Card */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentDemoQuestion._id}
+              initial={{ opacity: 0, x: 30, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
+              transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+              className="mb-8"
+            >
+              <div className="overflow-hidden rounded-3xl bg-white shadow-xl transition-shadow duration-300 hover:shadow-2xl">
+                <div className="px-8 py-12 md:px-12 md:py-16">
+                  <DemographicsField
+                    questionId={currentDemoQuestion._id}
+                    questionNumber={currentDemoQuestion.number}
+                    questionText={currentDemoQuestion.text}
+                    fieldType={currentDemoQuestion.fieldType}
+                    value={currentDemoAnswer ?? ''}
+                    onChange={handleDemographicsChange}
+                    disabled={isDemoAdvancing || isDemoCompleting}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Next / Begin button (text & dropdown fields) */}
+          <div className="flex items-center justify-end">
+            {!isAutoAdvanceField && canAdvance && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => void handleDemographicsNext()}
+                disabled={isDemoAdvancing || isDemoCompleting}
+                className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-xl disabled:opacity-40"
+              >
+                {isDemoCompleting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Saving...
+                  </>
+                ) : isLastDemo ? (
+                  'Begin Survey'
+                ) : (
+                  'Next'
+                )}
+              </motion.button>
+            )}
+          </div>
+
+          {/* Auto-advance hint for radio fields */}
+          {isAutoAdvanceField && !currentDemoAnswer && (
+            <div className="mt-6 text-center text-sm text-gray-400">
+              Select an answer to automatically continue
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // RENDER: WELCOME / COMPLETED
+  // ============================================================
   if (stage === 'welcome') {
     return <WelcomeScreen survey={survey} onBegin={handleBegin} />;
   }
@@ -304,54 +489,19 @@ export function SingleQuestionSurveyShell({
     return <CompletionScreen survey={survey} />;
   }
 
-  if (stage === 'redirecting') {
-    return (
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-8 flex justify-center">
-          <Image
-            src="/header-logo.png"
-            alt="Logo"
-            width={180}
-            height={60}
-            priority
-            className="h-auto w-auto"
-          />
-        </div>
-        <div className="rounded-lg bg-white p-8 text-center shadow-lg">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">
-            Demographics Complete!
-          </h1>
-          <p className="mb-6 text-base text-gray-600">
-            Thank you. Redirecting you to your survey now...
-          </p>
-          <div className="flex justify-center">
-            <div className="h-2 w-48 overflow-hidden rounded-full bg-gray-200">
-              <div className="h-2 animate-pulse rounded-full bg-primary-500" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (!currentQuestion) {
     return null;
   }
 
-  // ============================================
-  // RENDER QUESTION INPUT
-  // ============================================
+  // ============================================================
+  // RENDER: SURVEY QUESTION INPUT
+  // ============================================================
   const renderQuestionInput = () => {
     const currentAnswer = answers[currentQuestion._id];
 
-    // Demographics fields
     if (survey.surveyType === 'demographics') {
-      const fieldType = currentQuestion.fieldType || currentQuestion.slug?.current || '';
+      const fieldType =
+        currentQuestion.fieldType || currentQuestion.slug?.current || '';
       return (
         <DemographicsField
           questionId={currentQuestion._id}
@@ -365,7 +515,6 @@ export function SingleQuestionSurveyShell({
       );
     }
 
-    // Likert scales
     if (survey.surveyType === 'likert5') {
       return (
         <LikertScale5
@@ -395,13 +544,13 @@ export function SingleQuestionSurveyShell({
     return null;
   };
 
-  // ============================================
-  // MAIN RENDER
-  // ============================================
+  // ============================================================
+  // RENDER: MAIN SURVEY
+  // ============================================================
   return (
     <div className="min-h-screen bg-white px-4 py-12">
       <div className="mx-auto max-w-2xl">
-        {/* Logo Header */}
+        {/* Logo */}
         <div className="mb-8 flex justify-center">
           <Image
             src="/header-logo.png"
@@ -413,13 +562,15 @@ export function SingleQuestionSurveyShell({
           />
         </div>
 
-        {/* Progress Bar - Apple Style */}
+        {/* Progress Bar */}
         <div className="mb-12">
           <div className="mb-3 flex items-center justify-between text-sm">
             <span className="font-medium text-gray-600">
               Question {currentQuestionIndex + 1} of {totalQuestions}
             </span>
-            <span className="font-semibold text-primary-600">{progressPercentage}%</span>
+            <span className="font-semibold text-primary-600">
+              {progressPercentage}%
+            </span>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
             <div
@@ -429,7 +580,7 @@ export function SingleQuestionSurveyShell({
           </div>
         </div>
 
-        {/* Save Indicator - Subtle */}
+        {/* Save Indicator */}
         {isSaving && (
           <div className="mb-6 flex items-center justify-center gap-2 text-sm text-gray-500">
             <Save className="h-4 w-4 animate-pulse" />
@@ -437,7 +588,7 @@ export function SingleQuestionSurveyShell({
           </div>
         )}
 
-        {/* Answered Indicator - Apple Style with Red Accent */}
+        {/* Answer Recorded Indicator */}
         <AnimatePresence>
           {justAnswered && !isAdvancing && (
             <motion.div
@@ -455,7 +606,7 @@ export function SingleQuestionSurveyShell({
           )}
         </AnimatePresence>
 
-        {/* Question Container with Apple-style Card */}
+        {/* Question Card */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion._id}
@@ -465,26 +616,21 @@ export function SingleQuestionSurveyShell({
             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
             className="mb-8"
           >
-            {/* White Card with Shadow - Apple Style */}
             <div className="overflow-hidden rounded-3xl bg-white shadow-xl transition-shadow duration-300 hover:shadow-2xl">
               <div className="px-8 py-12 md:px-12 md:py-16">
-                {/* Section context (optional) */}
                 {currentQuestion.sectionTitle && (
                   <div className="mb-4 text-sm font-medium text-gray-500">
                     {currentQuestion.sectionTitle}
                   </div>
                 )}
-
-                {/* Question */}
                 {renderQuestionInput()}
               </div>
             </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation - Apple Minimalist Style */}
+        {/* Navigation */}
         <div className="flex items-center justify-between">
-          {/* Back Button - Ghost Style */}
           <button
             onClick={handleBack}
             disabled={isFirstQuestion || isAdvancing}
@@ -494,7 +640,6 @@ export function SingleQuestionSurveyShell({
             Previous
           </button>
 
-          {/* Submit Button - Pill Shaped CTA (only on last question if answered) */}
           {isLastQuestion && answers[currentQuestion._id] !== undefined && (
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -515,14 +660,14 @@ export function SingleQuestionSurveyShell({
           )}
         </div>
 
-        {/* Auto-advance hint - Very Subtle */}
+        {/* Auto-advance hint */}
         {!isLastQuestion && !answers[currentQuestion._id] && (
           <div className="mt-6 text-center text-sm text-gray-400">
             Select an answer to automatically continue
           </div>
         )}
 
-        {/* Keyboard hint - Ultra Subtle */}
+        {/* Keyboard hint */}
         <div className="mt-4 text-center text-xs text-gray-300">
           Use ← arrow key to go back
         </div>

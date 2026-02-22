@@ -1,4 +1,4 @@
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/surveys/queries';
 import { SingleQuestionSurveyShell } from '@/components/survey/SingleQuestionSurveyShell';
@@ -8,18 +8,12 @@ interface SurveyPageProps {
   params: {
     token: string;
   };
-  searchParams: {
-    returnTo?: string;
-  };
 }
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default async function SurveyPage({
-  params,
-  searchParams,
-}: SurveyPageProps) {
+export default async function SurveyPage({ params }: SurveyPageProps) {
   const { token } = params;
 
   // Validate token format
@@ -27,7 +21,7 @@ export default async function SurveyPage({
     notFound();
   }
 
-  // Look up invitation by token — include campaign.survey for gate check
+  // Look up invitation by token
   const invitation = await prisma.invitation.findUnique({
     where: { token },
     include: {
@@ -130,71 +124,46 @@ export default async function SurveyPage({
   }
 
   // ============================================================
-  // DEMOGRAPHICS GATE
-  // Non-demographics surveys require demographics to be completed
-  // first. Gate is enforced here (server) — not just in the UI.
+  // DEMOGRAPHICS — shown inline before every non-demographics survey
+  //
+  // If the user hasn't completed demographics yet, fetch the
+  // demographics questions from the published demographics survey
+  // and pass them to the shell. The shell shows them as stage 1
+  // before the actual survey questions.
   // ============================================================
+  type DemographicsQuestion = {
+    _id: string;
+    number: number;
+    text: string;
+    fieldType: string;
+  };
+
   const isDemographicsSurvey =
     invitation.campaign.survey.surveyType === 'demographics';
 
-  if (!isDemographicsSurvey) {
-    const needsGate = invitation.demographicsCompletedAt === null;
+  let demographicsQuestions: DemographicsQuestion[] = [];
 
-    if (needsGate) {
-      const orgId = invitation.campaign.organizationId;
-
-      // Check if demographics was already completed (self-healing for
-      // respondents who existed before this gate was introduced)
-      const completedDemo = await prisma.invitation.findFirst({
-        where: {
-          userId: invitation.userId,
-          status: 'COMPLETED',
-          campaign: {
-            organizationId: orgId,
-            survey: { surveyType: 'demographics' },
-          },
+  if (!isDemographicsSurvey && invitation.demographicsCompletedAt === null) {
+    const demoSurvey = await prisma.survey.findFirst({
+      where: { surveyType: 'demographics', status: 'PUBLISHED' },
+      include: {
+        questions: {
+          orderBy: { questionNumber: 'asc' },
+          select: { id: true, questionNumber: true, text: true, config: true },
         },
-        select: { id: true, completedAt: true },
-      });
+      },
+    });
 
-      if (completedDemo) {
-        // Stamp the flag so future page loads skip this lookup
-        await prisma.invitation.update({
-          where: { id: invitation.id },
-          data: {
-            demographicsCompletedAt: completedDemo.completedAt,
-            demographicsInvitationId: completedDemo.id,
-          },
-        });
-        // Fall through — demographics already done, allow access
-      } else {
-        // Find their pending demographics invitation for this org
-        const pendingDemo = await prisma.invitation.findFirst({
-          where: {
-            userId: invitation.userId,
-            status: { not: 'COMPLETED' },
-            campaign: {
-              organizationId: orgId,
-              survey: { surveyType: 'demographics' },
-            },
-          },
-          select: { token: true },
-        });
-
-        if (pendingDemo) {
-          // Redirect to demographics; returnTo brings them back here after
-          redirect(`/s/${pendingDemo.token}?returnTo=${token}`);
-        }
-
-        // No demographics invitation found — admin needs to create one
-        return (
-          <SurveyError
-            icon="locked"
-            title="Prerequisites Not Set Up"
-            message="You must complete the Demographics survey before accessing this survey. Please contact your survey administrator."
-          />
-        );
-      }
+    if (demoSurvey) {
+      demographicsQuestions = demoSurvey.questions
+        .map((q) => ({
+          _id: q.id,
+          number: q.questionNumber,
+          text: q.text,
+          fieldType:
+            ((q.config as { fieldType?: string }) ?? {}).fieldType ?? '',
+        }))
+        .filter((q) => q.fieldType !== '');
     }
   }
   // ============================================================
@@ -231,12 +200,6 @@ export default async function SurveyPage({
       response.textValue ?? response.value ?? 0;
   }
 
-  // Validate returnTo param: must be a valid UUID (security: never a full URL)
-  let validatedReturnTo: string | undefined;
-  if (searchParams?.returnTo && UUID_REGEX.test(searchParams.returnTo)) {
-    validatedReturnTo = searchParams.returnTo;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <SingleQuestionSurveyShell
@@ -244,7 +207,7 @@ export default async function SurveyPage({
         invitationToken={token}
         existingResponses={existingResponses}
         isCompleted={invitation.status === 'COMPLETED'}
-        returnTo={validatedReturnTo}
+        demographicsQuestions={demographicsQuestions}
       />
     </div>
   );

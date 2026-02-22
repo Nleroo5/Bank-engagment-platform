@@ -9,12 +9,8 @@ import {
   RATE_LIMITS,
 } from '@/lib/rate-limit';
 
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 const submitSchema = z.object({
   token: z.string().uuid(),
-  returnTo: z.string().uuid().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -37,15 +33,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { token, returnTo } = submitSchema.parse(body);
+    const { token } = submitSchema.parse(body);
 
-    // Look up invitation by token — include campaign.survey for demographics check
+    // Look up invitation by token
     const invitation = await prisma.invitation.findUnique({
       where: { token },
       include: {
-        campaign: {
-          include: { survey: true },
-        },
+        campaign: true,
         responses: true,
       },
     });
@@ -116,25 +110,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate returnTo: must be a UUID for an invitation belonging to the same user
-    // This prevents open-redirect attacks — the token is never used as a URL directly
-    let validatedReturnTo: string | null = null;
-    if (returnTo && UUID_REGEX.test(returnTo)) {
-      const returnInvitation = await prisma.invitation.findFirst({
-        where: { token: returnTo, userId: invitation.userId },
-        select: { token: true },
-      });
-      if (returnInvitation) {
-        validatedReturnTo = returnInvitation.token;
-      }
-    }
-
     const completedAt = new Date();
-    const isDemographicsSurvey =
-      invitation.campaign.survey.surveyType === 'demographics';
 
     // ============================================
-    // TRANSACTION: Reverse-scoring, completion, demographics gate fan-out
+    // TRANSACTION: Reverse-scoring + completion
     // ============================================
     await prisma.$transaction(async (tx) => {
       // 1. Fetch PostgreSQL survey data to get scale and reversed questions
@@ -190,33 +169,9 @@ export async function POST(request: NextRequest) {
           lastActiveAt: completedAt,
         },
       });
-
-      // 5. Demographics gate fan-out: when demographics is completed, stamp the
-      //    flag on all other invitations for this user+org so they pass the gate
-      //    immediately without needing an extra redirect
-      if (isDemographicsSurvey) {
-        await tx.invitation.updateMany({
-          where: {
-            userId: invitation.userId,
-            id: { not: invitation.id },
-            demographicsCompletedAt: null,
-            campaign: {
-              organizationId: invitation.campaign.organizationId,
-            },
-          },
-          data: {
-            demographicsCompletedAt: completedAt,
-            demographicsInvitationId: invitation.id,
-          },
-        });
-      }
     });
 
-    return NextResponse.json({
-      success: true,
-      completedAt,
-      returnTo: validatedReturnTo,
-    });
+    return NextResponse.json({ success: true, completedAt });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
