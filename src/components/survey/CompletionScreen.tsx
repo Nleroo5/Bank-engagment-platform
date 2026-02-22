@@ -19,8 +19,8 @@ export function CompletionScreen({ survey }: CompletionScreenProps) {
         <Image
           src="/header-logo.png"
           alt="Logo"
-          width={180}
-          height={60}
+          width={260}
+          height={87}
           priority
           className="h-auto w-auto"
         />
