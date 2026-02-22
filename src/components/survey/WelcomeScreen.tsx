@@ -6,7 +6,9 @@ import type { SplashConfig } from '@/types/splash';
 import { Clock, Calendar, Shield } from 'lucide-react';
 
 interface WelcomeScreenProps {
-  survey: Survey;
+  survey?: Survey | null;
+  /** Fallback title when no survey object or splashConfig.welcomeTitle is available */
+  fallbackTitle?: string;
   onBegin: () => void;
   splashConfig?: SplashConfig;
   isAnonymous?: boolean;
@@ -23,13 +25,14 @@ function formatEndDate(date: Date | string): string {
 
 export function WelcomeScreen({
   survey,
+  fallbackTitle,
   onBegin,
   splashConfig,
   isAnonymous,
   campaignEndDate,
 }: WelcomeScreenProps) {
-  const title = splashConfig?.welcomeTitle || survey.title;
-  const message = splashConfig?.welcomeMessage || survey.welcomeMessage;
+  const title = splashConfig?.welcomeTitle || survey?.title || fallbackTitle || '';
+  const message = splashConfig?.welcomeMessage || survey?.welcomeMessage;
   const buttonText = splashConfig?.buttonText || 'Begin Survey';
   const bankName = splashConfig?.bankName;
   const logoUrl = splashConfig?.logoUrl;
@@ -72,7 +75,7 @@ export function WelcomeScreen({
 
         {/* Logistics */}
         <div className="mb-6 space-y-2">
-          {survey.estimatedMinutes && (
+          {survey?.estimatedMinutes && (
             <div className="flex items-center gap-2 text-gray-600">
               <Clock className="h-5 w-5 shrink-0" aria-hidden="true" />
               <span>Estimated time: {survey.estimatedMinutes} minutes</span>
@@ -92,7 +95,7 @@ export function WelcomeScreen({
           )}
         </div>
 
-        {survey.instructions && (
+        {survey?.instructions && (
           <div className="mb-6 rounded-md bg-blue-50 p-4">
             <h2 className="mb-2 font-semibold text-blue-900">Instructions</h2>
             <div className="prose prose-sm text-blue-800">

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { parseSplashConfig } from '@/types/splash';
 import { SingleQuestionAnonymousSurveyShell } from '@/components/survey/SingleQuestionAnonymousSurveyShell';
-import AccessCodeEntry from '@/components/survey/AccessCodeEntry';
+import AnonymousSplash from '@/components/survey/AnonymousSplash';
 
 interface AnonymousSurveyPageProps {
   params: {
@@ -198,10 +198,10 @@ export default async function AnonymousSurveyPage({
   }
 
   // ============================================
-  // 3. No session: Show access code entry
+  // 3. No session: Show splash / welcome screen
   // ============================================
   return (
-    <AccessCodeEntry
+    <AnonymousSplash
       accessCode={normalizedCode}
       surveyTitle={campaign.surveyTitle}
       splashConfig={parseSplashConfig(campaign.splashConfig)}
