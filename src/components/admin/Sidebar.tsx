@@ -39,7 +39,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-blue-900 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-primary-500 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -48,7 +48,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex h-16 items-center justify-between px-6 lg:justify-center">
             <button
               onClick={onClose}
-              className="rounded-md p-3 text-blue-200 hover:text-white lg:hidden"
+              className="rounded-md p-3 text-primary-200 hover:text-white lg:hidden"
               aria-label="Close sidebar"
             >
               <X className="h-6 w-6" />
@@ -68,8 +68,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   onClick={onClose}
                   className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-blue-800 text-white'
-                      : 'text-blue-100 hover:bg-blue-800 hover:text-white'
+                      ? 'bg-primary-700 text-white'
+                      : 'text-primary-100 hover:bg-primary-700 hover:text-white'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -80,11 +80,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </nav>
 
           {/* Footer */}
-          <footer className="border-t border-blue-800 p-4">
-            <p className="text-xs text-blue-300">
+          <footer className="border-t border-primary-700 p-4">
+            <p className="text-xs text-primary-200">
               Bank Engagement Survey Platform
             </p>
-            <p className="text-xs text-blue-400">v0.1.0</p>
+            <p className="text-xs text-primary-300">v0.1.0</p>
           </footer>
         </div>
       </div>
