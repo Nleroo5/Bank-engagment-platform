@@ -89,6 +89,7 @@ export default function AccessCodeEntry({
                 src={logoUrl}
                 alt={bankName ? `${bankName} logo` : 'Organization logo'}
                 fill
+                sizes="220px"
                 className="object-contain"
                 priority
               />

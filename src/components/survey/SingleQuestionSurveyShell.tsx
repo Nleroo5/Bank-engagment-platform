@@ -509,13 +509,15 @@ export function SingleQuestionSurveyShell({
   // ============================================================
   if (stage === 'welcome') {
     return (
+      <div className="min-h-screen bg-white px-4 py-12">
         <WelcomeScreen
           survey={survey}
           splashConfig={splashConfig ?? undefined}
           campaignEndDate={campaignEndDate}
           onBegin={handleBegin}
         />
-      );
+      </div>
+    );
   }
 
   if (stage === 'completed') {

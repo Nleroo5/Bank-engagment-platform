@@ -44,8 +44,8 @@ export function WelcomeScreen({
               src={logoUrl}
               alt={bankName ? `${bankName} logo` : 'Organization logo'}
               fill
+              sizes="220px"
               className="object-contain"
-              unoptimized={false}
             />
           </div>
         ) : (

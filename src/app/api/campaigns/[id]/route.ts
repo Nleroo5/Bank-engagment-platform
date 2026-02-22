@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+
+const SplashConfigSchema = z.object({
+  bankName: z.string().max(100).optional(),
+  logoUrl: z.string().url().max(500).optional(),
+  welcomeTitle: z.string().max(200).optional(),
+  welcomeMessage: z.string().max(500).optional(),
+  buttonText: z.string().max(50).optional(),
+}).strict();
 
 const updateCampaignSchema = z.object({
   status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'ARCHIVED']).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   reminderDays: z.number().int().min(1).max(30).optional(),
+  splashConfig: SplashConfigSchema.nullable().optional(),
 });
 
 export async function GET(
@@ -93,6 +103,10 @@ export async function PUT(
         ...data,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
+        splashConfig:
+          data.splashConfig === null
+            ? Prisma.JsonNull
+            : data.splashConfig ?? undefined,
       },
     });
 

@@ -589,13 +589,13 @@ export function NewCampaignForm({
                         <input
                           type="file"
                           id="splashLogo"
-                          accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                          accept="image/jpeg,image/png,image/webp"
                           onChange={handleLogoChange}
                           className="sr-only"
                         />
                       </label>
                       <p className="mt-1 text-xs text-gray-500">
-                        JPG, PNG, WebP or SVG · max 2 MB
+                        JPG, PNG or WebP · max 2 MB
                       </p>
                     </div>
                   </div>
