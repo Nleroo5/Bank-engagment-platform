@@ -1144,6 +1144,7 @@ export function NewCampaignForm({
                     <div
                       className="overflow-hidden rounded-lg border border-gray-200 shadow-sm"
                       style={{
+                        position: 'relative',
                         width: `${Math.round(FULL_WIDTH * SCALE)}px`,
                         height: `${Math.round(previewInnerHeight * SCALE)}px`,
                       }}
@@ -1152,6 +1153,9 @@ export function NewCampaignForm({
                         ref={previewInnerRef}
                         className="pointer-events-none"
                         style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
                           width: `${FULL_WIDTH}px`,
                           transformOrigin: 'top left',
                           transform: `scale(${SCALE})`,
