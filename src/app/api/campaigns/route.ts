@@ -13,19 +13,13 @@ const SplashConfigSchema = z.object({
 
 export async function GET() {
   try {
-    // Fetch only non-deleted campaigns
     const campaigns = await prisma.surveyCampaign.findMany({
-      where: {
-        deletedAt: null,
-      },
+      where: { deletedAt: null },
       include: {
         organization: true,
-        invitations: true,
         anonymousResponses: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: 'desc' },
     });
 
     return NextResponse.json({ campaigns });
@@ -47,14 +41,11 @@ export async function POST(request: NextRequest) {
       organizationName,
       startDate,
       endDate,
-      reminderDays,
-      isAnonymous,
       accessCode,
       maxResponses,
       splashConfig,
     } = body;
 
-    // Fetch survey from PostgreSQL to get the title
     const survey = await prisma.survey.findUnique({
       where: { id: surveyId },
       select: { title: true },
@@ -64,19 +55,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Survey not found' }, { status: 404 });
     }
 
-    // Handle organization - either find existing or create new
     let finalOrganizationId = organizationId;
 
     if (!organizationId && organizationName) {
-      // Create new organization
       const newOrganization = await prisma.organization.create({
-        data: {
-          name: organizationName,
-        },
+        data: { name: organizationName },
       });
       finalOrganizationId = newOrganization.id;
     } else if (organizationId) {
-      // Validate organization exists
       const organization = await prisma.organization.findUnique({
         where: { id: organizationId },
       });
@@ -94,29 +80,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate anonymous survey requirements
-    if (isAnonymous) {
-      if (!accessCode) {
-        return NextResponse.json(
-          { error: 'Access code is required for anonymous surveys' },
-          { status: 400 }
-        );
-      }
-
-      // Check access code uniqueness
-      const existingCampaign = await prisma.surveyCampaign.findUnique({
-        where: { accessCode: accessCode.toUpperCase() },
-      });
-
-      if (existingCampaign) {
-        return NextResponse.json(
-          { error: 'This access code is already in use' },
-          { status: 400 }
-        );
-      }
+    if (!accessCode) {
+      return NextResponse.json(
+        { error: 'Access code is required' },
+        { status: 400 }
+      );
     }
 
-    // Validate and sanitize splashConfig if provided
+    const existingCampaign = await prisma.surveyCampaign.findUnique({
+      where: { accessCode: accessCode.toUpperCase() },
+    });
+
+    if (existingCampaign) {
+      return NextResponse.json(
+        { error: 'This access code is already in use' },
+        { status: 400 }
+      );
+    }
+
     let validatedSplashConfig: z.infer<typeof SplashConfigSchema> | null = null;
     if (splashConfig != null) {
       const parsed = SplashConfigSchema.safeParse(splashConfig);
@@ -129,26 +110,19 @@ export async function POST(request: NextRequest) {
       validatedSplashConfig = parsed.data;
     }
 
-    // Create the campaign
     const campaign = await prisma.surveyCampaign.create({
       data: {
-        surveyId: surveyId,
+        surveyId,
         surveyTitle: survey.title,
         organizationId: finalOrganizationId,
         status: 'DRAFT',
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
-        reminderDays: parseInt(reminderDays) || 3,
-        isAnonymous: Boolean(isAnonymous),
-        accessCode: isAnonymous && accessCode ? accessCode.toUpperCase() : null,
+        accessCode: accessCode.toUpperCase(),
         maxResponses: maxResponses ? parseInt(maxResponses) : null,
         splashConfig: validatedSplashConfig ?? Prisma.JsonNull,
-        // Note: maxInvitationUses would be stored per-invitation, not per-campaign
-        // This can be implemented when creating invitations
       },
-      include: {
-        organization: true,
-      },
+      include: { organization: true },
     });
 
     return NextResponse.json({ campaign }, { status: 201 });

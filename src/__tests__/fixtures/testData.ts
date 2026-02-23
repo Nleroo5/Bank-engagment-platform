@@ -1,10 +1,4 @@
-import type {
-  User,
-  Organization,
-  SurveyCampaign,
-  Invitation,
-  Response,
-} from '@prisma/client';
+import type { User, Organization, SurveyCampaign } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -31,14 +25,8 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
   email: `test-${Date.now()}@example.com`,
   name: 'Test User',
   passwordHash: null,
-  role: 'RESPONDENT',
+  role: 'ORG_ADMIN',
   organizationId: uuidv4(),
-  division: 'Technology',
-  jobRole: 'IT Specialist',
-  employmentStatus: 'FULL_TIME',
-  gender: 'MALE',
-  timeAtBank: '1-3 years',
-  bankExperience: '5-10 years',
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -55,48 +43,14 @@ export const createMockCampaign = (
   status: 'ACTIVE',
   startDate: new Date(),
   endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-  reminderDays: 3,
   createdById: null,
   deletedAt: null,
   deletedBy: null,
-  isAnonymous: false,
-  accessCode: null,
+  accessCode: 'TESTCODE',
   maxResponses: null,
   splashConfig: null,
   createdAt: new Date(),
   updatedAt: new Date(),
-  ...overrides,
-});
-
-export const createMockInvitation = (
-  overrides?: Partial<Invitation>
-): Invitation => ({
-  id: uuidv4(),
-  campaignId: uuidv4(),
-  userId: uuidv4(),
-  token: uuidv4(),
-  status: 'PENDING',
-  sentAt: null,
-  openedAt: null,
-  completedAt: null,
-  reminderSentAt: null,
-  createdAt: new Date(),
-  demographicsCompletedAt: null,
-  demographicsInvitationId: null,
-  ...overrides,
-});
-
-export const createMockResponse = (
-  overrides?: Partial<Response>
-): Response => ({
-  id: uuidv4(),
-  invitationId: uuidv4(),
-  questionId: `question-${Date.now()}`,
-  questionNumber: 1,
-  value: 5,
-  adjustedValue: null,
-  textValue: null,
-  submittedAt: new Date(),
   ...overrides,
 });
 
@@ -114,49 +68,6 @@ export const createMockUsers = (
       name: `Test User ${i + 1}`,
     })
   );
-};
-
-/**
- * Create multiple invitations for a campaign
- */
-export const createMockInvitations = (
-  count: number,
-  campaignId: string,
-  baseOverrides?: Partial<Invitation>
-): Invitation[] => {
-  return Array.from({ length: count }, () =>
-    createMockInvitation({
-      ...baseOverrides,
-      campaignId,
-    })
-  );
-};
-
-/**
- * Create a complete test scenario with organization, users, campaign, and invitations
- */
-export const createTestScenario = (respondentCount: number = 5) => {
-  const organization = createMockOrganization();
-  const users = createMockUsers(respondentCount, {
-    organizationId: organization.id,
-  });
-  const campaign = createMockCampaign({ organizationId: organization.id });
-  const invitations = users.map((user) =>
-    createMockInvitation({
-      campaignId: campaign.id,
-      userId: user.id,
-      status: 'COMPLETED',
-      sentAt: new Date(),
-      completedAt: new Date(),
-    })
-  );
-
-  return {
-    organization,
-    users,
-    campaign,
-    invitations,
-  };
 };
 
 /**

@@ -8,11 +8,9 @@ export default withAuth(
 
     // Public paths - allow unauthenticated access
     if (
-      path.startsWith('/s/') || // Survey token URLs
       path.startsWith('/a/') || // Anonymous access code URLs
       path.startsWith('/api/anonymous/') || // Anonymous API endpoints
       path.startsWith('/api/sanity/') || // Sanity CMS data (surveys, questions) - needed for survey rendering
-      path.startsWith('/api/responses') || // Public response submission (uses token validation)
       path === '/' || // Home page
       path === '/admin/login' // Login page
     ) {
@@ -57,14 +55,6 @@ export default withAuth(
       }
 
       if (role === 'ORG_ADMIN') {
-        // Block access to user management
-        if (path.startsWith('/api/users') || path === '/admin/users') {
-          return NextResponse.json(
-            { error: 'Forbidden: User management requires super admin access' },
-            { status: 403 }
-          );
-        }
-        // Allow other admin and API access
         return NextResponse.next();
       }
 

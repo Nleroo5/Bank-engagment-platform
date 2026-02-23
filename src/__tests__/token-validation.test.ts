@@ -1,141 +1,52 @@
 import { describe, it, expect } from 'vitest';
-import type { Invitation, SurveyCampaign } from '@prisma/client';
+import type { SurveyCampaign } from '@prisma/client';
 
 /**
- * Unit tests for token validation logic
- * Tests the business rules around invitation tokens
+ * Unit tests for anonymous survey access validation logic.
+ * Tests the business rules around campaign access codes.
  */
 
-type InvitationWithCampaign = Invitation & {
-  campaign: SurveyCampaign;
-};
-
-describe('Token Validation Logic', () => {
-  describe('Token Existence Validation', () => {
-    it('should return error for non-existent token', () => {
-      const invitation = null;
-
-      const isValid = invitation !== null;
+describe('Anonymous Survey Access Validation', () => {
+  describe('Campaign Existence Validation', () => {
+    it('should return error for non-existent campaign', () => {
+      const campaign = null;
+      const isValid = campaign !== null;
       expect(isValid).toBe(false);
     });
 
-    it('should accept existing token', () => {
-      const invitation = {
+    it('should accept existing campaign', () => {
+      const campaign = {
         id: '123',
-        token: 'valid-token',
-      } as Invitation;
+        accessCode: 'TESTCODE',
+      } as SurveyCampaign;
 
-      const isValid = invitation !== null;
-      expect(isValid).toBe(true);
-    });
-  });
-
-  describe('Invitation Status Validation', () => {
-    it('should reject completed surveys', () => {
-      const invitation = {
-        id: '123',
-        status: 'COMPLETED',
-        completedAt: new Date(),
-      } as Invitation;
-
-      const isValid = invitation.status !== 'COMPLETED';
-      expect(isValid).toBe(false);
-    });
-
-    it('should accept pending invitations', () => {
-      const invitation = {
-        id: '123',
-        status: 'PENDING',
-        completedAt: null,
-      } as Invitation;
-
-      const isValid = invitation.status !== 'COMPLETED';
-      expect(isValid).toBe(true);
-    });
-
-    it('should accept sent invitations', () => {
-      const invitation = {
-        id: '123',
-        status: 'SENT',
-        sentAt: new Date(),
-      } as Invitation;
-
-      const isValid = invitation.status !== 'COMPLETED';
-      expect(isValid).toBe(true);
-    });
-
-    it('should accept in-progress invitations', () => {
-      const invitation = {
-        id: '123',
-        status: 'IN_PROGRESS',
-      } as Invitation;
-
-      const isValid = invitation.status !== 'COMPLETED';
-      expect(isValid).toBe(true);
-    });
-
-    it('should accept opened invitations', () => {
-      const invitation = {
-        id: '123',
-        status: 'OPENED',
-        openedAt: new Date(),
-      } as Invitation;
-
-      const isValid = invitation.status !== 'COMPLETED';
+      const isValid = campaign !== null;
       expect(isValid).toBe(true);
     });
   });
 
   describe('Campaign Status Validation', () => {
-    it('should reject invitations from draft campaigns', () => {
-      const invitation = {
-        id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'DRAFT',
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
-
-      const isValid = invitation.campaign.status === 'ACTIVE';
+    it('should reject draft campaigns', () => {
+      const campaign = { id: '123', status: 'DRAFT' } as SurveyCampaign;
+      const isValid = campaign.status === 'ACTIVE';
       expect(isValid).toBe(false);
     });
 
-    it('should accept invitations from active campaigns', () => {
-      const invitation = {
-        id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
-
-      const isValid = invitation.campaign.status === 'ACTIVE';
+    it('should accept active campaigns', () => {
+      const campaign = { id: '123', status: 'ACTIVE' } as SurveyCampaign;
+      const isValid = campaign.status === 'ACTIVE';
       expect(isValid).toBe(true);
     });
 
-    it('should reject invitations from completed campaigns', () => {
-      const invitation = {
-        id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'COMPLETED',
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
-
-      const isValid = invitation.campaign.status === 'ACTIVE';
+    it('should reject completed campaigns', () => {
+      const campaign = { id: '123', status: 'COMPLETED' } as SurveyCampaign;
+      const isValid = campaign.status === 'ACTIVE';
       expect(isValid).toBe(false);
     });
 
-    it('should reject invitations from cancelled campaigns', () => {
-      const invitation = {
-        id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'CANCELLED',
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
-
-      const isValid = invitation.campaign.status === 'ACTIVE';
+    it('should reject archived campaigns', () => {
+      const campaign = { id: '123', status: 'ARCHIVED' } as SurveyCampaign;
+      const isValid = campaign.status === 'ACTIVE';
       expect(isValid).toBe(false);
     });
   });
@@ -145,148 +56,184 @@ describe('Token Validation Logic', () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      const invitation = {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: yesterday,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+        status: 'ACTIVE',
+        endDate: yesterday,
+      } as SurveyCampaign;
 
       const now = new Date();
-      const isExpired =
-        invitation.campaign.endDate && invitation.campaign.endDate < now;
+      const isExpired = campaign.endDate && campaign.endDate < now;
       expect(isExpired).toBe(true);
-    });
-
-    it('should accept campaigns ending today', () => {
-      const now = new Date();
-      const today = new Date(now); // Use same timestamp
-
-      const invitation = {
-        id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: today,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
-
-      const isExpired =
-        invitation.campaign.endDate && invitation.campaign.endDate < now;
-      expect(isExpired).toBe(false);
     });
 
     it('should accept campaigns ending in the future', () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const invitation = {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: tomorrow,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+        status: 'ACTIVE',
+        endDate: tomorrow,
+      } as SurveyCampaign;
 
       const now = new Date();
-      const isExpired =
-        invitation.campaign.endDate && invitation.campaign.endDate < now;
+      const isExpired = campaign.endDate && campaign.endDate < now;
+      expect(isExpired).toBe(false);
+    });
+
+    it('should accept campaigns ending today (same moment)', () => {
+      const now = new Date();
+      const today = new Date(now);
+
+      const campaign = {
+        id: '123',
+        status: 'ACTIVE',
+        endDate: today,
+      } as SurveyCampaign;
+
+      const isExpired = campaign.endDate && campaign.endDate < now;
       expect(isExpired).toBe(false);
     });
 
     it('should accept campaigns with no end date', () => {
-      const invitation = {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: null,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+        status: 'ACTIVE',
+        endDate: null,
+      } as SurveyCampaign;
 
       const now = new Date();
-      const isExpired =
-        invitation.campaign.endDate && invitation.campaign.endDate < now;
-      expect(isExpired).toBeFalsy(); // null is falsy, which is correct behavior
+      const isExpired = campaign.endDate && campaign.endDate < now;
+      expect(isExpired).toBeFalsy();
+    });
+
+    it('should accept campaigns ending far in the future', () => {
+      const farFuture = new Date('2099-12-31');
+
+      const campaign = {
+        id: '123',
+        status: 'ACTIVE',
+        endDate: farFuture,
+      } as SurveyCampaign;
+
+      const now = new Date();
+      const isExpired = campaign.endDate && campaign.endDate < now;
+      expect(isExpired).toBe(false);
+    });
+
+    it('should reject campaigns with very old end dates', () => {
+      const veryOldDate = new Date('2000-01-01');
+
+      const campaign = {
+        id: '123',
+        status: 'ACTIVE',
+        endDate: veryOldDate,
+      } as SurveyCampaign;
+
+      const now = new Date();
+      const isExpired = campaign.endDate && campaign.endDate < now;
+      expect(isExpired).toBe(true);
+    });
+  });
+
+  describe('Campaign Start Date Validation', () => {
+    it('should reject campaigns that have not started yet', () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const campaign = {
+        id: '123',
+        status: 'ACTIVE',
+        startDate: tomorrow,
+      } as SurveyCampaign;
+
+      const now = new Date();
+      const hasNotStarted = campaign.startDate && campaign.startDate > now;
+      expect(hasNotStarted).toBe(true);
+    });
+
+    it('should accept campaigns that have already started', () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const campaign = {
+        id: '123',
+        status: 'ACTIVE',
+        startDate: yesterday,
+      } as SurveyCampaign;
+
+      const now = new Date();
+      const hasNotStarted = campaign.startDate && campaign.startDate > now;
+      expect(hasNotStarted).toBe(false);
+    });
+
+    it('should accept campaigns with no start date', () => {
+      const campaign = {
+        id: '123',
+        status: 'ACTIVE',
+        startDate: null,
+      } as SurveyCampaign;
+
+      const now = new Date();
+      const hasNotStarted = campaign.startDate && campaign.startDate > now;
+      expect(hasNotStarted).toBeFalsy();
     });
   });
 
   describe('Combined Validation Rules', () => {
-    const validateInvitation = (invitation: InvitationWithCampaign | null) => {
-      if (!invitation) {
-        return { valid: false, error: 'Invalid invitation token' };
+    const validateCampaignAccess = (campaign: SurveyCampaign | null) => {
+      if (!campaign) {
+        return { valid: false, error: 'Invalid access code' };
       }
 
-      if (invitation.status === 'COMPLETED') {
-        return {
-          valid: false,
-          error: 'This survey has already been completed',
-        };
-      }
-
-      if (invitation.campaign.status !== 'ACTIVE') {
+      if (campaign.status !== 'ACTIVE') {
         return { valid: false, error: 'This survey is not currently active' };
       }
 
       const now = new Date();
-      if (invitation.campaign.endDate && invitation.campaign.endDate < now) {
+      if (campaign.startDate && campaign.startDate > now) {
+        return { valid: false, error: 'This survey has not started yet' };
+      }
+
+      if (campaign.endDate && campaign.endDate < now) {
         return { valid: false, error: 'This survey has expired' };
       }
 
       return { valid: true, error: null };
     };
 
-    it('should validate a fully valid invitation', () => {
+    it('should validate a fully valid campaign', () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const invitation = {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: tomorrow,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+        status: 'ACTIVE',
+        startDate: null,
+        endDate: tomorrow,
+      } as SurveyCampaign;
 
-      const result = validateInvitation(invitation);
+      const result = validateCampaignAccess(campaign);
       expect(result.valid).toBe(true);
       expect(result.error).toBe(null);
     });
 
-    it('should reject null invitation with appropriate error', () => {
-      const result = validateInvitation(null);
+    it('should reject null campaign with appropriate error', () => {
+      const result = validateCampaignAccess(null);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('Invalid invitation token');
-    });
-
-    it('should reject completed invitation with appropriate error', () => {
-      const invitation = {
-        id: '123',
-        status: 'COMPLETED',
-        campaign: {
-          status: 'ACTIVE',
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
-
-      const result = validateInvitation(invitation);
-      expect(result.valid).toBe(false);
-      expect(result.error).toBe('This survey has already been completed');
+      expect(result.error).toBe('Invalid access code');
     });
 
     it('should reject inactive campaign with appropriate error', () => {
-      const invitation = {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'DRAFT',
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+        status: 'DRAFT',
+        startDate: null,
+        endDate: null,
+      } as SurveyCampaign;
 
-      const result = validateInvitation(invitation);
+      const result = validateCampaignAccess(campaign);
       expect(result.valid).toBe(false);
       expect(result.error).toBe('This survey is not currently active');
     });
@@ -295,187 +242,77 @@ describe('Token Validation Logic', () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      const invitation = {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: yesterday,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+        status: 'ACTIVE',
+        startDate: null,
+        endDate: yesterday,
+      } as SurveyCampaign;
 
-      const result = validateInvitation(invitation);
+      const result = validateCampaignAccess(campaign);
       expect(result.valid).toBe(false);
       expect(result.error).toBe('This survey has expired');
     });
 
     it('should check errors in priority order', () => {
-      // Multiple validation errors - should return first one encountered
-      const invitation = {
-        id: '123',
-        status: 'COMPLETED', // First error
-        campaign: {
-          status: 'DRAFT', // Second error
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+      // Multiple validation errors — should return first one encountered
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
 
-      const result = validateInvitation(invitation);
+      const campaign = {
+        id: '123',
+        status: 'DRAFT', // First error
+        startDate: null,
+        endDate: yesterday, // Second error
+      } as SurveyCampaign;
+
+      const result = validateCampaignAccess(campaign);
       expect(result.valid).toBe(false);
-      // Should return completion error first
-      expect(result.error).toBe('This survey has already been completed');
+      expect(result.error).toBe('This survey is not currently active');
     });
   });
 
-  describe('Status Transition Validation', () => {
-    it('should allow transition from PENDING to SENT', () => {
-      const currentStatus = 'PENDING';
-      const newStatus = 'SENT';
-
-      const validTransitions: Record<string, string[]> = {
-        PENDING: ['SENT', 'IN_PROGRESS'],
-        SENT: ['OPENED', 'IN_PROGRESS'],
-        OPENED: ['IN_PROGRESS'],
-        IN_PROGRESS: ['COMPLETED'],
-      };
-
-      const isValidTransition =
-        validTransitions[currentStatus]?.includes(newStatus) ?? false;
-      expect(isValidTransition).toBe(true);
-    });
-
-    it('should allow transition from SENT to OPENED', () => {
-      const currentStatus = 'SENT';
-      const newStatus = 'OPENED';
-
-      const validTransitions: Record<string, string[]> = {
-        PENDING: ['SENT', 'IN_PROGRESS'],
-        SENT: ['OPENED', 'IN_PROGRESS'],
-        OPENED: ['IN_PROGRESS'],
-        IN_PROGRESS: ['COMPLETED'],
-      };
-
-      const isValidTransition =
-        validTransitions[currentStatus]?.includes(newStatus) ?? false;
-      expect(isValidTransition).toBe(true);
-    });
-
-    it('should allow transition from OPENED to IN_PROGRESS', () => {
-      const currentStatus = 'OPENED';
-      const newStatus = 'IN_PROGRESS';
-
-      const validTransitions: Record<string, string[]> = {
-        PENDING: ['SENT', 'IN_PROGRESS'],
-        SENT: ['OPENED', 'IN_PROGRESS'],
-        OPENED: ['IN_PROGRESS'],
-        IN_PROGRESS: ['COMPLETED'],
-      };
-
-      const isValidTransition =
-        validTransitions[currentStatus]?.includes(newStatus) ?? false;
-      expect(isValidTransition).toBe(true);
-    });
-
-    it('should allow transition from IN_PROGRESS to COMPLETED', () => {
-      const currentStatus = 'IN_PROGRESS';
-      const newStatus = 'COMPLETED';
-
-      const validTransitions: Record<string, string[]> = {
-        PENDING: ['SENT', 'IN_PROGRESS'],
-        SENT: ['OPENED', 'IN_PROGRESS'],
-        OPENED: ['IN_PROGRESS'],
-        IN_PROGRESS: ['COMPLETED'],
-      };
-
-      const isValidTransition =
-        validTransitions[currentStatus]?.includes(newStatus) ?? false;
-      expect(isValidTransition).toBe(true);
-    });
-
-    it('should reject invalid status transitions', () => {
-      const currentStatus = 'COMPLETED';
-      const newStatus = 'SENT'; // Cannot go back from completed
-
-      const validTransitions: Record<string, string[]> = {
-        PENDING: ['SENT', 'IN_PROGRESS'],
-        SENT: ['OPENED', 'IN_PROGRESS'],
-        OPENED: ['IN_PROGRESS'],
-        IN_PROGRESS: ['COMPLETED'],
-      };
-
-      const isValidTransition =
-        validTransitions[currentStatus]?.includes(newStatus) ?? false;
-      expect(isValidTransition).toBe(false);
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle missing campaign reference gracefully', () => {
-      const invitation = {
+  describe('Max Responses Validation', () => {
+    it('should detect when max responses is reached', () => {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: undefined,
-      } as unknown as InvitationWithCampaign;
+        status: 'ACTIVE',
+        maxResponses: 100,
+      } as SurveyCampaign;
 
-      // Should not throw error, but fail validation
-      expect(() => {
-        const isValid = invitation.campaign?.status === 'ACTIVE';
-        expect(isValid).toBe(false);
-      }).not.toThrow();
+      const completedCount = 100;
+      const isFull =
+        campaign.maxResponses !== null &&
+        completedCount >= campaign.maxResponses;
+      expect(isFull).toBe(true);
     });
 
-    it('should handle date comparison at exact expiration time', () => {
-      const now = new Date();
-      const expirationTime = new Date(now.getTime());
-
-      const invitation = {
+    it('should allow access when max responses not yet reached', () => {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: expirationTime,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+        status: 'ACTIVE',
+        maxResponses: 100,
+      } as SurveyCampaign;
 
-      // Should not be expired at exact moment (< not <=)
-      const isExpired =
-        invitation.campaign.endDate && invitation.campaign.endDate < now;
-      expect(isExpired).toBe(false);
+      const completedCount = 50;
+      const isFull =
+        campaign.maxResponses !== null &&
+        completedCount >= campaign.maxResponses;
+      expect(isFull).toBe(false);
     });
 
-    it('should handle very old expired dates', () => {
-      const veryOldDate = new Date('2000-01-01');
-
-      const invitation = {
+    it('should allow access when no max responses set', () => {
+      const campaign = {
         id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: veryOldDate,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
+        status: 'ACTIVE',
+        maxResponses: null,
+      } as SurveyCampaign;
 
-      const now = new Date();
-      const isExpired =
-        invitation.campaign.endDate && invitation.campaign.endDate < now;
-      expect(isExpired).toBe(true);
-    });
-
-    it('should handle far future dates', () => {
-      const farFuture = new Date('2099-12-31');
-
-      const invitation = {
-        id: '123',
-        status: 'SENT',
-        campaign: {
-          status: 'ACTIVE',
-          endDate: farFuture,
-        } as SurveyCampaign,
-      } as InvitationWithCampaign;
-
-      const now = new Date();
-      const isExpired =
-        invitation.campaign.endDate && invitation.campaign.endDate < now;
-      expect(isExpired).toBe(false);
+      const completedCount = 99999;
+      const isFull =
+        campaign.maxResponses !== null &&
+        completedCount >= campaign.maxResponses;
+      expect(isFull).toBe(false);
     });
   });
 });

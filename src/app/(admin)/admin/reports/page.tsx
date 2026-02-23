@@ -5,28 +5,18 @@ import { ReportsGrid } from '@/components/admin/ReportsGrid';
 export const dynamic = 'force-dynamic';
 
 export default async function ReportsListPage() {
-  // Fetch only non-deleted campaigns with completed/active status
   const campaigns = await prisma.surveyCampaign.findMany({
     where: {
       status: { in: ['COMPLETED', 'ACTIVE'] },
-      deletedAt: null, // Exclude deleted campaigns
+      deletedAt: null,
     },
     include: {
       organization: true,
-      // Count BOTH tracked invitations AND anonymous responses
       _count: {
         select: {
-          invitations: true, // Total tracked invitations
-          anonymousResponses: true, // Total anonymous sessions (completed + pending)
+          anonymousResponses: true,
         },
       },
-      // Get completed tracked invitations
-      invitations: {
-        where: {
-          status: 'COMPLETED',
-        },
-      },
-      // Get completed anonymous responses
       anonymousResponses: {
         where: {
           completedAt: { not: null },

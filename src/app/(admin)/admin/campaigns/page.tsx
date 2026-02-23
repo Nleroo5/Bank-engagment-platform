@@ -7,18 +7,12 @@ import { CampaignsTable } from '@/components/admin/CampaignsTable';
 export const dynamic = 'force-dynamic';
 
 export default async function CampaignsPage() {
-  // Fetch only non-deleted campaigns
   const campaigns = await prisma.surveyCampaign.findMany({
     where: {
       deletedAt: null,
     },
     include: {
       organization: true,
-      invitations: {
-        where: {
-          status: 'COMPLETED',
-        },
-      },
       anonymousResponses: {
         where: {
           completedAt: {
@@ -28,7 +22,6 @@ export default async function CampaignsPage() {
       },
       _count: {
         select: {
-          invitations: true,
           anonymousResponses: true,
         },
       },

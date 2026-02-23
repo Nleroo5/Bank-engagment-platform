@@ -3,16 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Trash2 } from 'lucide-react';
-import type { SurveyCampaign, Organization, Invitation, AnonymousResponse } from '@prisma/client';
+import type { SurveyCampaign, Organization, AnonymousResponse } from '@prisma/client';
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
 import { useRouter } from 'next/navigation';
 
 type CampaignWithRelations = SurveyCampaign & {
   organization: Organization;
-  invitations: Invitation[];
   anonymousResponses: AnonymousResponse[];
   _count: {
-    invitations: number;
     anonymousResponses: number;
   };
 };
@@ -30,20 +28,8 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const getResponseRate = (campaign: CampaignWithRelations) => {
-    // Count completed tracked invitations
-    const completedTracked = campaign.invitations.length; // Already filtered to completed in query
-
-    // Count completed anonymous responses
-    const completedAnonymous = campaign.anonymousResponses.length; // Already filtered to completed in query
-
-    // Total completed
-    const completedCount = completedTracked + completedAnonymous;
-
-    // Total invitations/responses
-    const totalTracked = campaign._count.invitations;
-    const totalAnonymous = campaign._count.anonymousResponses;
-    const totalCount = totalTracked + totalAnonymous;
-
+    const completedCount = campaign.anonymousResponses.length;
+    const totalCount = campaign._count.anonymousResponses;
     if (totalCount === 0) return 0;
     return Math.round((completedCount / totalCount) * 100);
   };
@@ -84,7 +70,6 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
         throw new Error(error.error || 'Failed to delete campaign');
       }
 
-      // Close dialog and refresh the page
       setDeleteDialog({ isOpen: false, campaign: null });
       router.refresh();
     } catch (error) {
@@ -102,11 +87,8 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
   };
 
   const getDeleteConsequences = (campaign: CampaignWithRelations) => {
-    const completedTracked = campaign.invitations.length; // Already filtered to completed
-    const completedAnonymous = campaign.anonymousResponses.length; // Already filtered to completed
-    const completedCount = completedTracked + completedAnonymous;
-    const totalInvitations = campaign._count.invitations;
-    const totalResponses = totalInvitations + campaign._count.anonymousResponses;
+    const completedCount = campaign.anonymousResponses.length;
+    const totalResponses = campaign._count.anonymousResponses;
     const consequences = [];
 
     if (totalResponses > 0) {

@@ -83,7 +83,7 @@ export function CampaignHeaderActions({
         title="Delete Campaign?"
         message={`Are you sure you want to delete "${campaign.surveyTitle}"? This action cannot be undone. ${
           campaign.status === 'ACTIVE'
-            ? 'Active campaigns with invitations cannot be deleted. Consider archiving instead.'
+            ? 'Active campaigns cannot be deleted. Consider archiving instead.'
             : ''
         }`}
         confirmLabel="Delete Campaign"

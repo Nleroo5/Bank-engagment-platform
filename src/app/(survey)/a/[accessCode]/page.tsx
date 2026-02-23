@@ -41,7 +41,6 @@ export default async function AnonymousSurveyPage({
           id: true,
           surveyTitle: true,
           surveyId: true,
-          isAnonymous: true,
           status: true,
           startDate: true,
           endDate: true,
@@ -57,7 +56,6 @@ export default async function AnonymousSurveyPage({
           id: true,
           surveyTitle: true,
           surveyId: true,
-          isAnonymous: true,
           status: true,
           startDate: true,
           endDate: true,
@@ -71,24 +69,6 @@ export default async function AnonymousSurveyPage({
 
   if (!campaign) {
     notFound();
-  }
-
-  // Verify this is an anonymous campaign
-  if (!campaign.isAnonymous) {
-    // Redirect to error page or show message
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-          <h1 className="mb-4 text-2xl font-bold text-red-600">
-            Invalid Survey Type
-          </h1>
-          <p className="text-gray-700">
-            This survey uses personalized invitations. Please use the link sent
-            to your email.
-          </p>
-        </div>
-      </div>
-    );
   }
 
   // Check if campaign is active

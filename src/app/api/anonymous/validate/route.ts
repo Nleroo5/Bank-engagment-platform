@@ -106,17 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 3. Validate campaign is anonymous
-    // ============================================
-    if (!campaign.isAnonymous) {
-      return NextResponse.json(
-        { error: 'This survey uses personalized invitations.' },
-        { status: 400 }
-      );
-    }
-
-    // ============================================
-    // 4. Validate campaign is active
+    // 3. Validate campaign is active
     // ============================================
     if (campaign.status !== 'ACTIVE') {
       return NextResponse.json(

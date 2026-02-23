@@ -2,11 +2,9 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import {
   BarChart3,
-  Users,
   Clock,
   TrendingUp,
   Plus,
-  Upload,
 } from 'lucide-react';
 import { RecentCampaignsTable } from '@/components/admin/RecentCampaignsTable';
 
@@ -14,29 +12,13 @@ import { RecentCampaignsTable } from '@/components/admin/RecentCampaignsTable';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  // Fetch stats (exclude deleted campaigns from all metrics)
-  const [campaigns, users, invitations, anonymousCompleted, anonymousPending] =
+  const [activeCampaigns, anonymousCompleted, anonymousPending] =
     await Promise.all([
-      // Total campaigns (active ones, not deleted)
+      // Total active campaigns (not deleted)
       prisma.surveyCampaign.count({
         where: {
           status: 'ACTIVE',
           deletedAt: null,
-        },
-      }),
-
-      // Total users
-      prisma.user.count(),
-
-      // Invitations from non-deleted campaigns only
-      prisma.invitation.findMany({
-        where: {
-          campaign: {
-            deletedAt: null,
-          },
-        },
-        select: {
-          status: true,
         },
       }),
 
@@ -57,45 +39,22 @@ export default async function DashboardPage() {
       }),
     ]);
 
-  // Calculate pending responses from tracked invitations (SENT or OPENED, not completed)
-  const pendingTrackedInvitations = invitations.filter(
-    (inv) => inv.status === 'SENT' || inv.status === 'OPENED'
-  ).length;
-
-  // Total pending responses = tracked + anonymous
-  const pendingResponses = pendingTrackedInvitations + anonymousPending;
-
-  // Calculate completion rate (both tracked and anonymous)
-  const completedTrackedInvitations = invitations.filter(
-    (inv) => inv.status === 'COMPLETED'
-  ).length;
-  const totalCompleted = completedTrackedInvitations + anonymousCompleted;
-  const totalInvitations = invitations.length + anonymousCompleted + anonymousPending;
-
+  const totalResponses = anonymousCompleted + anonymousPending;
   const completionRate =
-    totalInvitations > 0
-      ? Math.round((totalCompleted / totalInvitations) * 100)
+    totalResponses > 0
+      ? Math.round((anonymousCompleted / totalResponses) * 100)
       : 0;
 
   // Fetch recent campaigns (exclude deleted)
   const recentCampaigns = await prisma.surveyCampaign.findMany({
     where: {
-      deletedAt: null, // Exclude deleted campaigns
+      deletedAt: null,
     },
     include: {
       organization: true,
       _count: {
         select: {
-          invitations: true,
           anonymousResponses: true,
-        },
-      },
-      invitations: {
-        where: {
-          status: 'COMPLETED',
-        },
-        select: {
-          id: true,
         },
       },
       anonymousResponses: {
@@ -126,7 +85,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-3">
         {/* Total Active Campaigns */}
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
@@ -135,24 +94,11 @@ export default async function DashboardPage() {
                 Active Campaigns
               </p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
-                {campaigns}
+                {activeCampaigns}
               </p>
             </div>
             <div className="rounded-full bg-blue-100 p-3">
               <BarChart3 className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Total Users */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Users</p>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{users}</p>
-            </div>
-            <div className="rounded-full bg-purple-100 p-3">
-              <Users className="h-6 w-6 text-purple-600" />
             </div>
           </div>
         </div>
@@ -165,7 +111,7 @@ export default async function DashboardPage() {
                 Pending Responses
               </p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
-                {pendingResponses}
+                {anonymousPending}
               </p>
             </div>
             <div className="rounded-full bg-orange-100 p-3">
@@ -204,13 +150,6 @@ export default async function DashboardPage() {
           >
             <Plus className="h-4 w-4" />
             New Campaign
-          </Link>
-          <Link
-            href="/admin/users/import"
-            className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <Upload className="h-4 w-4" />
-            Import Users
           </Link>
         </div>
       </div>

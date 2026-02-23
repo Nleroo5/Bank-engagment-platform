@@ -5,10 +5,7 @@ import {
   calculateCategoryScores,
   prepareResponsesForScoring,
 } from '@/lib/scoring/categoryScoring';
-import {
-  checkAnonymityThreshold,
-  ANONYMOUS_SURVEY_TYPES,
-} from '@/lib/scoring/anonymity';
+import { checkAnonymityThreshold } from '@/lib/scoring/anonymity';
 import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -28,15 +25,14 @@ export async function GET(
       );
     }
 
-    // Fetch campaign with all data
+    // Fetch campaign with all anonymous response data
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.campaignId },
       include: {
         organization: true,
-        invitations: {
-          where: { status: 'COMPLETED' },
+        anonymousResponses: {
+          where: { completedAt: { not: null } },
           include: {
-            user: true,
             responses: {
               orderBy: { questionNumber: 'asc' },
             },
@@ -121,36 +117,39 @@ export async function GET(
     // Build a set of valid question IDs from the current survey definition
     const validQuestionIds = new Set(questions.map((q) => q._id));
 
-    // Calculate weighted scores for each respondent
-    const individualResults = campaign.invitations.map((invitation) => {
-      // Filter out null values and responses for questions no longer in the survey
-      const preparedResponses = prepareResponsesForScoring(
-        invitation.responses
-          .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
-          .map((r) => ({
-            questionId: r.questionId,
-            questionNumber: r.questionNumber,
-            value: r.value!,
-          })),
-        questions
-      );
+    // Calculate weighted scores for each anonymous respondent
+    const individualResults = campaign.anonymousResponses.map(
+      (anonResponse, index) => {
+        const preparedResponses = prepareResponsesForScoring(
+          anonResponse.responses
+            .filter(
+              (r) => r.value !== null && validQuestionIds.has(r.questionId)
+            )
+            .map((r) => ({
+              questionId: r.questionId,
+              questionNumber: r.questionNumber,
+              value: r.value!,
+            })),
+          questions
+        );
 
-      const scoringResult = calculateCategoryScores(
-        preparedResponses,
-        categories,
-        survey._id,
-        survey.title,
-        invitation.id,
-        survey.scale!.min,
-        survey.scale!.max,
-        survey.surveyType as 'likert3' | 'likert5'
-      );
+        const scoringResult = calculateCategoryScores(
+          preparedResponses,
+          categories,
+          survey._id,
+          survey.title,
+          anonResponse.id,
+          survey.scale!.min,
+          survey.scale!.max,
+          survey.surveyType as 'likert3' | 'likert5'
+        );
 
-      return {
-        userName: invitation.user.name || invitation.user.email,
-        ...scoringResult,
-      };
-    });
+        return {
+          respondentLabel: `Respondent ${index + 1}`,
+          ...scoringResult,
+        };
+      }
+    );
 
     // Calculate aggregate statistics
     const aggregateStats = categories.map((category) => {
@@ -160,7 +159,6 @@ export async function GET(
         )
         .filter((cs) => cs !== undefined);
 
-      // Guard: no respondents have scores for this category
       if (categoryScores.length === 0) {
         return {
           categoryName: category.name,
@@ -203,17 +201,17 @@ export async function GET(
         respondentCount: weightedScores.length,
         averageWeightedScore: Math.round(averageWeighted * 10) / 10,
         averageRawScore: Math.round(averageRaw * 10) / 10,
-        minWeightedScore: weightedScores.length > 0 ? Math.min(...weightedScores) : 0,
-        maxWeightedScore: weightedScores.length > 0 ? Math.max(...weightedScores) : 0,
+        minWeightedScore:
+          weightedScores.length > 0 ? Math.min(...weightedScores) : 0,
+        maxWeightedScore:
+          weightedScores.length > 0 ? Math.max(...weightedScores) : 0,
         standardDeviation: Math.round(stdDev * 10) / 10,
         averagePercentage:
           Math.round((averageWeighted / maxPossibleWeighted) * 100 * 10) / 10,
       };
     });
 
-    const isAnonymousSurvey = ANONYMOUS_SURVEY_TYPES.includes(
-      survey.surveyType.toLowerCase()
-    );
+    const completedCount = campaign.anonymousResponses.length;
 
     // ================================================================================
     // EXCEL EXPORT
@@ -221,27 +219,15 @@ export async function GET(
     if (format === 'xlsx') {
       const workbook = new ExcelJS.Workbook();
 
-      // Sheet 1: Summary
-      const totalInvitations =
-        campaign.invitations.length +
-        (await prisma.invitation.count({
-          where: { campaignId: campaign.id },
-        })) -
-        campaign.invitations.length;
-
-      const completionRate =
-        totalInvitations > 0
-          ? Math.round(
-              (campaign.invitations.length / totalInvitations) * 100 * 10
-            ) / 10
+      const overallWeightedScore =
+        individualResults.length > 0
+          ? individualResults.reduce(
+              (sum, r) => sum + r.overallMetrics.totalWeightedScore,
+              0
+            ) / individualResults.length
           : 0;
 
-      const overallWeightedScore =
-        individualResults.reduce(
-          (sum, r) => sum + r.overallMetrics.totalWeightedScore,
-          0
-        ) / individualResults.length;
-
+      // Sheet 1: Summary
       const summarySheet = workbook.addWorksheet('Summary');
       summarySheet.addRows([
         ['WEIGHTED SCORING REPORT'],
@@ -266,9 +252,7 @@ export async function GET(
         ['Status', campaign.status],
         [''],
         ['Response Metrics'],
-        ['Total Invitations', totalInvitations],
-        ['Completed Responses', campaign.invitations.length],
-        ['Completion Rate', `${completionRate}%`],
+        ['Completed Responses', completedCount],
         [''],
         ['Overall Weighted Score'],
         ['Average Weighted Score', overallWeightedScore.toFixed(1)],
@@ -310,42 +294,10 @@ export async function GET(
         ['Avg Weighted Score = (Sum of adjusted responses) × Weight'],
         ['Avg Raw Score = Sum of adjusted responses (before weight)'],
         ['Percentage = (Avg Weighted / Max Possible Weighted) × 100'],
+        [
+          'Note: Individual scores are not shown to preserve respondent anonymity',
+        ],
       ]);
-
-      // Sheet 3: Individual Scores (if not anonymous)
-      if (!isAnonymousSurvey) {
-        const individualSheet = workbook.addWorksheet('Individual Scores');
-
-        const individualHeaders = [
-          'Respondent',
-          ...categories.map((c) => `${c.name} (×${c.weight})`),
-          'Total Weighted',
-          'Completion',
-        ];
-
-        const individualRows = individualResults.map((result) => {
-          const categoryValues = categories.map((cat) => {
-            const catScore = result.categoryScores.find(
-              (cs) => cs.categoryId === cat._id
-            );
-            return catScore ? catScore.weightedScore.toFixed(1) : 'N/A';
-          });
-
-          return [
-            result.userName,
-            ...categoryValues,
-            result.overallMetrics.totalWeightedScore.toFixed(1),
-            `${result.overallMetrics.completionRate.toFixed(0)}%`,
-          ];
-        });
-
-        individualSheet.addRows([
-          ['INDIVIDUAL WEIGHTED SCORES'],
-          [''],
-          individualHeaders,
-          ...individualRows,
-        ]);
-      }
 
       // Generate buffer
       const buffer = await workbook.xlsx.writeBuffer();
@@ -380,11 +332,7 @@ export async function GET(
       yPosition += 7;
       doc.text(`Organization: ${campaign.organization.name}`, 20, yPosition);
       yPosition += 7;
-      doc.text(
-        `Completed: ${campaign.invitations.length} respondents`,
-        20,
-        yPosition
-      );
+      doc.text(`Completed: ${completedCount} respondents`, 20, yPosition);
       yPosition += 15;
 
       // Category scores table

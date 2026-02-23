@@ -4,15 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Trash2 } from 'lucide-react';
-import type { SurveyCampaign, Organization, Invitation, AnonymousResponse } from '@prisma/client';
+import type { SurveyCampaign, Organization, AnonymousResponse } from '@prisma/client';
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
 
 type CampaignWithRelations = SurveyCampaign & {
   organization: Organization;
-  invitations: Pick<Invitation, 'id'>[];
   anonymousResponses: Pick<AnonymousResponse, 'id'>[];
   _count: {
-    invitations: number;
     anonymousResponses: number;
   };
 };
@@ -60,7 +58,6 @@ export function RecentCampaignsTable({ campaigns }: RecentCampaignsTableProps) {
         throw new Error(error.error || 'Failed to delete campaign');
       }
 
-      // Close dialog and refresh the page
       setDeleteDialog({ isOpen: false, campaign: null });
       router.refresh();
     } catch (error) {
@@ -78,10 +75,8 @@ export function RecentCampaignsTable({ campaigns }: RecentCampaignsTableProps) {
   };
 
   const getDeleteConsequences = (campaign: CampaignWithRelations) => {
-    const completedTracked = campaign.invitations.length;
-    const completedAnonymous = campaign.anonymousResponses.length;
-    const completedCount = completedTracked + completedAnonymous;
-    const totalResponses = campaign._count.invitations + campaign._count.anonymousResponses;
+    const completedCount = campaign.anonymousResponses.length;
+    const totalResponses = campaign._count.anonymousResponses;
     const consequences = [];
 
     if (totalResponses > 0) {
@@ -127,14 +122,9 @@ export function RecentCampaignsTable({ campaigns }: RecentCampaignsTableProps) {
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {campaigns.map((campaign) => {
-              const completedTracked = campaign.invitations.length;
-              const completedAnonymous = campaign.anonymousResponses.length;
-              const completedCount = completedTracked + completedAnonymous;
-              const totalCount = campaign._count.invitations + campaign._count.anonymousResponses;
-              const responseRate = getResponseRate(
-                completedCount,
-                totalCount
-              );
+              const completedCount = campaign.anonymousResponses.length;
+              const totalCount = campaign._count.anonymousResponses;
+              const responseRate = getResponseRate(completedCount, totalCount);
 
               return (
                 <tr key={campaign.id} className="hover:bg-gray-50">

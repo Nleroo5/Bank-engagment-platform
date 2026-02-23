@@ -27,7 +27,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
     endDate: campaign.endDate
       ? new Date(campaign.endDate).toISOString().split('T')[0]
       : '',
-    reminderDays: campaign.reminderDays.toString(),
   });
 
   // Splash config state — pre-populate from existing campaign data
@@ -107,7 +106,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
           status: formData.status,
           startDate: formData.startDate || undefined,
           endDate: formData.endDate || undefined,
-          reminderDays: parseInt(formData.reminderDays, 10),
           splashConfig: hasSplashConfig ? splashConfigPayload : null,
         }),
       });
@@ -229,31 +227,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
             Leave blank for no expiration
           </p>
         </div>
-      </div>
-
-      {/* Reminder Days */}
-      <div>
-        <label
-          htmlFor="reminderDays"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Reminder Days Before End
-        </label>
-        <input
-          type="number"
-          id="reminderDays"
-          min="1"
-          max="30"
-          required
-          value={formData.reminderDays}
-          onChange={(e) =>
-            setFormData({ ...formData, reminderDays: e.target.value })
-          }
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-        />
-        <p className="mt-1 text-sm text-gray-500">
-          Send reminder emails this many days before the campaign ends
-        </p>
       </div>
 
       {/* Splash Page Editor */}

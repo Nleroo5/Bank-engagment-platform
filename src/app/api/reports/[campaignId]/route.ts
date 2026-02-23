@@ -5,30 +5,17 @@ import {
   calculateCategoryScores,
   prepareResponsesForScoring,
 } from '@/lib/scoring/categoryScoring';
-import {
-  getFilterableOptions,
-  ANONYMOUS_SURVEY_TYPES,
-  getFilterableOptionsAnonymous,
-} from '@/lib/scoring/anonymity';
+import { getFilterableOptionsAnonymous } from '@/lib/scoring/anonymity';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { campaignId: string } }
 ) {
   try {
-    // Fetch campaign with all related data
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.campaignId },
       include: {
         organization: true,
-        invitations: {
-          include: {
-            user: true,
-            responses: {
-              orderBy: { questionNumber: 'asc' },
-            },
-          },
-        },
         anonymousResponses: {
           where: { completedAt: { not: null } },
           include: {
@@ -46,9 +33,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    // Determine if this is an anonymous campaign
-    const isAnonymous = campaign.isAnonymous;
 
     // Fetch survey from Sanity with full question and category data
     let survey;
@@ -83,10 +67,8 @@ export async function GET(
       );
     }
 
-    // Check if this is a demographics survey (doesn't need scoring)
     const isDemographicsSurvey = survey.surveyType === 'demographics';
 
-    // Validate survey has scale information (skip for demographics)
     if (!isDemographicsSurvey && !survey.scale) {
       return NextResponse.json(
         {
@@ -98,29 +80,7 @@ export async function GET(
       );
     }
 
-    // DISABLED: Anonymity threshold check removed per user request
-    // Users want to view reports immediately regardless of response count
-    // const meetsThreshold = isAnonymous
-    //   ? campaign.anonymousResponses.length >= 5
-    //   : await checkAnonymityThreshold(campaign.id, survey.surveyType);
-    //
-    // if (!meetsThreshold) {
-    //   return NextResponse.json(
-    //     {
-    //       error: 'Insufficient respondents',
-    //       message:
-    //         'This survey requires a minimum of 5 completed responses before viewing results to protect respondent anonymity.',
-    //       requiresAnonymity: true,
-    //       threshold: 5,
-    //     },
-    //     { status: 403 }
-    //   );
-    // }
-
-    // Get filter options for demographics
-    const filterOptions = isAnonymous
-      ? await getFilterableOptionsAnonymous(campaign.id)
-      : await getFilterableOptions(campaign.id, survey.surveyType);
+    const filterOptions = await getFilterableOptionsAnonymous(campaign.id);
 
     // Parse query parameters for filters
     const { searchParams } = new URL(request.url);
@@ -140,33 +100,11 @@ export async function GET(
     // DEMOGRAPHICS SURVEY HANDLING
     // ============================================
     if (isDemographicsSurvey) {
-      // Get all responses (tracked or anonymous)
-      const responses = isAnonymous
-        ? campaign.anonymousResponses
-        : campaign.invitations.filter((inv) => inv.status === 'COMPLETED');
+      const demographicsData: Record<string, unknown>[] =
+        campaign.anonymousResponses.map((r) => {
+          return (r.demographics as Record<string, unknown>) || {};
+        });
 
-      // Extract demographics data from each response
-      const demographicsData: Record<string, unknown>[] = responses.map((r) => {
-        if (isAnonymous) {
-          // For anonymous responses, extract demographics JSON field
-          const anonResp = r as typeof campaign.anonymousResponses[number];
-          return (anonResp.demographics as Record<string, unknown>) || {};
-        } else {
-          // For tracked invitations, extract user demographic fields
-          // Note: Only fields that exist on the User model (per schema)
-          const invitation = r as typeof campaign.invitations[number];
-          return {
-            division: invitation.user.division,
-            jobRole: invitation.user.jobRole,
-            employmentStatus: invitation.user.employmentStatus,
-            gender: invitation.user.gender,
-            timeAtBank: invitation.user.timeAtBank,
-            bankExperience: invitation.user.bankExperience,
-          };
-        }
-      });
-
-      // Calculate frequency distributions for each field
       const fields = [
         { key: 'bankSize', label: 'Bank Size' },
         { key: 'device', label: 'Device Used' },
@@ -183,7 +121,6 @@ export async function GET(
       ];
 
       const distributions = fields.map((field) => {
-        // Count occurrences of each value
         const counts = new Map<string, number>();
         demographicsData.forEach((data) => {
           const value = data[field.key];
@@ -192,15 +129,14 @@ export async function GET(
           }
         });
 
-        // Convert to array with percentages
         const total = demographicsData.length;
         const distribution = Array.from(counts.entries())
           .map(([value, count]) => ({
             value,
             count,
-            percentage: Math.round((count / total) * 1000) / 10, // 1 decimal place
+            percentage: Math.round((count / total) * 1000) / 10,
           }))
-          .sort((a, b) => b.count - a.count); // Sort by count descending
+          .sort((a, b) => b.count - a.count);
 
         return {
           field: field.key,
@@ -210,7 +146,6 @@ export async function GET(
         };
       });
 
-      // Return demographics report data
       return NextResponse.json({
         campaign: {
           id: campaign.id,
@@ -220,23 +155,12 @@ export async function GET(
           startDate: campaign.startDate,
           endDate: campaign.endDate,
           status: campaign.status,
-          isAnonymous,
+          isAnonymous: true,
         },
         metrics: {
-          totalInvitations: isAnonymous
-            ? campaign.anonymousResponses.length
-            : campaign.invitations.length,
-          completedCount: responses.length,
-          completionRate:
-            responses.length > 0
-              ? Math.round(
-                  (responses.length /
-                    (isAnonymous
-                      ? campaign.anonymousResponses.length
-                      : campaign.invitations.length)) *
-                    100
-                )
-              : 0,
+          totalInvitations: campaign.anonymousResponses.length,
+          completedCount: campaign.anonymousResponses.length,
+          completionRate: 100,
         },
         demographics: {
           respondentCount: demographicsData.length,
@@ -244,29 +168,6 @@ export async function GET(
         },
       });
     }
-
-    // DISABLED: Filter anonymity validation removed per user request
-    // Users want to view all reports regardless of respondent count
-    // if (Object.keys(filters).length > 0) {
-    //   const validation = isAnonymous
-    //     ? await validateFilteredAnonymityAnonymous(campaign.id, filters)
-    //     : await validateFilteredAnonymity(
-    //         campaign.id,
-    //         survey.surveyType,
-    //         filters
-    //       );
-    //
-    //   if (!validation.valid) {
-    //     return NextResponse.json(
-    //       {
-    //         error: 'Filter results in too few respondents',
-    //         message: `Only ${validation.count} respondents match these filters. Minimum 5 required for anonymity protection.`,
-    //         count: validation.count,
-    //       },
-    //       { status: 400 }
-    //     );
-    //   }
-    // }
 
     // Extract all questions with their metadata
     const questions = survey.sections.flatMap((section) =>
@@ -285,7 +186,6 @@ export async function GET(
       }))
     );
 
-    // Extract unique categories
     const categoriesMap = new Map(
       questions.map((q) => [q.category._id, q.category])
     );
@@ -296,56 +196,22 @@ export async function GET(
       return a.name.localeCompare(b.name);
     });
 
-    // Prepare data based on campaign type
-    let filteredData: Array<{
-      id: string;
-      responses: Array<{
-        questionId: string;
-        questionNumber: number;
-        value: number | null;
-        adjustedValue: number | null;
-      }>;
-      demographics?: Record<string, unknown>;
-      user?: { name?: string; email: string } & Record<string, unknown>;
-    }>;
+    // Filter anonymous responses based on demographics JSON
+    const filteredData = campaign.anonymousResponses
+      .filter((anonResp) => {
+        if (Object.keys(filters).length === 0) return true;
 
-    if (isAnonymous) {
-      // Filter anonymous responses based on demographics JSON
-      filteredData = campaign.anonymousResponses
-        .filter((anonResp) => {
-          if (Object.keys(filters).length === 0) return true;
-
-          const demographics =
-            (anonResp.demographics as Record<string, unknown>) || {};
-          return Object.entries(filters).every(([key, value]) => {
-            return demographics[key] === value;
-          });
-        })
-        .map((anonResp) => ({
-          id: anonResp.id,
-          responses: anonResp.responses,
-          demographics: anonResp.demographics as Record<string, unknown>,
-        }));
-    } else {
-      // Filter tracked invitations based on User demographics
-      filteredData = campaign.invitations
-        .filter((inv) => inv.status === 'COMPLETED')
-        .filter((inv) => {
-          if (Object.keys(filters).length === 0) return true;
-
-          return Object.entries(filters).every(([key, value]) => {
-            return inv.user[key as keyof typeof inv.user] === value;
-          });
-        })
-        .map((inv) => ({
-          id: inv.id,
-          responses: inv.responses,
-          user: {
-            ...inv.user,
-            name: inv.user.name ?? undefined,
-          },
-        }));
-    }
+        const demographics =
+          (anonResp.demographics as Record<string, unknown>) || {};
+        return Object.entries(filters).every(([key, value]) => {
+          return demographics[key] === value;
+        });
+      })
+      .map((anonResp) => ({
+        id: anonResp.id,
+        responses: anonResp.responses,
+        demographics: anonResp.demographics as Record<string, unknown>,
+      }));
 
     // ============================================
     // BUILD RESPONDENT DEMOGRAPHICS SUMMARY
@@ -362,23 +228,7 @@ export async function GET(
     ];
 
     const respondentDemoData: Record<string, unknown>[] = filteredData.map(
-      (item) => {
-        if (isAnonymous) {
-          return (item.demographics as Record<string, unknown>) || {};
-        }
-        // Tracked: pull from User model fields (spread into item.user)
-        const user = item.user as Record<string, unknown> | undefined;
-        return {
-          bankSize: user?.bankSize,
-          device: user?.device,
-          employmentStatus: user?.employmentStatus,
-          gender: user?.gender,
-          timeAtBank: user?.timeAtBank,
-          bankExperience: user?.bankExperience,
-          division: user?.division,
-          jobRole: user?.jobRole,
-        };
-      }
+      (item) => (item.demographics as Record<string, unknown>) || {}
     );
 
     const respondentDemographics = {
@@ -410,13 +260,9 @@ export async function GET(
       }),
     };
 
-    // Build a set of valid question IDs from the current survey definition
     const validQuestionIds = new Set(questions.map((q) => q._id));
 
-    // Calculate weighted scores for each respondent
     const individualResults = filteredData.map((data) => {
-      // Prepare responses for scoring — filter out null values and responses for
-      // questions that no longer exist in the survey (e.g. deleted from Sanity CMS)
       const preparedResponses = prepareResponsesForScoring(
         data.responses
           .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
@@ -428,7 +274,6 @@ export async function GET(
         questions
       );
 
-      // Calculate weighted category scores
       const scoringResult = calculateCategoryScores(
         preparedResponses,
         categories,
@@ -441,15 +286,12 @@ export async function GET(
       );
 
       return {
-        userId: isAnonymous ? 'anonymous' : data.user?.email || 'unknown',
-        userName: isAnonymous
-          ? 'Anonymous'
-          : data.user?.name || data.user?.email || 'Unknown',
+        userId: 'anonymous',
+        userName: 'Anonymous',
         ...scoringResult,
       };
     });
 
-    // Calculate aggregate statistics across all respondents
     const aggregateStats = categories.map((category) => {
       const categoryScores = individualResults
         .map((result) =>
@@ -457,7 +299,6 @@ export async function GET(
         )
         .filter((cs) => cs !== undefined);
 
-      // Guard: no respondents have scores for this category
       if (categoryScores.length === 0) {
         return {
           categoryId: category._id,
@@ -485,7 +326,6 @@ export async function GET(
       const averageRaw =
         rawScores.reduce((sum, score) => sum + score, 0) / rawScores.length;
 
-      // Calculate standard deviation
       const mean = averageWeighted;
       const squaredDiffs = weightedScores.map((score) =>
         Math.pow(score - mean, 2)
@@ -515,21 +355,16 @@ export async function GET(
       };
     });
 
-    // Calculate overall metrics
-    const totalCount = isAnonymous
-      ? campaign.anonymousResponses.length
-      : campaign.invitations.length;
+    const totalCount = campaign.anonymousResponses.length;
     const completedCount = filteredData.length;
     const completionRate =
       totalCount > 0
         ? Math.round((completedCount / totalCount) * 100 * 10) / 10
         : 0;
 
-    // Calculate section-level aggregates
     const sectionAggregates = survey.sections.map((section) => {
       const sectionQuestionIds = section.questions.map((q) => q._id);
 
-      // Collect all responses for this section
       const allSectionResponses: number[] = [];
 
       filteredData.forEach((data) => {
@@ -538,7 +373,6 @@ export async function GET(
         );
 
         sectionResponses.forEach((response) => {
-          // Use adjustedValue if available (for reverse-scored), otherwise use raw value
           const value = response.adjustedValue ?? response.value ?? 0;
           allSectionResponses.push(value);
         });
@@ -561,7 +395,6 @@ export async function GET(
       };
     });
 
-    // Map categories to the expected format
     const categoryScores = aggregateStats.map((cat) => ({
       categoryId: cat.categoryId,
       categoryName: cat.categoryName,
@@ -570,7 +403,6 @@ export async function GET(
       responseCount: cat.respondentCount,
     }));
 
-    // Calculate simple overall score (average of all adjusted responses)
     const allResponses = filteredData.flatMap((data) =>
       data.responses.map((r) => (r.adjustedValue ?? r.value ?? 0) as number)
     );
@@ -579,12 +411,6 @@ export async function GET(
         ? allResponses.reduce((sum: number, val: number) => sum + val, 0) /
           allResponses.length
         : 0;
-
-    // Determine if individual scores should be shown
-    // Never show for anonymous campaigns or Associate 180
-    const showIndividualScores =
-      !isAnonymous &&
-      !ANONYMOUS_SURVEY_TYPES.includes(survey.surveyType.toLowerCase());
 
     return NextResponse.json({
       campaign: {
@@ -596,14 +422,11 @@ export async function GET(
         startDate: campaign.startDate,
         endDate: campaign.endDate,
         status: campaign.status,
-        isAnonymous,
+        isAnonymous: true,
       },
       metrics: {
         totalInvitations: totalCount,
-        completedCount: isAnonymous
-          ? campaign.anonymousResponses.length
-          : campaign.invitations.filter((inv) => inv.status === 'COMPLETED')
-              .length,
+        completedCount: campaign.anonymousResponses.length,
         completionRate,
         filteredCount: filteredData.length,
       },
@@ -613,7 +436,7 @@ export async function GET(
         sections: sectionAggregates,
       },
       categoryAggregates: aggregateStats,
-      individualScores: showIndividualScores ? individualResults : undefined,
+      individualScores: undefined,
       respondentDemographics,
       filters: {
         applied: filters,

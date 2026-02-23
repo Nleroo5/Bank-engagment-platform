@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  Users,
   FileText,
   BarChart3,
   X,
@@ -20,7 +19,6 @@ const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Surveys', href: '/admin/surveys', icon: ListChecks },
   { name: 'Campaigns', href: '/admin/campaigns', icon: FileText },
-  { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
 ];
 

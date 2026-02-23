@@ -7,17 +7,14 @@ import { FileBarChart, Users, Calendar, Trash2 } from 'lucide-react';
 import type {
   SurveyCampaign,
   Organization,
-  Invitation,
   AnonymousResponse,
 } from '@prisma/client';
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
 
 type CampaignWithRelations = SurveyCampaign & {
   organization: Organization;
-  invitations: Invitation[];
   anonymousResponses: AnonymousResponse[];
   _count: {
-    invitations: number;
     anonymousResponses: number;
   };
 };
@@ -38,7 +35,7 @@ export function ReportsGrid({ campaigns }: ReportsGridProps) {
     e: React.MouseEvent,
     campaign: CampaignWithRelations
   ) => {
-    e.preventDefault(); // Prevent navigation to report
+    e.preventDefault();
     setDeleteDialog({ isOpen: true, campaign });
   };
 
@@ -59,7 +56,6 @@ export function ReportsGrid({ campaigns }: ReportsGridProps) {
         throw new Error(error.error || 'Failed to delete report');
       }
 
-      // Close dialog and refresh the page
       setDeleteDialog({ isOpen: false, campaign: null });
       router.refresh();
     } catch (error) {
@@ -75,17 +71,8 @@ export function ReportsGrid({ campaigns }: ReportsGridProps) {
   };
 
   const getDeleteConsequences = (campaign: CampaignWithRelations) => {
-    // Count both tracked and anonymous responses
-    const completedTracked = campaign.invitations.filter(
-      (inv) => inv.status === 'COMPLETED'
-    ).length;
-    const completedAnonymous = campaign.anonymousResponses.length;
-    const completedCount = completedTracked + completedAnonymous;
-
-    const totalTracked = campaign._count.invitations;
-    const totalAnonymous = campaign._count.anonymousResponses;
-    const totalRespondents = totalTracked + totalAnonymous;
-
+    const completedCount = campaign.anonymousResponses.length;
+    const totalRespondents = campaign._count.anonymousResponses;
     const consequences = [];
 
     if (totalRespondents > 0) {
@@ -131,16 +118,9 @@ export function ReportsGrid({ campaigns }: ReportsGridProps) {
     <>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {campaigns.map((campaign) => {
-          // Calculate ACCURATE metrics for both tracked AND anonymous campaigns
-          const completedTracked = campaign.invitations.length;
-          const completedAnonymous = campaign.anonymousResponses.length;
-          const completedCount = completedTracked + completedAnonymous;
+          const completedCount = campaign.anonymousResponses.length;
+          const totalInvitations = campaign._count.anonymousResponses;
 
-          const totalTracked = campaign._count.invitations;
-          const totalAnonymous = campaign._count.anonymousResponses;
-          const totalInvitations = totalTracked + totalAnonymous;
-
-          // Calculate accurate response rate
           const responseRate =
             totalInvitations > 0
               ? Math.round((completedCount / totalInvitations) * 100)

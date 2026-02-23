@@ -27,11 +27,8 @@ export function NewCampaignForm({
     organizationName: '', // For typing new organization names
     startDate: '',
     endDate: '',
-    reminderDays: '3',
-    isAnonymous: false,
     accessCode: '',
     maxResponses: '',
-    maxInvitationUses: '', // Per-invitation link limit
   });
 
   const [accessCodeError, setAccessCodeError] = useState<string | null>(null);
@@ -100,16 +97,14 @@ export function NewCampaignForm({
     setError(null);
     setLogoUploadWarning(null);
 
-    // Validate anonymous survey fields
-    if (formData.isAnonymous) {
-      if (!formData.accessCode || formData.accessCode.length < 6) {
-        setError('Access code must be at least 6 characters');
-        return;
-      }
-      if (accessCodeError) {
-        setError('Please fix the access code error before submitting');
-        return;
-      }
+    // Validate access code
+    if (!formData.accessCode || formData.accessCode.length < 6) {
+      setError('Access code must be at least 6 characters');
+      return;
+    }
+    if (accessCodeError) {
+      setError('Please fix the access code error before submitting');
+      return;
     }
 
     setIsSubmitting(true);
@@ -153,17 +148,10 @@ export function NewCampaignForm({
         organizationName: formData.organizationId ? undefined : formData.organizationName,
         startDate: formData.startDate || null,
         endDate: formData.endDate || null,
-        reminderDays: parseInt(formData.reminderDays),
-        isAnonymous: formData.isAnonymous,
+        accessCode: formData.accessCode,
         maxResponses: formData.maxResponses
           ? parseInt(formData.maxResponses)
           : null,
-        maxInvitationUses: formData.maxInvitationUses
-          ? parseInt(formData.maxInvitationUses)
-          : null,
-        ...(formData.isAnonymous && {
-          accessCode: formData.accessCode,
-        }),
         splashConfig: hasSplashConfig ? splashConfigPayload : null,
       };
 
@@ -339,162 +327,69 @@ export function NewCampaignForm({
         </div>
       </div>
 
-      {/* Respondent Limits */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <h3 className="mb-4 font-medium text-gray-900">
-          Response Limits (Optional)
-        </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="maxResponses"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Maximum Total Responses
-            </label>
-            <input
-              type="number"
-              id="maxResponses"
-              min="1"
-              value={formData.maxResponses}
-              onChange={(e) =>
-                setFormData({ ...formData, maxResponses: e.target.value })
-              }
-              placeholder="Unlimited"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              Campaign closes after this many completed responses
-            </p>
-          </div>
-
-          {!formData.isAnonymous && (
-            <div>
-              <label
-                htmlFor="maxInvitationUses"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Max Uses Per Invitation Link
-              </label>
-              <input
-                type="number"
-                id="maxInvitationUses"
-                min="1"
-                value={formData.maxInvitationUses}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    maxInvitationUses: e.target.value,
-                  })
-                }
-                placeholder="1"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                How many times each invitation link can be used (default: 1)
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Anonymous Survey Option */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <div className="flex items-start">
-          <div className="flex h-5 items-center">
-            <input
-              type="checkbox"
-              id="isAnonymous"
-              checked={formData.isAnonymous}
-              onChange={(e) =>
-                setFormData({ ...formData, isAnonymous: e.target.checked })
-              }
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-            />
-          </div>
-          <div className="ml-3">
-            <label htmlFor="isAnonymous" className="font-medium text-gray-700">
-              Anonymous Survey
-            </label>
-            <p className="text-sm text-gray-500">
-              Use public link with access code instead of personalized email
-              invitations. Responses cannot be traced to individuals.
-            </p>
-          </div>
-        </div>
-
-        {/* Access Code Field (shown only when anonymous) */}
-        {formData.isAnonymous && (
-          <div className="mt-4 space-y-4">
-            <div>
-              <label
-                htmlFor="accessCode"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Access Code <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="accessCode"
-                required
-                minLength={6}
-                maxLength={20}
-                value={formData.accessCode}
-                onChange={(e) => handleAccessCodeChange(e.target.value)}
-                placeholder="e.g., BANK2024"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono uppercase focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              />
-              {checkingAccessCode && (
-                <p className="mt-1 text-sm text-gray-500">
-                  Checking availability...
-                </p>
-              )}
-              {accessCodeError && (
-                <p className="mt-1 text-sm text-red-600">{accessCodeError}</p>
-              )}
-              {!accessCodeError &&
-                formData.accessCode.length >= 6 &&
-                !checkingAccessCode && (
-                  <p className="mt-1 text-sm text-green-600">
-                    ✓ Access code is available
-                  </p>
-                )}
-              <p className="mt-1 text-sm text-gray-500">
-                6-20 alphanumeric characters (automatically converted to
-                uppercase)
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Reminder Days (only for non-anonymous) */}
-      {!formData.isAnonymous && (
-        <div>
-          <label
-            htmlFor="reminderDays"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Reminder Days Before End
-          </label>
-          <input
-            type="number"
-            id="reminderDays"
-            min="1"
-            max="30"
-            required
-            value={formData.reminderDays}
-            onChange={(e) =>
-              setFormData({ ...formData, reminderDays: e.target.value })
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-          />
+      {/* Access Code */}
+      <div>
+        <label
+          htmlFor="accessCode"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Access Code <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="accessCode"
+          required
+          minLength={6}
+          maxLength={20}
+          value={formData.accessCode}
+          onChange={(e) => handleAccessCodeChange(e.target.value)}
+          placeholder="e.g., BANK2024"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono uppercase focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+        />
+        {checkingAccessCode && (
           <p className="mt-1 text-sm text-gray-500">
-            Send reminder emails this many days before the campaign ends
-            (default: 3)
+            Checking availability...
           </p>
-        </div>
-      )}
+        )}
+        {accessCodeError && (
+          <p className="mt-1 text-sm text-red-600">{accessCodeError}</p>
+        )}
+        {!accessCodeError &&
+          formData.accessCode.length >= 6 &&
+          !checkingAccessCode && (
+            <p className="mt-1 text-sm text-green-600">
+              ✓ Access code is available
+            </p>
+          )}
+        <p className="mt-1 text-sm text-gray-500">
+          6-20 alphanumeric characters (automatically converted to uppercase).
+          Respondents enter this code to access the survey.
+        </p>
+      </div>
+
+      {/* Response Limit */}
+      <div>
+        <label
+          htmlFor="maxResponses"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Maximum Total Responses (Optional)
+        </label>
+        <input
+          type="number"
+          id="maxResponses"
+          min="1"
+          value={formData.maxResponses}
+          onChange={(e) =>
+            setFormData({ ...formData, maxResponses: e.target.value })
+          }
+          placeholder="Unlimited"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+        />
+        <p className="mt-1 text-sm text-gray-500">
+          Campaign closes after this many completed responses
+        </p>
+      </div>
 
       {/* Splash Page Editor */}
       <div className="rounded-lg border border-gray-200 bg-gray-50">
@@ -741,7 +636,7 @@ export function NewCampaignForm({
         </button>
         <button
           type="submit"
-          disabled={isSubmitting || (formData.isAnonymous && !!accessCodeError)}
+          disabled={isSubmitting || !!accessCodeError}
           className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
         >
           {isSubmitting ? 'Creating...' : 'Create Campaign'}

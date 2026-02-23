@@ -1,28 +1,28 @@
 import { test, expect } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
- * E2E tests for survey respondent flow
- * Tests the complete flow of taking a survey via token link
+ * E2E tests for the anonymous survey respondent flow.
+ * Tests the complete flow of taking a survey via access code.
  */
 
 const prisma = new PrismaClient();
 
-test.describe('Survey Flow', () => {
-  let testToken: string;
+test.describe('Anonymous Survey Flow', () => {
+  let testAccessCode: string;
   let testCampaignId: string;
 
   test.beforeAll(async () => {
-    // Create test data for survey flow
+    // Create test data for anonymous survey flow
     const organization = await prisma.organization.findFirst();
 
     if (!organization) {
       throw new Error('No organization found. Please run db:seed first.');
     }
 
-    // Create a test campaign with a real Sanity survey ID
+    // Create a test campaign
     // Note: This assumes Survey 4 (LTE) exists in Sanity with ID 'survey-4'
+    testAccessCode = `E2ETEST${Date.now()}`.slice(0, 12).toUpperCase();
     const campaign = await prisma.surveyCampaign.create({
       data: {
         surveyId: 'survey-4',
@@ -31,46 +31,17 @@ test.describe('Survey Flow', () => {
         status: 'ACTIVE',
         startDate: new Date(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        reminderDays: 3,
+        accessCode: testAccessCode,
       },
     });
 
     testCampaignId = campaign.id;
-
-    // Create a test user (respondent)
-    const user = await prisma.user.create({
-      data: {
-        email: `test-respondent-${Date.now()}@example.com`,
-        name: 'Test Respondent',
-        role: 'RESPONDENT',
-        organizationId: organization.id,
-        division: 'Technology',
-        jobRole: 'IT Specialist',
-        employmentStatus: 'FULL_TIME',
-        gender: 'MALE',
-        timeAtBank: '1-3 years',
-        bankExperience: '5-10 years',
-        isActive: true,
-      },
-    });
-
-    // Create an invitation with a unique token
-    testToken = uuidv4();
-    await prisma.invitation.create({
-      data: {
-        campaignId: campaign.id,
-        userId: user.id,
-        token: testToken,
-        status: 'SENT',
-        sentAt: new Date(),
-      },
-    });
   });
 
   test.afterAll(async () => {
     // Clean up test data
     if (testCampaignId) {
-      await prisma.invitation.deleteMany({
+      await prisma.anonymousResponse.deleteMany({
         where: { campaignId: testCampaignId },
       });
       await prisma.surveyCampaign.delete({
@@ -80,140 +51,82 @@ test.describe('Survey Flow', () => {
     await prisma.$disconnect();
   });
 
-  test('should display survey when accessing valid token', async ({ page }) => {
-    await page.goto(`/s/${testToken}`);
+  test('should display splash page when accessing valid access code', async ({
+    page,
+  }) => {
+    await page.goto(`/a/${testAccessCode}`);
 
-    // Should see survey title or first question
+    // Should see survey title or access code entry
     await expect(page.locator('h1')).toBeVisible();
-
-    // Should see survey content (questions, Likert scale, etc.)
-    const surveyContent = page.locator(
-      'text=/Strongly Agree|Agree|Disagree|Question/i'
-    );
-    await expect(surveyContent.first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('should show error for invalid token', async ({ page }) => {
-    const invalidToken = uuidv4();
-    await page.goto(`/s/${invalidToken}`);
+  test('should show error for invalid access code', async ({ page }) => {
+    await page.goto('/a/INVALIDCODE999');
 
-    // Should see error message
-    await expect(
-      page.locator('text=/Invalid|expired|not found/i')
-    ).toBeVisible();
-  });
-
-  test('should navigate between survey sections', async ({ page }) => {
-    await page.goto(`/s/${testToken}`);
-
-    // Wait for survey to load
-    await page.waitForLoadState('networkidle');
-
-    // Look for navigation buttons (Next, Previous, etc.)
-    const nextButton = page.locator('button:has-text("Next")');
-    const continueButton = page.locator('button:has-text("Continue")');
-
-    // Try to find and click navigation button
-    if (await nextButton.isVisible()) {
-      // Select a response first (if questions are present)
-      const likertOption = page.locator('input[type="radio"]').first();
-      if (await likertOption.isVisible()) {
-        await likertOption.click();
-      }
-      await nextButton.click();
-    } else if (await continueButton.isVisible()) {
-      await continueButton.click();
+    // Should see 404 or error message
+    const has404 = await page
+      .locator('h1:has-text("404")')
+      .isVisible()
+      .catch(() => false);
+    const errorContent = page.locator('text=/not found|invalid|unavailable/i');
+    if (!has404) {
+      await expect(errorContent.first()).toBeVisible();
     }
   });
 
-  test('should require responses before proceeding', async ({ page }) => {
-    await page.goto(`/s/${testToken}`);
-
-    await page.waitForLoadState('networkidle');
-
-    // Try to proceed without answering
-    const nextButton = page.locator('button:has-text("Next")');
-    if (await nextButton.isVisible()) {
-      await nextButton.click();
-
-      // Should see validation message or stay on same page
-      // Implementation may vary - either error message or disabled button
-      const errorMessage = page.locator('text=/required|answer|complete/i');
-      const isErrorVisible = await errorMessage.isVisible().catch(() => false);
-
-      // If no error, the button should have been disabled
-      if (!isErrorVisible) {
-        // Check if still on the same section
-        await expect(nextButton).toBeVisible();
-      }
-    }
-  });
-
-  test('should show progress indicator', async ({ page }) => {
-    await page.goto(`/s/${testToken}`);
-
-    await page.waitForLoadState('networkidle');
-
-    // Look for progress indicator (progress bar, step counter, etc.)
-    const progressBar = page.locator('[role="progressbar"]');
-    const progressText = page.locator('text=/progress|of|section/i');
-
-    const hasProgressBar = await progressBar.isVisible().catch(() => false);
-    const hasProgressText = await progressText.isVisible().catch(() => false);
-
-    // At least one progress indicator should be present
-    expect(hasProgressBar || hasProgressText).toBeTruthy();
-  });
-
-  test('should prevent accessing completed survey', async ({ page }) => {
-    // First, mark the invitation as completed
-    await prisma.invitation.update({
-      where: { token: testToken },
+  test('should show survey unavailable for inactive campaign', async ({
+    page,
+  }) => {
+    // Create a draft campaign
+    const organization = await prisma.organization.findFirst();
+    const draftCode = `DRAFT${Date.now()}`.slice(0, 12).toUpperCase();
+    const draftCampaign = await prisma.surveyCampaign.create({
       data: {
-        status: 'COMPLETED',
-        completedAt: new Date(),
+        surveyId: 'survey-4',
+        surveyTitle: 'Draft Campaign',
+        organizationId: organization!.id,
+        status: 'DRAFT',
+        accessCode: draftCode,
       },
     });
 
-    await page.goto(`/s/${testToken}`);
+    await page.goto(`/a/${draftCode}`);
 
-    // Should see message that survey is already completed
+    // Should see unavailable message
     await expect(
-      page.locator('text=/already completed|thank you|submitted/i')
+      page.locator('text=/not currently active|unavailable/i')
     ).toBeVisible();
 
-    // Reset for other tests
-    await prisma.invitation.update({
-      where: { token: testToken },
-      data: {
-        status: 'SENT',
-        completedAt: null,
-      },
-    });
+    // Clean up
+    await prisma.surveyCampaign.delete({ where: { id: draftCampaign.id } });
   });
 });
 
 test.describe('Survey Accessibility', () => {
-  let testToken: string;
+  let testAccessCode: string;
 
   test.beforeAll(async () => {
-    // Reuse or create test data
-    const invitation = await prisma.invitation.findFirst({
-      where: { status: 'SENT' },
+    // Reuse an existing active campaign with an access code
+    const existing = await prisma.surveyCampaign.findFirst({
+      where: { status: 'ACTIVE', accessCode: { not: null } },
     });
 
-    if (invitation) {
-      testToken = invitation.token;
+    if (existing?.accessCode) {
+      testAccessCode = existing.accessCode;
     }
   });
 
+  test.afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
   test('should have proper heading structure', async ({ page }) => {
-    if (!testToken) {
+    if (!testAccessCode) {
       test.skip();
       return;
     }
 
-    await page.goto(`/s/${testToken}`);
+    await page.goto(`/a/${testAccessCode}`);
 
     // Should have h1 for main heading
     const h1 = await page.locator('h1').count();
@@ -221,12 +134,12 @@ test.describe('Survey Accessibility', () => {
   });
 
   test('should have keyboard navigation support', async ({ page }) => {
-    if (!testToken) {
+    if (!testAccessCode) {
       test.skip();
       return;
     }
 
-    await page.goto(`/s/${testToken}`);
+    await page.goto(`/a/${testAccessCode}`);
 
     // Tab through interactive elements
     await page.keyboard.press('Tab');
