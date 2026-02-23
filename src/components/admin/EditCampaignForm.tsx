@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlignLeft, AlignCenter, AlignRight, ChevronDown, ChevronUp, ImageIcon, X } from 'lucide-react';
 import type { SurveyCampaign, Organization } from '@prisma/client';
@@ -60,6 +60,15 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
     setLogoPreview(null);
     setCurrentLogoUrl(null);
   };
+
+  // Auto-grow the welcome message textarea as content is typed
+  const messageTextareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const ta = messageTextareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${ta.scrollHeight}px`;
+  }, [splashData.welcomeMessage]);
 
   const handleLogoResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -392,18 +401,19 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                     Welcome Message
                   </label>
                   <textarea
+                    ref={messageTextareaRef}
                     id="splashMessage"
-                    rows={3}
-                    maxLength={500}
+                    maxLength={2000}
                     value={splashData.welcomeMessage}
                     onChange={(e) =>
                       setSplashData({ ...splashData, welcomeMessage: e.target.value })
                     }
                     placeholder="Briefly explain the purpose of this survey…"
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    className="mt-1 block w-full resize-none overflow-hidden rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    style={{ minHeight: '5rem' }}
                   />
                   <p className="mt-1 text-right text-xs text-gray-400">
-                    {splashData.welcomeMessage?.length ?? 0} / 500
+                    {splashData.welcomeMessage?.length ?? 0} / 2000
                   </p>
                   {/* Font Size Slider */}
                   <div className="mt-2">

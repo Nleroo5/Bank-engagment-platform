@@ -8,7 +8,7 @@ const SplashConfigSchema = z.object({
   logoUrl: z.string().url().max(500).optional(),
   logoHeight: z.number().int().min(24).max(200).optional(),
   welcomeTitle: z.string().max(200).optional(),
-  welcomeMessage: z.string().max(500).optional(),
+  welcomeMessage: z.string().max(2000).optional(),
   welcomeMessageFontSize: z.number().int().min(6).max(32).optional(),
   welcomeMessageAlignment: z.enum(['left', 'center', 'right']).optional(),
   buttonText: z.string().max(50).optional(),
