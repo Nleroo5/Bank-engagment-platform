@@ -139,7 +139,7 @@ export function SurveyForm({ scales, categories, survey }: SurveyFormProps) {
     setFormData({
       ...formData,
       surveyType: newType,
-      scaleId: matchingScale?.id ?? '',
+      scaleId: matchingScale?.id ?? '',  // '' is coerced to null by the API
     });
   };
 

@@ -118,7 +118,7 @@ export async function PUT(
         surveyType,
         surveyNumber,
         status,
-        scaleId,
+        scaleId: scaleId || null,
         surveyjsSchema: {}, // Empty for now - we'll build this later
       },
       include: {
