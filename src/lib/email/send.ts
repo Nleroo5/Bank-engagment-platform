@@ -16,7 +16,7 @@ const IS_DEVELOPMENT =
   !RESEND_API_KEY || process.env.NODE_ENV === 'development';
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@example.com';
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
 /**
  * Mock email sending for development - logs to console instead of sending
