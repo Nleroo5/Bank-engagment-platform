@@ -801,7 +801,7 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                 </p>
                 {(() => {
                   const FULL_WIDTH = 672; // max-w-2xl in px
-                  const SCALE = 0.45;
+                  const SCALE = 0.6;
                   const liveSplash: SplashConfig = {
                     ...splashData,
                     logoUrl: previewLogoSrc ?? undefined,
