@@ -6,14 +6,21 @@ export interface SplashConfig {
   /** Height of the logo in pixels (24–200). Default 64. */
   logoHeight?: number;
   welcomeTitle?: string;
+  /** Font size of the page title in pixels (20–60). Default 30. */
+  titleFontSize?: number;
   welcomeMessage?: string;
   /** Font size in pixels (6–32). Default 16. */
   welcomeMessageFontSize?: number;
   welcomeMessageAlignment?: MessageAlignment;
   buttonText?: string;
+  /** Hex color for the CTA button background, e.g. '#2563eb'. */
+  buttonColor?: string;
+  /** Hex color for the card background, e.g. '#ffffff'. */
+  cardBackground?: string;
 }
 
 const VALID_ALIGNMENTS: ReadonlySet<string> = new Set(['left', 'center', 'right']);
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 // Backward-compat: campaigns saved before the numeric font-size migration
 const LEGACY_FONT_SIZE: Record<string, number> = { sm: 12, md: 14, lg: 16, xl: 20 };
@@ -42,6 +49,12 @@ export function parseSplashConfig(raw: unknown): SplashConfig | null {
   }
 
   if (typeof obj.welcomeTitle === 'string') result.welcomeTitle = obj.welcomeTitle;
+
+  if (typeof obj.titleFontSize === 'number' &&
+      obj.titleFontSize >= 20 && obj.titleFontSize <= 60) {
+    result.titleFontSize = Math.round(obj.titleFontSize);
+  }
+
   if (typeof obj.welcomeMessage === 'string') result.welcomeMessage = obj.welcomeMessage;
 
   // welcomeMessageFontSize: accept numeric or migrate from old string enum
@@ -59,5 +72,14 @@ export function parseSplashConfig(raw: unknown): SplashConfig | null {
   }
 
   if (typeof obj.buttonText === 'string') result.buttonText = obj.buttonText;
+
+  if (typeof obj.buttonColor === 'string' && HEX_RE.test(obj.buttonColor)) {
+    result.buttonColor = obj.buttonColor;
+  }
+
+  if (typeof obj.cardBackground === 'string' && HEX_RE.test(obj.cardBackground)) {
+    result.cardBackground = obj.cardBackground;
+  }
+
   return result;
 }

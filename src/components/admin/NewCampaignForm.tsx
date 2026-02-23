@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlignLeft, AlignCenter, AlignRight, ChevronDown, ChevronUp, ImageIcon, X } from 'lucide-react';
 import type { Organization } from '@prisma/client';
-import type { SurveyListItem } from '@/types/survey';
+import type { SurveyListItem, Survey } from '@/types/survey';
 import type { SplashConfig, MessageAlignment } from '@/types/splash';
+import { WelcomeScreen } from '@/components/survey/WelcomeScreen';
 
 interface NewCampaignFormProps {
   organizations: Organization[];
@@ -43,13 +44,21 @@ export function NewCampaignForm({
     bankName: '',
     logoHeight: 64,
     welcomeTitle: '',
+    titleFontSize: 30,
     welcomeMessage: '',
     welcomeMessageFontSize: 16,
     welcomeMessageAlignment: 'left',
     buttonText: '',
+    buttonColor: '#2563eb',
+    cardBackground: '#ffffff',
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  // Preview state
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const previewInnerRef = useRef<HTMLDivElement>(null);
+  const [previewInnerHeight, setPreviewInnerHeight] = useState(700);
 
   // Handle logo file selection — show local preview immediately
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +76,18 @@ export function NewCampaignForm({
     ta.style.height = 'auto';
     ta.style.height = `${ta.scrollHeight}px`;
   }, [splashData.welcomeMessage]);
+
+  // Measure preview inner height with ResizeObserver
+  useEffect(() => {
+    const el = previewInnerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      const entry = entries[0];
+      if (entry) setPreviewInnerHeight(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [previewVisible]);
 
   const handleLogoResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -177,12 +198,18 @@ export function NewCampaignForm({
         splashConfigPayload.logoHeight = splashData.logoHeight ?? 64;
       }
       if (splashData.welcomeTitle) splashConfigPayload.welcomeTitle = splashData.welcomeTitle;
+      if ((splashData.titleFontSize ?? 30) !== 30)
+        splashConfigPayload.titleFontSize = splashData.titleFontSize;
       if (splashData.welcomeMessage) {
         splashConfigPayload.welcomeMessage = splashData.welcomeMessage;
         splashConfigPayload.welcomeMessageFontSize = splashData.welcomeMessageFontSize ?? 16;
         splashConfigPayload.welcomeMessageAlignment = splashData.welcomeMessageAlignment ?? 'left';
       }
       if (splashData.buttonText) splashConfigPayload.buttonText = splashData.buttonText;
+      if ((splashData.buttonColor ?? '#2563eb') !== '#2563eb')
+        splashConfigPayload.buttonColor = splashData.buttonColor;
+      if ((splashData.cardBackground ?? '#ffffff') !== '#ffffff')
+        splashConfigPayload.cardBackground = splashData.cardBackground;
       const hasSplashConfig = Object.keys(splashConfigPayload).length > 0;
 
       const payload = {
@@ -465,6 +492,7 @@ export function NewCampaignForm({
                   <input
                     type="text"
                     id="splashBankName"
+                    maxLength={100}
                     value={splashData.bankName}
                     onChange={(e) =>
                       setSplashData({ ...splashData, bankName: e.target.value })
@@ -531,6 +559,11 @@ export function NewCampaignForm({
                       </p>
                     </div>
                   </div>
+                  {logoPreview && (
+                    <p className="mt-1 text-xs text-gray-400">
+                      Logo height: {splashData.logoHeight ?? 64}px — drag corner handle in preview to resize
+                    </p>
+                  )}
                 </div>
 
                 {/* Welcome Title */}
@@ -544,6 +577,7 @@ export function NewCampaignForm({
                   <input
                     type="text"
                     id="splashTitle"
+                    maxLength={200}
                     value={splashData.welcomeTitle}
                     onChange={(e) =>
                       setSplashData({ ...splashData, welcomeTitle: e.target.value })
@@ -551,6 +585,39 @@ export function NewCampaignForm({
                     placeholder={selectedSurvey?.title || 'Defaults to survey title'}
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
+                  <p className="mt-1 text-right text-xs text-gray-400">
+                    {splashData.welcomeTitle?.length ?? 0} / 200
+                  </p>
+                  {/* Title Font Size Slider */}
+                  <div className="mt-2">
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="text-xs font-medium text-gray-600">
+                        Title font size
+                      </p>
+                      <span className="text-xs font-semibold text-gray-700">
+                        {splashData.titleFontSize ?? 30}px
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={20}
+                      max={60}
+                      step={1}
+                      value={splashData.titleFontSize ?? 30}
+                      onChange={(e) =>
+                        setSplashData({
+                          ...splashData,
+                          titleFontSize: parseInt(e.target.value, 10),
+                        })
+                      }
+                      className="w-full accent-primary-600"
+                      aria-label="Title font size"
+                    />
+                    <div className="mt-0.5 flex justify-between text-[10px] text-gray-400">
+                      <span>20px</span>
+                      <span>60px</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Welcome Message */}
@@ -608,43 +675,43 @@ export function NewCampaignForm({
                   </div>
                 </div>
 
-                  {/* Message Alignment */}
-                  <div className="mt-2">
-                    <p className="mb-1 text-xs font-medium text-gray-600">
-                      Text alignment
-                    </p>
-                    <div className="flex overflow-hidden rounded-md border border-gray-300">
-                      {(
-                        [
-                          { value: 'left', label: 'Left', Icon: AlignLeft },
-                          { value: 'center', label: 'Center', Icon: AlignCenter },
-                          { value: 'right', label: 'Right', Icon: AlignRight },
-                        ] as const
-                      ).map(({ value, label, Icon }, i) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() =>
-                            setSplashData({
-                              ...splashData,
-                              welcomeMessageAlignment: value as MessageAlignment,
-                            })
-                          }
-                          aria-pressed={splashData.welcomeMessageAlignment === value}
-                          aria-label={label}
-                          className={[
-                            'flex flex-1 items-center justify-center py-1.5 transition-colors',
-                            i > 0 ? 'border-l border-gray-300' : '',
-                            splashData.welcomeMessageAlignment === value
-                              ? 'bg-primary-50 text-primary-700'
-                              : 'bg-white text-gray-500 hover:bg-gray-50',
-                          ].join(' ')}
-                        >
-                          <Icon className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                      ))}
-                    </div>
+                {/* Message Alignment */}
+                <div>
+                  <p className="mb-1 text-xs font-medium text-gray-600">
+                    Text alignment
+                  </p>
+                  <div className="flex overflow-hidden rounded-md border border-gray-300">
+                    {(
+                      [
+                        { value: 'left', label: 'Left', Icon: AlignLeft },
+                        { value: 'center', label: 'Center', Icon: AlignCenter },
+                        { value: 'right', label: 'Right', Icon: AlignRight },
+                      ] as const
+                    ).map(({ value, label, Icon }, i) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          setSplashData({
+                            ...splashData,
+                            welcomeMessageAlignment: value as MessageAlignment,
+                          })
+                        }
+                        aria-pressed={splashData.welcomeMessageAlignment === value}
+                        aria-label={label}
+                        className={[
+                          'flex flex-1 items-center justify-center py-1.5 transition-colors',
+                          i > 0 ? 'border-l border-gray-300' : '',
+                          splashData.welcomeMessageAlignment === value
+                            ? 'bg-primary-50 text-primary-700'
+                            : 'bg-white text-gray-500 hover:bg-gray-50',
+                        ].join(' ')}
+                      >
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    ))}
                   </div>
+                </div>
 
                 {/* Button Text */}
                 <div>
@@ -657,6 +724,7 @@ export function NewCampaignForm({
                   <input
                     type="text"
                     id="splashButton"
+                    maxLength={50}
                     value={splashData.buttonText}
                     onChange={(e) =>
                       setSplashData({ ...splashData, buttonText: e.target.value })
@@ -664,88 +732,142 @@ export function NewCampaignForm({
                     placeholder="Begin Survey"
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   />
+                  <p className="mt-1 text-right text-xs text-gray-400">
+                    {splashData.buttonText?.length ?? 0} / 50
+                  </p>
                 </div>
+
+                {/* Button Color */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Button Color
+                  </label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={splashData.buttonColor ?? '#2563eb'}
+                      onChange={(e) =>
+                        setSplashData({ ...splashData, buttonColor: e.target.value })
+                      }
+                      className="h-9 w-9 cursor-pointer rounded border border-gray-300 p-0.5"
+                      aria-label="Button background color"
+                    />
+                    <span className="font-mono text-sm text-gray-700">
+                      {splashData.buttonColor ?? '#2563eb'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSplashData({ ...splashData, buttonColor: '#2563eb' })
+                      }
+                      className="text-xs text-gray-400 underline hover:text-gray-600"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Card Background */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Card Background
+                  </label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={splashData.cardBackground ?? '#ffffff'}
+                      onChange={(e) =>
+                        setSplashData({ ...splashData, cardBackground: e.target.value })
+                      }
+                      className="h-9 w-9 cursor-pointer rounded border border-gray-300 p-0.5"
+                      aria-label="Card background color"
+                    />
+                    <span className="font-mono text-sm text-gray-700">
+                      {splashData.cardBackground ?? '#ffffff'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSplashData({ ...splashData, cardBackground: '#ffffff' })
+                      }
+                      className="text-xs text-gray-400 underline hover:text-gray-600"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile: toggle preview button */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewVisible(v => !v)}
+                  className="mt-2 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 lg:hidden"
+                >
+                  {previewVisible ? 'Hide Preview' : 'Show Preview'}
+                </button>
               </div>
 
-              {/* Right: Live Preview */}
-              <div className="hidden lg:block">
+              {/* Right: Pixel-perfect Live Preview */}
+              <div className={previewVisible ? 'block' : 'hidden lg:block'}>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Preview
+                  Live Preview
                 </p>
-                <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                  {/* Logo */}
-                  <div className="mb-1 flex justify-center">
-                    {logoPreview ? (
-                      <div className="relative inline-block">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={logoPreview}
-                          alt="Logo"
-                          style={{ height: `${Math.round((splashData.logoHeight ?? 64) * 0.45)}px` }}
-                          className="w-auto max-w-[200px] select-none object-contain"
-                          draggable={false}
-                        />
-                        <div
-                          className="absolute bottom-0 right-0 h-3.5 w-3.5 cursor-nwse-resize border-b-2 border-r-2 border-gray-400 hover:border-primary-600"
-                          onMouseDown={handleLogoResizeStart}
-                          title={`${splashData.logoHeight ?? 64}px — drag to resize`}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-10 w-32 items-center justify-center rounded bg-gray-100">
-                        <span className="text-xs text-gray-400">Logo</span>
-                      </div>
-                    )}
-                  </div>
-                  {logoPreview && (
-                    <p className="mb-3 text-center text-[10px] text-gray-400">
-                      {splashData.logoHeight ?? 64}px — drag corner to resize
-                    </p>
-                  )}
-
-                  {/* Bank name */}
-                  {splashData.bankName && (
-                    <p className="mb-2 text-center text-xs text-gray-500">
-                      {splashData.bankName}
-                    </p>
-                  )}
-
-                  {/* Title */}
-                  <h3 className="mb-2 text-center text-base font-bold text-gray-900 line-clamp-2">
-                    {splashData.welcomeTitle ||
-                      selectedSurvey?.title ||
-                      'Survey Title'}
-                  </h3>
-
-                  {/* Message */}
-                  {splashData.welcomeMessage && (
-                    <p
-                      style={{ fontSize: `${Math.max(8, Math.round((splashData.welcomeMessageFontSize ?? 16) * 0.55))}px` }}
-                      className={[
-                        'mb-3 whitespace-pre-line leading-snug text-gray-600 line-clamp-4',
-                        splashData.welcomeMessageAlignment === 'center' ? 'text-center' :
-                        splashData.welcomeMessageAlignment === 'right' ? 'text-right' :
-                        'text-left',
-                      ].join(' ')}
+                {(() => {
+                  const FULL_WIDTH = 672; // max-w-2xl in px
+                  const SCALE = 0.45;
+                  const liveSplash: SplashConfig = {
+                    ...splashData,
+                    logoUrl: logoPreview ?? undefined,
+                  };
+                  // Pass estimatedMinutes from selected survey so preview matches live screen
+                  const previewSurvey = selectedSurvey
+                    ? ({ estimatedMinutes: selectedSurvey.estimatedMinutes } as unknown as Survey)
+                    : null;
+                  return (
+                    <div
+                      className="overflow-hidden rounded-lg border border-gray-200 shadow-sm"
+                      style={{
+                        width: `${Math.round(FULL_WIDTH * SCALE)}px`,
+                        height: `${Math.round(previewInnerHeight * SCALE)}px`,
+                      }}
                     >
-                      {splashData.welcomeMessage}
-                    </p>
-                  )}
-
-                  {/* Estimated time placeholder */}
-                  {selectedSurvey?.estimatedMinutes && (
-                    <p className="mb-3 text-center text-xs text-gray-400">
-                      ≈ {selectedSurvey.estimatedMinutes} min
-                    </p>
-                  )}
-
-                  {/* Button */}
-                  <div className="mt-3">
-                    <div className="w-full rounded-md bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white">
-                      {splashData.buttonText || 'Begin Survey'}
+                      <div
+                        ref={previewInnerRef}
+                        className="pointer-events-none"
+                        style={{
+                          width: `${FULL_WIDTH}px`,
+                          transformOrigin: 'top left',
+                          transform: `scale(${SCALE})`,
+                        }}
+                      >
+                        <WelcomeScreen
+                          survey={previewSurvey}
+                          fallbackTitle={splashData.welcomeTitle || selectedSurvey?.title || ''}
+                          splashConfig={liveSplash}
+                          isAnonymous={true}
+                          campaignEndDate={formData.endDate || null}
+                          onBegin={() => {}}
+                        />
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
+                <p className="mt-1 text-center text-[10px] text-gray-400">
+                  Scaled preview — identical to what respondents see
+                </p>
+                {logoPreview && (
+                  <p className="mt-1 text-center text-[10px] text-gray-400">
+                    Logo: {splashData.logoHeight ?? 64}px
+                    <button
+                      type="button"
+                      className="ml-2 underline hover:text-gray-600"
+                      onMouseDown={handleLogoResizeStart}
+                      title="Drag to resize logo"
+                    >
+                      drag to resize
+                    </button>
+                  </p>
+                )}
               </div>
             </div>
           </div>

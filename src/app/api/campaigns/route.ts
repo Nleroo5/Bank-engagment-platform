@@ -8,10 +8,13 @@ const SplashConfigSchema = z.object({
   logoUrl: z.string().url().max(500).optional(),
   logoHeight: z.number().int().min(24).max(200).optional(),
   welcomeTitle: z.string().max(200).optional(),
+  titleFontSize: z.number().int().min(20).max(60).optional(),
   welcomeMessage: z.string().max(2000).optional(),
   welcomeMessageFontSize: z.number().int().min(6).max(32).optional(),
   welcomeMessageAlignment: z.enum(['left', 'center', 'right']).optional(),
   buttonText: z.string().max(50).optional(),
+  buttonColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  cardBackground: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
 }).strict();
 
 export async function GET() {

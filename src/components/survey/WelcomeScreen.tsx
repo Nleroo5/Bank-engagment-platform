@@ -80,6 +80,9 @@ export function WelcomeScreen({
   const bankName = splashConfig?.bankName;
   const logoUrl = splashConfig?.logoUrl;
   const logoHeight = splashConfig?.logoHeight ?? 64;
+  const titleFontSize = splashConfig?.titleFontSize ?? 30;
+  const buttonColor = splashConfig?.buttonColor;
+  const cardBackground = splashConfig?.cardBackground;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -111,8 +114,16 @@ export function WelcomeScreen({
         )}
       </div>
 
-      <div className="rounded-lg bg-white p-8 shadow-lg">
-        <h1 className="mb-4 text-3xl font-bold text-gray-900">{title}</h1>
+      <div
+        className="rounded-lg p-8 shadow-lg"
+        style={{ backgroundColor: cardBackground ?? '#ffffff' }}
+      >
+        <h1
+          className="mb-4 font-bold text-gray-900"
+          style={{ fontSize: `${titleFontSize}px` }}
+        >
+          {title}
+        </h1>
 
         {message && (
           <WelcomeMessage
@@ -169,7 +180,12 @@ export function WelcomeScreen({
 
         <button
           onClick={onBegin}
-          className="w-full rounded-md bg-primary-600 px-6 py-3 text-lg font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          style={buttonColor ? { backgroundColor: buttonColor } : undefined}
+          className={`w-full rounded-md px-6 py-3 text-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            buttonColor
+              ? 'focus:ring-gray-400'
+              : 'bg-primary-600 hover:bg-primary-700 focus:ring-primary-500'
+          }`}
         >
           {buttonText}
         </button>
