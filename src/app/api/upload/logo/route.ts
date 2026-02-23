@@ -10,6 +10,16 @@ const ALLOWED_TYPES = new Set([
 const MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4 MB
 
 export async function POST(request: NextRequest) {
+  // Fail fast with a clear message if the Blob token is not configured.
+  // Without it, @vercel/blob will throw a generic error that is hard to diagnose.
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error('[upload/logo] BLOB_READ_WRITE_TOKEN is not set. Logo uploads require a Vercel Blob store to be connected to this project.');
+    return NextResponse.json(
+      { error: 'Logo storage is not configured on this server. Ask your administrator to connect a Vercel Blob store and set BLOB_READ_WRITE_TOKEN.' },
+      { status: 503 }
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file');
@@ -48,9 +58,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: blob.url }, { status: 200 });
   } catch (error) {
-    console.error('Logo upload error:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[upload/logo] Upload failed:', message, error);
     return NextResponse.json(
-      { error: 'Failed to upload logo. Please try again.' },
+      { error: `Logo upload failed: ${message}` },
       { status: 500 }
     );
   }

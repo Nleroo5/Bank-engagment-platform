@@ -17,7 +17,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [logoUploadWarning, setLogoUploadWarning] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     status: campaign.status,
@@ -36,6 +35,7 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
     bankName: existingSplash?.bankName ?? '',
     welcomeTitle: existingSplash?.welcomeTitle ?? '',
     welcomeMessage: existingSplash?.welcomeMessage ?? '',
+    welcomeMessageFontSize: existingSplash?.welcomeMessageFontSize ?? 'lg',
     buttonText: existingSplash?.buttonText ?? '',
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -62,7 +62,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLogoUploadWarning(null);
     setIsSubmitting(true);
 
     try {
@@ -81,12 +80,16 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
           if (typeof uploadData.url === 'string') {
             resolvedLogoUrl = uploadData.url;
           } else {
-            setLogoUploadWarning('Logo upload returned an unexpected response. Other changes will be saved without the new logo.');
+            setError('Logo upload returned an unexpected response. Please try again.');
+            setIsSubmitting(false);
+            return;
           }
         } else {
           const errData = await uploadRes.json().catch(() => ({})) as { error?: unknown };
           const msg = typeof errData.error === 'string' ? errData.error : 'Logo upload failed.';
-          setLogoUploadWarning(`${msg} Other changes will be saved without the new logo.`);
+          setError(`${msg} Please try again, or remove the logo to save without one.`);
+          setIsSubmitting(false);
+          return;
         }
       }
 
@@ -95,7 +98,10 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
       if (splashData.bankName) splashConfigPayload.bankName = splashData.bankName;
       if (resolvedLogoUrl) splashConfigPayload.logoUrl = resolvedLogoUrl;
       if (splashData.welcomeTitle) splashConfigPayload.welcomeTitle = splashData.welcomeTitle;
-      if (splashData.welcomeMessage) splashConfigPayload.welcomeMessage = splashData.welcomeMessage;
+      if (splashData.welcomeMessage) {
+        splashConfigPayload.welcomeMessage = splashData.welcomeMessage;
+        splashConfigPayload.welcomeMessageFontSize = splashData.welcomeMessageFontSize ?? 'lg';
+      }
       if (splashData.buttonText) splashConfigPayload.buttonText = splashData.buttonText;
       const hasSplashConfig = Object.keys(splashConfigPayload).length > 0;
 
@@ -133,12 +139,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
           <p className="text-sm text-red-800">{error}</p>
         </div>
       )}
-      {logoUploadWarning && (
-        <div className="rounded-md bg-yellow-50 p-4">
-          <p className="text-sm text-yellow-800">{logoUploadWarning}</p>
-        </div>
-      )}
-
       {/* Campaign Info (Read-only) */}
       <div className="rounded-md bg-gray-50 p-4">
         <h3 className="mb-3 text-sm font-medium text-gray-900">
@@ -377,6 +377,46 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                   <p className="mt-1 text-right text-xs text-gray-400">
                     {splashData.welcomeMessage?.length ?? 0} / 500
                   </p>
+                  {/* Font Size Picker */}
+                  <div className="mt-2">
+                    <p className="mb-1 text-xs font-medium text-gray-600">
+                      Message font size
+                    </p>
+                    <div className="flex overflow-hidden rounded-md border border-gray-300">
+                      {(
+                        [
+                          { value: 'sm', label: 'Small', sampleClass: 'text-xs' },
+                          { value: 'md', label: 'Medium', sampleClass: 'text-sm' },
+                          { value: 'lg', label: 'Large', sampleClass: 'text-base' },
+                          { value: 'xl', label: 'X-Large', sampleClass: 'text-lg' },
+                        ] as const
+                      ).map(({ value, label, sampleClass }, i) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setSplashData({
+                              ...splashData,
+                              welcomeMessageFontSize: value,
+                            })
+                          }
+                          aria-pressed={splashData.welcomeMessageFontSize === value}
+                          className={[
+                            'flex flex-1 flex-col items-center gap-0.5 py-1.5 transition-colors',
+                            i > 0 ? 'border-l border-gray-300' : '',
+                            splashData.welcomeMessageFontSize === value
+                              ? 'bg-primary-50 text-primary-700'
+                              : 'bg-white text-gray-500 hover:bg-gray-50',
+                          ].join(' ')}
+                        >
+                          <span className={`font-medium leading-none ${sampleClass}`}>
+                            Aa
+                          </span>
+                          <span className="text-[10px] leading-none">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Button Text */}
@@ -436,7 +476,15 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
 
                   {/* Message */}
                   {splashData.welcomeMessage && (
-                    <p className="mb-3 text-center text-xs text-gray-600 line-clamp-3">
+                    <p
+                      className={[
+                        'mb-3 text-center text-gray-600 line-clamp-3',
+                        splashData.welcomeMessageFontSize === 'sm' ? 'text-[10px]' :
+                        splashData.welcomeMessageFontSize === 'md' ? 'text-[11px]' :
+                        splashData.welcomeMessageFontSize === 'xl' ? 'text-sm' :
+                        'text-xs',
+                      ].join(' ')}
+                    >
                       {splashData.welcomeMessage}
                     </p>
                   )}

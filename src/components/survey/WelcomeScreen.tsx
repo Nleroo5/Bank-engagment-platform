@@ -73,7 +73,17 @@ export function WelcomeScreen({
         <h1 className="mb-4 text-3xl font-bold text-gray-900">{title}</h1>
 
         {message && (
-          <p className="mb-6 text-lg text-gray-700">{message}</p>
+          <p
+            className={[
+              'mb-6 text-gray-700',
+              splashConfig?.welcomeMessageFontSize === 'sm' ? 'text-sm' :
+              splashConfig?.welcomeMessageFontSize === 'md' ? 'text-base' :
+              splashConfig?.welcomeMessageFontSize === 'xl' ? 'text-xl' :
+              'text-lg',
+            ].join(' ')}
+          >
+            {message}
+          </p>
         )}
 
         {/* Logistics */}
