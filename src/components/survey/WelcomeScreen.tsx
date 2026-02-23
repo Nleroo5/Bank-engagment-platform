@@ -3,7 +3,7 @@
 import { Fragment } from 'react';
 import Image from 'next/image';
 import type { Survey } from '@/types/survey';
-import type { SplashConfig, MessageFontSize, MessageAlignment, LogoSize } from '@/types/splash';
+import type { SplashConfig, MessageAlignment } from '@/types/splash';
 import { Clock, Calendar, Shield } from 'lucide-react';
 
 interface WelcomeScreenProps {
@@ -27,44 +27,27 @@ function formatEndDate(date: Date | string): string {
   });
 }
 
-const FONT_SIZE_CLASS: Record<MessageFontSize, string> = {
-  sm: 'text-sm',
-  md: 'text-base',
-  lg: 'text-lg',
-  xl: 'text-xl',
-};
-
 const ALIGN_CLASS: Record<MessageAlignment, string> = {
   left: 'text-left',
   center: 'text-center',
   right: 'text-right',
 };
 
-// Logo height on the splash page
-const LOGO_HEIGHT_CLASS: Record<LogoSize, string> = {
-  sm: 'h-10',   // 40 px — small badge
-  md: 'h-16',   // 64 px — default
-  lg: 'h-24',   // 96 px — prominent
-};
-
-/** Renders the welcome message with proper line breaks and paragraph spacing. */
+/** Renders the welcome message with proper paragraph + line-break support. */
 function WelcomeMessage({
   text,
-  fontSize = 'lg',
+  fontSize = 16,
   alignment = 'left',
 }: {
   text: string;
-  fontSize?: MessageFontSize;
+  fontSize?: number;
   alignment?: MessageAlignment;
 }) {
   const paragraphs = text.split(/\n\n+/);
   return (
     <div
-      className={[
-        'mb-6 space-y-4 leading-relaxed text-gray-700',
-        FONT_SIZE_CLASS[fontSize],
-        ALIGN_CLASS[alignment],
-      ].join(' ')}
+      className={['mb-6 space-y-4 leading-relaxed text-gray-700', ALIGN_CLASS[alignment]].join(' ')}
+      style={{ fontSize: `${fontSize}px` }}
     >
       {paragraphs.map((para, i) => {
         const lines = para.split('\n');
@@ -96,8 +79,7 @@ export function WelcomeScreen({
   const buttonText = splashConfig?.buttonText || 'Begin Survey';
   const bankName = splashConfig?.bankName;
   const logoUrl = splashConfig?.logoUrl;
-  const logoSize = splashConfig?.logoSize ?? 'md';
-  const logoHeightClass = LOGO_HEIGHT_CLASS[logoSize];
+  const logoHeight = splashConfig?.logoHeight ?? 64;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -111,7 +93,8 @@ export function WelcomeScreen({
           <img
             src={logoUrl}
             alt={bankName ? `${bankName} logo` : 'Organization logo'}
-            className={`${logoHeightClass} w-auto max-w-[280px] object-contain`}
+            style={{ height: `${logoHeight}px` }}
+            className="w-auto max-w-[320px] object-contain"
           />
         ) : (
           <Image

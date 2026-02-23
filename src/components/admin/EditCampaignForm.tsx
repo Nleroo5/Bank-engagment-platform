@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AlignLeft, AlignCenter, AlignRight, ChevronDown, ChevronUp, ImageIcon, X } from 'lucide-react';
 import type { SurveyCampaign, Organization } from '@prisma/client';
 import { parseSplashConfig } from '@/types/splash';
-import type { SplashConfig, LogoSize, MessageAlignment } from '@/types/splash';
+import type { SplashConfig, MessageAlignment } from '@/types/splash';
 
 interface EditCampaignFormProps {
   campaign: SurveyCampaign & {
@@ -33,10 +33,10 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
   const [splashOpen, setSplashOpen] = useState(false);
   const [splashData, setSplashData] = useState<Omit<SplashConfig, 'logoUrl'>>({
     bankName: existingSplash?.bankName ?? '',
-    logoSize: existingSplash?.logoSize ?? 'md',
+    logoHeight: existingSplash?.logoHeight ?? 64,
     welcomeTitle: existingSplash?.welcomeTitle ?? '',
     welcomeMessage: existingSplash?.welcomeMessage ?? '',
-    welcomeMessageFontSize: existingSplash?.welcomeMessageFontSize ?? 'lg',
+    welcomeMessageFontSize: existingSplash?.welcomeMessageFontSize ?? 16,
     welcomeMessageAlignment: existingSplash?.welcomeMessageAlignment ?? 'left',
     buttonText: existingSplash?.buttonText ?? '',
   });
@@ -59,6 +59,28 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview(null);
     setCurrentLogoUrl(null);
+  };
+
+  const handleLogoResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    document.body.style.cursor = 'nwse-resize';
+    const startY = e.clientY;
+    const startHeight = splashData.logoHeight ?? 64;
+
+    const onMove = (moveE: MouseEvent) => {
+      const delta = moveE.clientY - startY;
+      const newHeight = Math.max(24, Math.min(200, Math.round(startHeight + delta)));
+      setSplashData(prev => ({ ...prev, logoHeight: newHeight }));
+    };
+
+    const onUp = () => {
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,12 +122,12 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
       if (splashData.bankName) splashConfigPayload.bankName = splashData.bankName;
       if (resolvedLogoUrl) {
         splashConfigPayload.logoUrl = resolvedLogoUrl;
-        splashConfigPayload.logoSize = splashData.logoSize ?? 'md';
+        splashConfigPayload.logoHeight = splashData.logoHeight ?? 64;
       }
       if (splashData.welcomeTitle) splashConfigPayload.welcomeTitle = splashData.welcomeTitle;
       if (splashData.welcomeMessage) {
         splashConfigPayload.welcomeMessage = splashData.welcomeMessage;
-        splashConfigPayload.welcomeMessageFontSize = splashData.welcomeMessageFontSize ?? 'lg';
+        splashConfigPayload.welcomeMessageFontSize = splashData.welcomeMessageFontSize ?? 16;
         splashConfigPayload.welcomeMessageAlignment = splashData.welcomeMessageAlignment ?? 'left';
       }
       if (splashData.buttonText) splashConfigPayload.buttonText = splashData.buttonText;
@@ -341,42 +363,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                   </div>
                 </div>
 
-                {/* Logo Size */}
-                {previewLogoSrc && (
-                  <div>
-                    <p className="mb-1 text-xs font-medium text-gray-600">
-                      Logo size
-                    </p>
-                    <div className="flex overflow-hidden rounded-md border border-gray-300">
-                      {(
-                        [
-                          { value: 'sm', label: 'Small' },
-                          { value: 'md', label: 'Medium' },
-                          { value: 'lg', label: 'Large' },
-                        ] as const
-                      ).map(({ value, label }, i) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() =>
-                            setSplashData({ ...splashData, logoSize: value as LogoSize })
-                          }
-                          aria-pressed={splashData.logoSize === value}
-                          className={[
-                            'flex flex-1 items-center justify-center py-1.5 text-xs transition-colors',
-                            i > 0 ? 'border-l border-gray-300' : '',
-                            splashData.logoSize === value
-                              ? 'bg-primary-50 font-medium text-primary-700'
-                              : 'bg-white text-gray-500 hover:bg-gray-50',
-                          ].join(' ')}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Welcome Title */}
                 <div>
                   <label
@@ -419,44 +405,34 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                   <p className="mt-1 text-right text-xs text-gray-400">
                     {splashData.welcomeMessage?.length ?? 0} / 500
                   </p>
-                  {/* Font Size Picker */}
+                  {/* Font Size Slider */}
                   <div className="mt-2">
-                    <p className="mb-1 text-xs font-medium text-gray-600">
-                      Message font size
-                    </p>
-                    <div className="flex overflow-hidden rounded-md border border-gray-300">
-                      {(
-                        [
-                          { value: 'sm', label: 'Small', sampleClass: 'text-xs' },
-                          { value: 'md', label: 'Medium', sampleClass: 'text-sm' },
-                          { value: 'lg', label: 'Large', sampleClass: 'text-base' },
-                          { value: 'xl', label: 'X-Large', sampleClass: 'text-lg' },
-                        ] as const
-                      ).map(({ value, label, sampleClass }, i) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() =>
-                            setSplashData({
-                              ...splashData,
-                              welcomeMessageFontSize: value,
-                            })
-                          }
-                          aria-pressed={splashData.welcomeMessageFontSize === value}
-                          className={[
-                            'flex flex-1 flex-col items-center gap-0.5 py-1.5 transition-colors',
-                            i > 0 ? 'border-l border-gray-300' : '',
-                            splashData.welcomeMessageFontSize === value
-                              ? 'bg-primary-50 text-primary-700'
-                              : 'bg-white text-gray-500 hover:bg-gray-50',
-                          ].join(' ')}
-                        >
-                          <span className={`font-medium leading-none ${sampleClass}`}>
-                            Aa
-                          </span>
-                          <span className="text-[10px] leading-none">{label}</span>
-                        </button>
-                      ))}
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="text-xs font-medium text-gray-600">
+                        Message font size
+                      </p>
+                      <span className="text-xs font-semibold text-gray-700">
+                        {splashData.welcomeMessageFontSize ?? 16}px
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={6}
+                      max={32}
+                      step={1}
+                      value={splashData.welcomeMessageFontSize ?? 16}
+                      onChange={(e) =>
+                        setSplashData({
+                          ...splashData,
+                          welcomeMessageFontSize: parseInt(e.target.value, 10),
+                        })
+                      }
+                      className="w-full accent-primary-600"
+                      aria-label="Message font size"
+                    />
+                    <div className="mt-0.5 flex justify-between text-[10px] text-gray-400">
+                      <span>6px</span>
+                      <span>32px</span>
                     </div>
                   </div>
                 </div>
@@ -527,25 +503,34 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                 </p>
                 <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
                   {/* Logo */}
-                  <div className="mb-4 flex justify-center">
+                  <div className="mb-1 flex justify-center">
                     {previewLogoSrc ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={previewLogoSrc}
-                        alt="Logo"
-                        className={[
-                          'w-auto max-w-[160px] object-contain',
-                          splashData.logoSize === 'sm' ? 'h-6' :
-                          splashData.logoSize === 'lg' ? 'h-14' :
-                          'h-10',
-                        ].join(' ')}
-                      />
+                      <div className="relative inline-block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={previewLogoSrc}
+                          alt="Logo"
+                          style={{ height: `${Math.round((splashData.logoHeight ?? 64) * 0.45)}px` }}
+                          className="w-auto max-w-[200px] select-none object-contain"
+                          draggable={false}
+                        />
+                        <div
+                          className="absolute bottom-0 right-0 h-3.5 w-3.5 cursor-nwse-resize border-b-2 border-r-2 border-gray-400 hover:border-primary-600"
+                          onMouseDown={handleLogoResizeStart}
+                          title={`${splashData.logoHeight ?? 64}px — drag to resize`}
+                        />
+                      </div>
                     ) : (
                       <div className="flex h-10 w-32 items-center justify-center rounded bg-gray-100">
                         <span className="text-xs text-gray-400">Logo</span>
                       </div>
                     )}
                   </div>
+                  {previewLogoSrc && (
+                    <p className="mb-3 text-center text-[10px] text-gray-400">
+                      {splashData.logoHeight ?? 64}px — drag corner to resize
+                    </p>
+                  )}
 
                   {/* Bank name */}
                   {splashData.bankName && (
@@ -562,12 +547,9 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                   {/* Message */}
                   {splashData.welcomeMessage && (
                     <p
+                      style={{ fontSize: `${Math.max(8, Math.round((splashData.welcomeMessageFontSize ?? 16) * 0.55))}px` }}
                       className={[
-                        'mb-3 whitespace-pre-line text-gray-600 line-clamp-4',
-                        splashData.welcomeMessageFontSize === 'sm' ? 'text-[10px]' :
-                        splashData.welcomeMessageFontSize === 'md' ? 'text-[11px]' :
-                        splashData.welcomeMessageFontSize === 'xl' ? 'text-sm' :
-                        'text-xs',
+                        'mb-3 whitespace-pre-line leading-snug text-gray-600 line-clamp-4',
                         splashData.welcomeMessageAlignment === 'center' ? 'text-center' :
                         splashData.welcomeMessageAlignment === 'right' ? 'text-right' :
                         'text-left',
