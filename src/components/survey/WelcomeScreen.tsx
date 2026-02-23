@@ -98,10 +98,18 @@ export function WelcomeScreen({
   const bankName = splashConfig?.bankName;
   const logoUrl = splashConfig?.logoUrl;
   const logoHeight = splashConfig?.logoHeight ?? 64;
+  const platformLogoUrl = splashConfig?.platformLogoUrl;
+  const platformLogoHeight = splashConfig?.platformLogoHeight ?? 64;
+  const logoArrangement = splashConfig?.logoArrangement ?? 'side-by-side';
   const titleFontSize = splashConfig?.titleFontSize ?? 30;
   const titleAlignment = splashConfig?.titleAlignment ?? 'left';
   const buttonColor = splashConfig?.buttonColor;
   const cardBackground = splashConfig?.cardBackground;
+
+  // Determine logo display mode
+  const hasPlatformLogo = !!platformLogoUrl;
+  const hasClientLogo = !!logoUrl;
+  const hasBothLogos = hasPlatformLogo && hasClientLogo;
   const anonymityNotice = splashConfig?.anonymityNotice
     ?? 'Anonymous — individual answers are never visible to anyone';
   const footerNotes = splashConfig?.footerNotes;
@@ -118,27 +126,44 @@ export function WelcomeScreen({
     <div className="mx-auto max-w-2xl">
       {/* Logo Header */}
       <div className="mb-8 flex flex-col items-center gap-2">
-        {logoUrl ? (
-          // Use <img> directly so the Vercel Blob URL loads without being
-          // proxied through /_next/image (which requires remotePatterns and
-          // can silently fail, showing a broken image).
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUrl}
-            alt={bankName ? `${bankName} logo` : 'Organization logo'}
-            style={{ height: `${logoHeight}px` }}
-            className="w-auto max-w-[320px] object-contain"
-          />
-        ) : (
-          <Image
-            src="/header-logo.png"
-            alt="Logo"
-            width={260}
-            height={87}
-            priority
-            className="h-auto w-auto"
-          />
-        )}
+        <div
+          className={[
+            'flex items-center gap-6',
+            hasBothLogos && logoArrangement === 'stacked' ? 'flex-col' : 'flex-row justify-center',
+          ].join(' ')}
+        >
+          {/* Platform logo — custom upload or default /header-logo.png */}
+          {hasPlatformLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={platformLogoUrl!}
+              alt="Platform logo"
+              style={{ height: `${platformLogoHeight}px` }}
+              className="w-auto max-w-[320px] object-contain"
+            />
+          ) : !hasClientLogo ? (
+            // Only show default when no client logo either
+            <Image
+              src="/header-logo.png"
+              alt="Logo"
+              width={260}
+              height={87}
+              priority
+              className="h-auto w-auto"
+            />
+          ) : null}
+
+          {/* Client / bank logo */}
+          {hasClientLogo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl!}
+              alt={bankName ? `${bankName} logo` : 'Organization logo'}
+              style={{ height: `${logoHeight}px` }}
+              className="w-auto max-w-[320px] object-contain"
+            />
+          )}
+        </div>
         {bankName && (
           <p className="text-sm font-medium text-gray-500">{bankName}</p>
         )}

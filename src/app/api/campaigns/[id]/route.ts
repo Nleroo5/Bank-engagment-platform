@@ -19,6 +19,9 @@ const SplashConfigSchema = z.object({
   anonymityNotice: z.string().max(300).optional(),
   footerNotes: z.string().max(1000).optional(),
   footerNotesAlignment: z.enum(['left', 'center', 'right']).optional(),
+  platformLogoUrl: z.string().url().max(500).optional(),
+  platformLogoHeight: z.number().int().min(24).max(200).optional(),
+  logoArrangement: z.enum(['side-by-side', 'stacked']).optional(),
 }).strict();
 
 const updateCampaignSchema = z.object({

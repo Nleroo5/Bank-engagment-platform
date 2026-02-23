@@ -25,9 +25,16 @@ export interface SplashConfig {
   footerNotes?: string;
   /** Alignment of footer notes. Default 'left'. */
   footerNotesAlignment?: MessageAlignment;
+  /** URL for the platform/admin logo (replaces the default /header-logo.png). */
+  platformLogoUrl?: string;
+  /** Height of the platform logo in pixels (24–200). Default 64. */
+  platformLogoHeight?: number;
+  /** How to arrange the two logos when both are present. Default 'side-by-side'. */
+  logoArrangement?: 'side-by-side' | 'stacked';
 }
 
 const VALID_ALIGNMENTS: ReadonlySet<string> = new Set(['left', 'center', 'right']);
+const LOGO_ARRANGEMENTS: ReadonlySet<string> = new Set(['side-by-side', 'stacked']);
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 // Backward-compat: campaigns saved before the numeric font-size migration
@@ -99,6 +106,17 @@ export function parseSplashConfig(raw: unknown): SplashConfig | null {
   if (typeof obj.footerNotesAlignment === 'string' &&
       VALID_ALIGNMENTS.has(obj.footerNotesAlignment)) {
     result.footerNotesAlignment = obj.footerNotesAlignment as MessageAlignment;
+  }
+
+  if (typeof obj.platformLogoUrl === 'string') result.platformLogoUrl = obj.platformLogoUrl;
+
+  if (typeof obj.platformLogoHeight === 'number' &&
+      obj.platformLogoHeight >= 24 && obj.platformLogoHeight <= 200) {
+    result.platformLogoHeight = Math.round(obj.platformLogoHeight);
+  }
+
+  if (typeof obj.logoArrangement === 'string' && LOGO_ARRANGEMENTS.has(obj.logoArrangement)) {
+    result.logoArrangement = obj.logoArrangement as 'side-by-side' | 'stacked';
   }
 
   return result;
