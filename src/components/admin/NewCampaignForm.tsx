@@ -52,8 +52,8 @@ export function NewCampaignForm({
     buttonText: '',
     buttonColor: '#2563eb',
     cardBackground: '#ffffff',
-    anonymityNotice: '',
-    footerNotes: '',
+    anonymityNotice: 'Anonymous — individual answers are never visible to anyone',
+    footerNotes: '• Your responses are confidential and will be aggregated with others\n• All questions must be answered to complete the survey',
     footerNotesAlignment: 'left',
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -63,6 +63,7 @@ export function NewCampaignForm({
   const [previewVisible, setPreviewVisible] = useState(false);
   const previewInnerRef = useRef<HTMLDivElement>(null);
   const [previewInnerHeight, setPreviewInnerHeight] = useState(700);
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
 
   // Handle logo file selection — show local preview immediately
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +71,17 @@ export function NewCampaignForm({
     setLogoFile(file);
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  const handleLogoDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingLogo(false);
+    const file = e.dataTransfer.files?.[0] ?? null;
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return;
+    setLogoFile(file);
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoPreview(URL.createObjectURL(file));
   };
 
   // Auto-grow textareas as content is typed
@@ -201,10 +213,8 @@ export function NewCampaignForm({
         splashConfigPayload.buttonColor = splashData.buttonColor;
       if ((splashData.cardBackground ?? '#ffffff') !== '#ffffff')
         splashConfigPayload.cardBackground = splashData.cardBackground;
-      if (splashData.anonymityNotice)
-        splashConfigPayload.anonymityNotice = splashData.anonymityNotice;
-      if (splashData.footerNotes)
-        splashConfigPayload.footerNotes = splashData.footerNotes;
+      splashConfigPayload.anonymityNotice = splashData.anonymityNotice ?? '';
+      splashConfigPayload.footerNotes = splashData.footerNotes ?? '';
       if ((splashData.footerNotesAlignment ?? 'left') !== 'left')
         splashConfigPayload.footerNotesAlignment = splashData.footerNotesAlignment;
       const hasSplashConfig = Object.keys(splashConfigPayload).length > 0;
@@ -510,9 +520,15 @@ export function NewCampaignForm({
                   >
                     Bank Logo
                   </label>
-                  <div className="mt-1 flex items-center gap-3">
-                    {logoPreview ? (
-                      <div className="relative h-14 w-28 overflow-hidden rounded border border-gray-200 bg-white p-1">
+                  {logoPreview ? (
+                    // With logo: compact row with drag-to-replace
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDraggingLogo(true); }}
+                      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDraggingLogo(false); }}
+                      onDrop={handleLogoDrop}
+                      className={`mt-1 flex items-center gap-3 rounded-lg border-2 border-dashed p-3 transition-colors ${isDraggingLogo ? 'border-primary-400 bg-primary-50' : 'border-gray-200 bg-white'}`}
+                    >
+                      <div className="relative h-14 w-28 shrink-0 overflow-hidden rounded border border-gray-200 bg-white p-1">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={logoPreview}
@@ -532,30 +548,53 @@ export function NewCampaignForm({
                           <X className="h-3 w-3" />
                         </button>
                       </div>
-                    ) : (
-                      <div className="flex h-14 w-28 items-center justify-center rounded border-2 border-dashed border-gray-300 bg-white">
-                        <ImageIcon className="h-6 w-6 text-gray-300" aria-hidden="true" />
+                      <div className="min-w-0">
+                        <label
+                          htmlFor="splashLogo"
+                          className="cursor-pointer text-sm font-medium text-primary-600 underline hover:text-primary-700 focus-within:ring-2 focus-within:ring-primary-500"
+                        >
+                          Change logo
+                          <input
+                            type="file"
+                            id="splashLogo"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleLogoChange}
+                            className="sr-only"
+                          />
+                        </label>
+                        <p className="mt-0.5 text-xs text-gray-400">
+                          or drop a new file here
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <label
-                        htmlFor="splashLogo"
-                        className="cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-primary-500"
-                      >
-                        {logoFile ? 'Change logo' : 'Upload logo'}
-                        <input
-                          type="file"
-                          id="splashLogo"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={handleLogoChange}
-                          className="sr-only"
-                        />
-                      </label>
-                      <p className="mt-1 text-xs text-gray-500">
-                        JPG, PNG or WebP · max 4 MB
-                      </p>
                     </div>
-                  </div>
+                  ) : (
+                    // No logo: full-width drop zone
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDraggingLogo(true); }}
+                      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDraggingLogo(false); }}
+                      onDrop={handleLogoDrop}
+                      className={`mt-1 flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-6 transition-colors ${isDraggingLogo ? 'border-primary-400 bg-primary-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}
+                    >
+                      <ImageIcon className="mb-2 h-8 w-8 text-gray-300" aria-hidden="true" />
+                      <p className="text-sm text-gray-500">
+                        Drop your logo here, or{' '}
+                        <label
+                          htmlFor="splashLogo"
+                          className="cursor-pointer text-primary-600 underline hover:text-primary-700 focus-within:ring-2 focus-within:ring-primary-500"
+                        >
+                          browse
+                          <input
+                            type="file"
+                            id="splashLogo"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleLogoChange}
+                            className="sr-only"
+                          />
+                        </label>
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">JPG, PNG or WebP · max 4 MB</p>
+                    </div>
+                  )}
                   {/* Logo height slider */}
                   {logoPreview && (
                     <div className="mt-3">
