@@ -51,31 +51,31 @@ interface SurveyFormProps {
   survey?: Survey;
 }
 
-// Maps each survey program to its scale and a human-readable description.
-// The scale is derived automatically — admins pick the program, not the scale.
+// Maps each survey type to its scale and a human-readable description.
+// The scale is derived automatically — admins pick the type, not the scale directly.
 const SURVEY_TYPE_OPTIONS = [
   {
     value: 'likert5',
-    label: 'Leadership / Operational Team Effectiveness',
-    description: 'Survey 4 (LTE) or Survey 5 (OTE) · 5-point scale: Strongly Disagree → Strongly Agree',
+    label: '5-Point Likert Scale — Team Effectiveness',
+    description: 'Survey 4 (LTE) or Survey 5 (OTE) · 1 = Strongly Disagree → 5 = Strongly Agree',
     scaleType: 'likert5',
   },
   {
     value: 'managerial_assessment',
-    label: 'Managerial Assessment',
-    description: 'Survey 6 · 3-point scale: Rarely / Sometimes / Frequently · Includes reverse-scored items',
+    label: '3-Point Likert Scale — Managerial Assessment',
+    description: 'Survey 6 · 1 = Rarely / 2 = Sometimes / 3 = Frequently · Includes reverse-scored items',
     scaleType: 'likert3',
   },
   {
     value: 'associate_180',
-    label: 'Associate 180 Assessment',
-    description: 'Survey 7 · 3-point scale: Rarely / Sometimes / Frequently · Anonymous · Requires 5+ respondents',
+    label: '3-Point Likert Scale — Associate 180 (Anonymous)',
+    description: 'Survey 7 · 1 = Rarely / 2 = Sometimes / 3 = Frequently · Requires 5+ respondents before reports generate',
     scaleType: 'likert3',
   },
   {
     value: 'demographics',
-    label: 'Demographics',
-    description: 'Survey 1 · Demographic collection form · No rating scale',
+    label: 'Demographics — No Rating Scale',
+    description: 'Survey 1 · Collects demographic information only · No Likert scale',
     scaleType: null,
   },
 ] as const;
@@ -225,7 +225,7 @@ export function SurveyForm({ scales, categories, survey }: SurveyFormProps) {
           {/* Survey Type */}
           <div className="md:col-span-2">
             <label htmlFor="surveyType" className="block text-sm font-medium text-gray-700">
-              Survey Program *
+              Survey Type *
             </label>
             <select
               id="surveyType"

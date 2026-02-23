@@ -16,11 +16,14 @@ export default async function NewSurveyPage() {
     },
   });
 
-  // Transform scales to match expected type
-  const scales = scalesRaw.map((scale) => ({
-    ...scale,
-    labels: (scale.labels as Record<string, string>) || {},
-  }));
+  // Transform scales: DB stores labels as [{ value, label }] array; form expects { "1": "...", "2": "..." }
+  const scales = scalesRaw.map((scale) => {
+    const raw = scale.labels;
+    const labels: Record<string, string> = Array.isArray(raw)
+      ? Object.fromEntries((raw as { value: number; label: string }[]).map((l) => [String(l.value), l.label]))
+      : (raw as Record<string, string>) ?? {};
+    return { ...scale, labels };
+  });
 
   // Transform categories to match expected type (convert Decimal to number)
   const categories = categoriesRaw.map((category) => ({
