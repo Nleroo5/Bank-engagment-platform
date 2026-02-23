@@ -45,12 +45,16 @@ export function NewCampaignForm({
     logoHeight: 64,
     welcomeTitle: '',
     titleFontSize: 30,
+    titleAlignment: 'left',
     welcomeMessage: '',
     welcomeMessageFontSize: 16,
     welcomeMessageAlignment: 'left',
     buttonText: '',
     buttonColor: '#2563eb',
     cardBackground: '#ffffff',
+    anonymityNotice: '',
+    footerNotes: '',
+    footerNotesAlignment: 'left',
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -68,14 +72,21 @@ export function NewCampaignForm({
     setLogoPreview(file ? URL.createObjectURL(file) : null);
   };
 
-  // Auto-grow the welcome message textarea as content is typed
+  // Auto-grow textareas as content is typed
   const messageTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const footerNotesTextareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const ta = messageTextareaRef.current;
     if (!ta) return;
     ta.style.height = 'auto';
     ta.style.height = `${ta.scrollHeight}px`;
   }, [splashData.welcomeMessage]);
+  useEffect(() => {
+    const ta = footerNotesTextareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${ta.scrollHeight}px`;
+  }, [splashData.footerNotes]);
 
   // Measure preview inner height with ResizeObserver
   useEffect(() => {
@@ -88,28 +99,6 @@ export function NewCampaignForm({
     ro.observe(el);
     return () => ro.disconnect();
   }, [previewVisible]);
-
-  const handleLogoResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    document.body.style.cursor = 'nwse-resize';
-    const startY = e.clientY;
-    const startHeight = splashData.logoHeight ?? 64;
-
-    const onMove = (moveE: MouseEvent) => {
-      const delta = moveE.clientY - startY;
-      const newHeight = Math.max(24, Math.min(200, Math.round(startHeight + delta)));
-      setSplashData(prev => ({ ...prev, logoHeight: newHeight }));
-    };
-
-    const onUp = () => {
-      document.body.style.cursor = '';
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  };
 
   // Check access code availability
   const checkAccessCode = async (code: string) => {
@@ -200,6 +189,8 @@ export function NewCampaignForm({
       if (splashData.welcomeTitle) splashConfigPayload.welcomeTitle = splashData.welcomeTitle;
       if ((splashData.titleFontSize ?? 30) !== 30)
         splashConfigPayload.titleFontSize = splashData.titleFontSize;
+      if ((splashData.titleAlignment ?? 'left') !== 'left')
+        splashConfigPayload.titleAlignment = splashData.titleAlignment;
       if (splashData.welcomeMessage) {
         splashConfigPayload.welcomeMessage = splashData.welcomeMessage;
         splashConfigPayload.welcomeMessageFontSize = splashData.welcomeMessageFontSize ?? 16;
@@ -210,6 +201,12 @@ export function NewCampaignForm({
         splashConfigPayload.buttonColor = splashData.buttonColor;
       if ((splashData.cardBackground ?? '#ffffff') !== '#ffffff')
         splashConfigPayload.cardBackground = splashData.cardBackground;
+      if (splashData.anonymityNotice)
+        splashConfigPayload.anonymityNotice = splashData.anonymityNotice;
+      if (splashData.footerNotes)
+        splashConfigPayload.footerNotes = splashData.footerNotes;
+      if ((splashData.footerNotesAlignment ?? 'left') !== 'left')
+        splashConfigPayload.footerNotesAlignment = splashData.footerNotesAlignment;
       const hasSplashConfig = Object.keys(splashConfigPayload).length > 0;
 
       const payload = {
@@ -559,10 +556,35 @@ export function NewCampaignForm({
                       </p>
                     </div>
                   </div>
+                  {/* Logo height slider */}
                   {logoPreview && (
-                    <p className="mt-1 text-xs text-gray-400">
-                      Logo height: {splashData.logoHeight ?? 64}px — drag corner handle in preview to resize
-                    </p>
+                    <div className="mt-3">
+                      <div className="mb-1 flex items-center justify-between">
+                        <p className="text-xs font-medium text-gray-600">Logo height</p>
+                        <span className="text-xs font-semibold text-gray-700">
+                          {splashData.logoHeight ?? 64}px
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={24}
+                        max={200}
+                        step={1}
+                        value={splashData.logoHeight ?? 64}
+                        onChange={(e) =>
+                          setSplashData({
+                            ...splashData,
+                            logoHeight: parseInt(e.target.value, 10),
+                          })
+                        }
+                        className="w-full accent-primary-600"
+                        aria-label="Logo height"
+                      />
+                      <div className="mt-0.5 flex justify-between text-[10px] text-gray-400">
+                        <span>24px</span>
+                        <span>200px</span>
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -616,6 +638,43 @@ export function NewCampaignForm({
                     <div className="mt-0.5 flex justify-between text-[10px] text-gray-400">
                       <span>20px</span>
                       <span>60px</span>
+                    </div>
+                  </div>
+                  {/* Title Alignment */}
+                  <div className="mt-3">
+                    <p className="mb-1 text-xs font-medium text-gray-600">
+                      Title alignment
+                    </p>
+                    <div className="flex overflow-hidden rounded-md border border-gray-300">
+                      {(
+                        [
+                          { value: 'left', label: 'Left', Icon: AlignLeft },
+                          { value: 'center', label: 'Center', Icon: AlignCenter },
+                          { value: 'right', label: 'Right', Icon: AlignRight },
+                        ] as const
+                      ).map(({ value, label, Icon }, i) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setSplashData({
+                              ...splashData,
+                              titleAlignment: value as MessageAlignment,
+                            })
+                          }
+                          aria-pressed={splashData.titleAlignment === value}
+                          aria-label={label}
+                          className={[
+                            'flex flex-1 items-center justify-center py-1.5 transition-colors',
+                            i > 0 ? 'border-l border-gray-300' : '',
+                            splashData.titleAlignment === value
+                              ? 'bg-primary-50 text-primary-700'
+                              : 'bg-white text-gray-500 hover:bg-gray-50',
+                          ].join(' ')}
+                        >
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -678,7 +737,7 @@ export function NewCampaignForm({
                 {/* Message Alignment */}
                 <div>
                   <p className="mb-1 text-xs font-medium text-gray-600">
-                    Text alignment
+                    Message alignment
                   </p>
                   <div className="flex overflow-hidden rounded-md border border-gray-300">
                     {(
@@ -797,6 +856,95 @@ export function NewCampaignForm({
                   </div>
                 </div>
 
+                {/* Anonymity Notice */}
+                <div>
+                  <label
+                    htmlFor="splashAnonymityNotice"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Anonymity Notice
+                  </label>
+                  <input
+                    type="text"
+                    id="splashAnonymityNotice"
+                    maxLength={300}
+                    value={splashData.anonymityNotice}
+                    onChange={(e) =>
+                      setSplashData({ ...splashData, anonymityNotice: e.target.value })
+                    }
+                    placeholder="Anonymous — individual answers are never visible to anyone"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Shown beside the shield icon. Leave blank to use the default text.
+                  </p>
+                </div>
+
+                {/* Footer Notes */}
+                <div>
+                  <label
+                    htmlFor="splashFooterNotes"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Footer Notes
+                  </label>
+                  <textarea
+                    ref={footerNotesTextareaRef}
+                    id="splashFooterNotes"
+                    maxLength={1000}
+                    value={splashData.footerNotes}
+                    onChange={(e) =>
+                      setSplashData({ ...splashData, footerNotes: e.target.value })
+                    }
+                    placeholder={`• Your responses are confidential and will be aggregated with others\n• All questions must be answered to complete the survey`}
+                    className="mt-1 block w-full resize-none overflow-hidden rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    style={{ minHeight: '4rem' }}
+                  />
+                  <p className="mt-1 text-right text-xs text-gray-400">
+                    {splashData.footerNotes?.length ?? 0} / 1000
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    One line per bullet. Leave blank to use default notes.
+                  </p>
+                  {/* Footer Notes Alignment */}
+                  <div className="mt-2">
+                    <p className="mb-1 text-xs font-medium text-gray-600">
+                      Footer alignment
+                    </p>
+                    <div className="flex overflow-hidden rounded-md border border-gray-300">
+                      {(
+                        [
+                          { value: 'left', label: 'Left', Icon: AlignLeft },
+                          { value: 'center', label: 'Center', Icon: AlignCenter },
+                          { value: 'right', label: 'Right', Icon: AlignRight },
+                        ] as const
+                      ).map(({ value, label, Icon }, i) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setSplashData({
+                              ...splashData,
+                              footerNotesAlignment: value as MessageAlignment,
+                            })
+                          }
+                          aria-pressed={splashData.footerNotesAlignment === value}
+                          aria-label={label}
+                          className={[
+                            'flex flex-1 items-center justify-center py-1.5 transition-colors',
+                            i > 0 ? 'border-l border-gray-300' : '',
+                            splashData.footerNotesAlignment === value
+                              ? 'bg-primary-50 text-primary-700'
+                              : 'bg-white text-gray-500 hover:bg-gray-50',
+                          ].join(' ')}
+                        >
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Mobile: toggle preview button */}
                 <button
                   type="button"
@@ -855,19 +1003,6 @@ export function NewCampaignForm({
                 <p className="mt-1 text-center text-[10px] text-gray-400">
                   Scaled preview — identical to what respondents see
                 </p>
-                {logoPreview && (
-                  <p className="mt-1 text-center text-[10px] text-gray-400">
-                    Logo: {splashData.logoHeight ?? 64}px
-                    <button
-                      type="button"
-                      className="ml-2 underline hover:text-gray-600"
-                      onMouseDown={handleLogoResizeStart}
-                      title="Drag to resize logo"
-                    >
-                      drag to resize
-                    </button>
-                  </p>
-                )}
               </div>
             </div>
           </div>

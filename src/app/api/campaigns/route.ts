@@ -15,6 +15,10 @@ const SplashConfigSchema = z.object({
   buttonText: z.string().max(50).optional(),
   buttonColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   cardBackground: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  titleAlignment: z.enum(['left', 'center', 'right']).optional(),
+  anonymityNotice: z.string().max(300).optional(),
+  footerNotes: z.string().max(1000).optional(),
+  footerNotesAlignment: z.enum(['left', 'center', 'right']).optional(),
 }).strict();
 
 export async function GET() {

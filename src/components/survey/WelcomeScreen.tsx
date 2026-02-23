@@ -66,6 +66,24 @@ function WelcomeMessage({
   );
 }
 
+/** Renders footer notes — supports multiline text, one line per bullet. */
+function FooterNotes({
+  text,
+  alignment = 'left',
+}: {
+  text: string;
+  alignment?: MessageAlignment;
+}) {
+  const lines = text.split('\n').filter(l => l.trim());
+  return (
+    <div className={['mb-6 space-y-2 text-base text-gray-600', ALIGN_CLASS[alignment]].join(' ')}>
+      {lines.map((line, i) => (
+        <p key={i}>{line}</p>
+      ))}
+    </div>
+  );
+}
+
 export function WelcomeScreen({
   survey,
   fallbackTitle,
@@ -81,8 +99,20 @@ export function WelcomeScreen({
   const logoUrl = splashConfig?.logoUrl;
   const logoHeight = splashConfig?.logoHeight ?? 64;
   const titleFontSize = splashConfig?.titleFontSize ?? 30;
+  const titleAlignment = splashConfig?.titleAlignment ?? 'left';
   const buttonColor = splashConfig?.buttonColor;
   const cardBackground = splashConfig?.cardBackground;
+  const anonymityNotice = splashConfig?.anonymityNotice
+    ?? 'Anonymous — individual answers are never visible to anyone';
+  const footerNotes = splashConfig?.footerNotes;
+  const footerNotesAlignment = splashConfig?.footerNotesAlignment ?? 'left';
+
+  // Default footer text shown when no custom footerNotes is configured
+  const defaultFooterLines: string[] = [];
+  if (!isAnonymous) {
+    defaultFooterLines.push('• Your responses are confidential and will be aggregated with others');
+  }
+  defaultFooterLines.push('• All questions must be answered to complete the survey');
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -119,7 +149,7 @@ export function WelcomeScreen({
         style={{ backgroundColor: cardBackground ?? '#ffffff' }}
       >
         <h1
-          className="mb-4 font-bold text-gray-900"
+          className={`mb-4 font-bold text-gray-900 ${ALIGN_CLASS[titleAlignment]}`}
           style={{ fontSize: `${titleFontSize}px` }}
         >
           {title}
@@ -150,7 +180,7 @@ export function WelcomeScreen({
           {isAnonymous && (
             <div className="flex items-center gap-2 text-green-700">
               <Shield className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span>Anonymous — individual answers are never visible to anyone</span>
+              <span>{anonymityNotice}</span>
             </div>
           )}
         </div>
@@ -171,12 +201,18 @@ export function WelcomeScreen({
           </div>
         )}
 
-        <div className="mb-6 space-y-2 text-base text-gray-600">
-          {!isAnonymous && (
-            <p>• Your responses are confidential and will be aggregated with others</p>
-          )}
-          <p>• All questions must be answered to complete the survey</p>
-        </div>
+        {/* Footer notes — custom override or defaults */}
+        {footerNotes !== undefined ? (
+          footerNotes.trim() && (
+            <FooterNotes text={footerNotes} alignment={footerNotesAlignment} />
+          )
+        ) : (
+          <div className="mb-6 space-y-2 text-base text-gray-600">
+            {defaultFooterLines.map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </div>
+        )}
 
         <button
           onClick={onBegin}

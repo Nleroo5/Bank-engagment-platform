@@ -6,6 +6,8 @@ export interface SplashConfig {
   /** Height of the logo in pixels (24–200). Default 64. */
   logoHeight?: number;
   welcomeTitle?: string;
+  /** Alignment of the page title. Default 'left'. */
+  titleAlignment?: MessageAlignment;
   /** Font size of the page title in pixels (20–60). Default 30. */
   titleFontSize?: number;
   welcomeMessage?: string;
@@ -17,6 +19,12 @@ export interface SplashConfig {
   buttonColor?: string;
   /** Hex color for the card background, e.g. '#ffffff'. */
   cardBackground?: string;
+  /** Override for the anonymity/shield notice text. Leave unset for default. */
+  anonymityNotice?: string;
+  /** Override for the footer notes. Supports newline-separated bullets. Leave unset for defaults. */
+  footerNotes?: string;
+  /** Alignment of footer notes. Default 'left'. */
+  footerNotesAlignment?: MessageAlignment;
 }
 
 const VALID_ALIGNMENTS: ReadonlySet<string> = new Set(['left', 'center', 'right']);
@@ -50,6 +58,10 @@ export function parseSplashConfig(raw: unknown): SplashConfig | null {
 
   if (typeof obj.welcomeTitle === 'string') result.welcomeTitle = obj.welcomeTitle;
 
+  if (typeof obj.titleAlignment === 'string' && VALID_ALIGNMENTS.has(obj.titleAlignment)) {
+    result.titleAlignment = obj.titleAlignment as MessageAlignment;
+  }
+
   if (typeof obj.titleFontSize === 'number' &&
       obj.titleFontSize >= 20 && obj.titleFontSize <= 60) {
     result.titleFontSize = Math.round(obj.titleFontSize);
@@ -79,6 +91,14 @@ export function parseSplashConfig(raw: unknown): SplashConfig | null {
 
   if (typeof obj.cardBackground === 'string' && HEX_RE.test(obj.cardBackground)) {
     result.cardBackground = obj.cardBackground;
+  }
+
+  if (typeof obj.anonymityNotice === 'string') result.anonymityNotice = obj.anonymityNotice;
+  if (typeof obj.footerNotes === 'string') result.footerNotes = obj.footerNotes;
+
+  if (typeof obj.footerNotesAlignment === 'string' &&
+      VALID_ALIGNMENTS.has(obj.footerNotesAlignment)) {
+    result.footerNotesAlignment = obj.footerNotesAlignment as MessageAlignment;
   }
 
   return result;
