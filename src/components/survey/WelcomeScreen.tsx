@@ -1,8 +1,9 @@
 'use client';
 
+import { Fragment } from 'react';
 import Image from 'next/image';
 import type { Survey } from '@/types/survey';
-import type { SplashConfig } from '@/types/splash';
+import type { SplashConfig, MessageFontSize, MessageAlignment, LogoSize } from '@/types/splash';
 import { Clock, Calendar, Shield } from 'lucide-react';
 
 interface WelcomeScreenProps {
@@ -26,6 +27,62 @@ function formatEndDate(date: Date | string): string {
   });
 }
 
+const FONT_SIZE_CLASS: Record<MessageFontSize, string> = {
+  sm: 'text-sm',
+  md: 'text-base',
+  lg: 'text-lg',
+  xl: 'text-xl',
+};
+
+const ALIGN_CLASS: Record<MessageAlignment, string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
+
+// Logo height on the splash page
+const LOGO_HEIGHT_CLASS: Record<LogoSize, string> = {
+  sm: 'h-10',   // 40 px — small badge
+  md: 'h-16',   // 64 px — default
+  lg: 'h-24',   // 96 px — prominent
+};
+
+/** Renders the welcome message with proper line breaks and paragraph spacing. */
+function WelcomeMessage({
+  text,
+  fontSize = 'lg',
+  alignment = 'left',
+}: {
+  text: string;
+  fontSize?: MessageFontSize;
+  alignment?: MessageAlignment;
+}) {
+  const paragraphs = text.split(/\n\n+/);
+  return (
+    <div
+      className={[
+        'mb-6 space-y-4 leading-relaxed text-gray-700',
+        FONT_SIZE_CLASS[fontSize],
+        ALIGN_CLASS[alignment],
+      ].join(' ')}
+    >
+      {paragraphs.map((para, i) => {
+        const lines = para.split('\n');
+        return (
+          <p key={i}>
+            {lines.map((line, j) => (
+              <Fragment key={j}>
+                {line}
+                {j < lines.length - 1 && <br />}
+              </Fragment>
+            ))}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export function WelcomeScreen({
   survey,
   fallbackTitle,
@@ -39,6 +96,8 @@ export function WelcomeScreen({
   const buttonText = splashConfig?.buttonText || 'Begin Survey';
   const bankName = splashConfig?.bankName;
   const logoUrl = splashConfig?.logoUrl;
+  const logoSize = splashConfig?.logoSize ?? 'md';
+  const logoHeightClass = LOGO_HEIGHT_CLASS[logoSize];
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -52,7 +111,7 @@ export function WelcomeScreen({
           <img
             src={logoUrl}
             alt={bankName ? `${bankName} logo` : 'Organization logo'}
-            className="h-16 w-auto max-w-[220px] object-contain"
+            className={`${logoHeightClass} w-auto max-w-[280px] object-contain`}
           />
         ) : (
           <Image
@@ -73,17 +132,11 @@ export function WelcomeScreen({
         <h1 className="mb-4 text-3xl font-bold text-gray-900">{title}</h1>
 
         {message && (
-          <p
-            className={[
-              'mb-6 text-gray-700',
-              splashConfig?.welcomeMessageFontSize === 'sm' ? 'text-sm' :
-              splashConfig?.welcomeMessageFontSize === 'md' ? 'text-base' :
-              splashConfig?.welcomeMessageFontSize === 'xl' ? 'text-xl' :
-              'text-lg',
-            ].join(' ')}
-          >
-            {message}
-          </p>
+          <WelcomeMessage
+            text={message}
+            fontSize={splashConfig?.welcomeMessageFontSize}
+            alignment={splashConfig?.welcomeMessageAlignment}
+          />
         )}
 
         {/* Logistics */}

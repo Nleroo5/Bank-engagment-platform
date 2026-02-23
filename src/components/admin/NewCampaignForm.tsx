@@ -2,10 +2,10 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, ChevronUp, ImageIcon, X } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, ChevronDown, ChevronUp, ImageIcon, X } from 'lucide-react';
 import type { Organization } from '@prisma/client';
 import type { SurveyListItem } from '@/types/survey';
-import type { SplashConfig } from '@/types/splash';
+import type { SplashConfig, LogoSize, MessageAlignment } from '@/types/splash';
 
 interface NewCampaignFormProps {
   organizations: Organization[];
@@ -41,9 +41,11 @@ export function NewCampaignForm({
   const [splashOpen, setSplashOpen] = useState(false);
   const [splashData, setSplashData] = useState<Omit<SplashConfig, 'logoUrl'>>({
     bankName: '',
+    logoSize: 'md',
     welcomeTitle: '',
     welcomeMessage: '',
     welcomeMessageFontSize: 'lg',
+    welcomeMessageAlignment: 'left',
     buttonText: '',
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -139,11 +141,15 @@ export function NewCampaignForm({
       // Build splashConfig — only include fields that have values
       const splashConfigPayload: SplashConfig = {};
       if (splashData.bankName) splashConfigPayload.bankName = splashData.bankName;
-      if (logoUrl) splashConfigPayload.logoUrl = logoUrl;
+      if (logoUrl) {
+        splashConfigPayload.logoUrl = logoUrl;
+        splashConfigPayload.logoSize = splashData.logoSize ?? 'md';
+      }
       if (splashData.welcomeTitle) splashConfigPayload.welcomeTitle = splashData.welcomeTitle;
       if (splashData.welcomeMessage) {
         splashConfigPayload.welcomeMessage = splashData.welcomeMessage;
         splashConfigPayload.welcomeMessageFontSize = splashData.welcomeMessageFontSize ?? 'lg';
+        splashConfigPayload.welcomeMessageAlignment = splashData.welcomeMessageAlignment ?? 'left';
       }
       if (splashData.buttonText) splashConfigPayload.buttonText = splashData.buttonText;
       const hasSplashConfig = Object.keys(splashConfigPayload).length > 0;
@@ -496,6 +502,42 @@ export function NewCampaignForm({
                   </div>
                 </div>
 
+                {/* Logo Size */}
+                {logoPreview && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-gray-600">
+                      Logo size
+                    </p>
+                    <div className="flex overflow-hidden rounded-md border border-gray-300">
+                      {(
+                        [
+                          { value: 'sm', label: 'Small' },
+                          { value: 'md', label: 'Medium' },
+                          { value: 'lg', label: 'Large' },
+                        ] as const
+                      ).map(({ value, label }, i) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setSplashData({ ...splashData, logoSize: value as LogoSize })
+                          }
+                          aria-pressed={splashData.logoSize === value}
+                          className={[
+                            'flex flex-1 items-center justify-center py-1.5 text-xs transition-colors',
+                            i > 0 ? 'border-l border-gray-300' : '',
+                            splashData.logoSize === value
+                              ? 'bg-primary-50 font-medium text-primary-700'
+                              : 'bg-white text-gray-500 hover:bg-gray-50',
+                          ].join(' ')}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Welcome Title */}
                 <div>
                   <label
@@ -580,6 +622,44 @@ export function NewCampaignForm({
                   </div>
                 </div>
 
+                  {/* Message Alignment */}
+                  <div className="mt-2">
+                    <p className="mb-1 text-xs font-medium text-gray-600">
+                      Text alignment
+                    </p>
+                    <div className="flex overflow-hidden rounded-md border border-gray-300">
+                      {(
+                        [
+                          { value: 'left', label: 'Left', Icon: AlignLeft },
+                          { value: 'center', label: 'Center', Icon: AlignCenter },
+                          { value: 'right', label: 'Right', Icon: AlignRight },
+                        ] as const
+                      ).map(({ value, label, Icon }, i) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setSplashData({
+                              ...splashData,
+                              welcomeMessageAlignment: value as MessageAlignment,
+                            })
+                          }
+                          aria-pressed={splashData.welcomeMessageAlignment === value}
+                          aria-label={label}
+                          className={[
+                            'flex flex-1 items-center justify-center py-1.5 transition-colors',
+                            i > 0 ? 'border-l border-gray-300' : '',
+                            splashData.welcomeMessageAlignment === value
+                              ? 'bg-primary-50 text-primary-700'
+                              : 'bg-white text-gray-500 hover:bg-gray-50',
+                          ].join(' ')}
+                        >
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                 {/* Button Text */}
                 <div>
                   <label
@@ -614,10 +694,15 @@ export function NewCampaignForm({
                       <img
                         src={logoPreview}
                         alt="Logo"
-                        className="h-12 w-auto max-w-[160px] object-contain"
+                        className={[
+                          'w-auto max-w-[160px] object-contain',
+                          splashData.logoSize === 'sm' ? 'h-6' :
+                          splashData.logoSize === 'lg' ? 'h-14' :
+                          'h-10',
+                        ].join(' ')}
                       />
                     ) : (
-                      <div className="flex h-12 w-32 items-center justify-center rounded bg-gray-100">
+                      <div className="flex h-10 w-32 items-center justify-center rounded bg-gray-100">
                         <span className="text-xs text-gray-400">Logo</span>
                       </div>
                     )}
@@ -641,11 +726,14 @@ export function NewCampaignForm({
                   {splashData.welcomeMessage && (
                     <p
                       className={[
-                        'mb-3 text-center text-gray-600 line-clamp-3',
+                        'mb-3 whitespace-pre-line text-gray-600 line-clamp-4',
                         splashData.welcomeMessageFontSize === 'sm' ? 'text-[10px]' :
                         splashData.welcomeMessageFontSize === 'md' ? 'text-[11px]' :
                         splashData.welcomeMessageFontSize === 'xl' ? 'text-sm' :
                         'text-xs',
+                        splashData.welcomeMessageAlignment === 'center' ? 'text-center' :
+                        splashData.welcomeMessageAlignment === 'right' ? 'text-right' :
+                        'text-left',
                       ].join(' ')}
                     >
                       {splashData.welcomeMessage}

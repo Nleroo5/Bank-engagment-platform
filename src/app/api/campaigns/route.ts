@@ -6,9 +6,11 @@ import { prisma } from '@/lib/prisma';
 const SplashConfigSchema = z.object({
   bankName: z.string().max(100).optional(),
   logoUrl: z.string().url().max(500).optional(),
+  logoSize: z.enum(['sm', 'md', 'lg']).optional(),
   welcomeTitle: z.string().max(200).optional(),
   welcomeMessage: z.string().max(500).optional(),
   welcomeMessageFontSize: z.enum(['sm', 'md', 'lg', 'xl']).optional(),
+  welcomeMessageAlignment: z.enum(['left', 'center', 'right']).optional(),
   buttonText: z.string().max(50).optional(),
 }).strict();
 
