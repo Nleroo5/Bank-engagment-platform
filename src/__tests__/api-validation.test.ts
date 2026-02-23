@@ -10,33 +10,36 @@ describe('API Validation Schemas', () => {
   describe('Campaign Creation Schema', () => {
     const createCampaignSchema = z.object({
       surveyId: z.string(),
-      organizationId: z.string().uuid(),
+      organizationId: z.string().uuid().optional(),
+      organizationName: z.string().optional(),
+      accessCode: z
+        .string()
+        .min(6)
+        .max(20)
+        .regex(/^[A-Z0-9]+$/, 'Access code must be uppercase alphanumeric'),
       startDate: z.string().optional(),
       endDate: z.string().optional(),
-      reminderDays: z.string().transform((val) => parseInt(val, 10)),
+      maxResponses: z.number().int().positive().optional(),
     });
 
     it('should validate valid campaign creation data', () => {
       const validData = {
         surveyId: 'survey-4',
         organizationId: '123e4567-e89b-12d3-a456-426614174000',
+        accessCode: 'BANK2024',
         startDate: '2024-01-01',
         endDate: '2024-01-31',
-        reminderDays: '3',
       };
 
       const result = createCampaignSchema.safeParse(validData);
       expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.reminderDays).toBe(3);
-      }
     });
 
     it('should reject campaign with invalid organization UUID', () => {
       const invalidData = {
         surveyId: 'survey-4',
         organizationId: 'not-a-uuid',
-        reminderDays: '3',
+        accessCode: 'BANK2024',
       };
 
       const result = createCampaignSchema.safeParse(invalidData);
@@ -47,36 +50,66 @@ describe('API Validation Schemas', () => {
       const dataWithoutDates = {
         surveyId: 'survey-4',
         organizationId: '123e4567-e89b-12d3-a456-426614174000',
-        reminderDays: '5',
+        accessCode: 'TESTCODE',
       };
 
       const result = createCampaignSchema.safeParse(dataWithoutDates);
       expect(result.success).toBe(true);
     });
 
-    it('should transform reminderDays string to number', () => {
+    it('should reject access code shorter than 6 characters', () => {
       const data = {
         surveyId: 'survey-4',
         organizationId: '123e4567-e89b-12d3-a456-426614174000',
-        reminderDays: '7',
+        accessCode: 'ABC',
       };
 
       const result = createCampaignSchema.safeParse(data);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.reminderDays).toBe(7);
-        expect(typeof result.data.reminderDays).toBe('number');
-      }
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject access code longer than 20 characters', () => {
+      const data = {
+        surveyId: 'survey-4',
+        organizationId: '123e4567-e89b-12d3-a456-426614174000',
+        accessCode: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      };
+
+      const result = createCampaignSchema.safeParse(data);
+      expect(result.success).toBe(false);
     });
 
     it('should reject missing required fields', () => {
       const incompleteData = {
         surveyId: 'survey-4',
-        // missing organizationId and reminderDays
+        // missing accessCode
       };
 
       const result = createCampaignSchema.safeParse(incompleteData);
       expect(result.success).toBe(false);
+    });
+
+    it('should accept campaign with organizationName instead of organizationId', () => {
+      const data = {
+        surveyId: 'survey-4',
+        organizationName: 'First National Bank',
+        accessCode: 'FNB2024',
+      };
+
+      const result = createCampaignSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept optional maxResponses', () => {
+      const data = {
+        surveyId: 'survey-4',
+        organizationId: '123e4567-e89b-12d3-a456-426614174000',
+        accessCode: 'BANK2024',
+        maxResponses: 500,
+      };
+
+      const result = createCampaignSchema.safeParse(data);
+      expect(result.success).toBe(true);
     });
   });
 

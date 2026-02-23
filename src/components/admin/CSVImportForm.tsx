@@ -39,10 +39,7 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
     { key: 'name', label: 'Name' },
   ];
 
-  const optionalFields = [
-    { key: 'division', label: 'Division' },
-    { key: 'jobRole', label: 'Job Role' },
-  ];
+  const optionalFields: { key: string; label: string }[] = [];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -85,9 +82,6 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
         const lowerHeader = header.toLowerCase();
         if (lowerHeader.includes('email')) initialMapping.email = header;
         if (lowerHeader.includes('name')) initialMapping.name = header;
-        if (lowerHeader.includes('division')) initialMapping.division = header;
-        if (lowerHeader.includes('job') && lowerHeader.includes('role'))
-          initialMapping.jobRole = header;
       });
       setColumnMapping(initialMapping);
 
@@ -127,14 +121,10 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
       // We've already validated these mappings exist
       const emailCol = columnMapping.email;
       const nameCol = columnMapping.name;
-      const divisionCol = columnMapping.division;
-      const jobRoleCol = columnMapping.jobRole;
 
       const users = csvData.map((row) => ({
         email: row[emailCol] || '',
         name: row[nameCol] || '',
-        division: divisionCol ? row[divisionCol] : undefined,
-        jobRole: jobRoleCol ? row[jobRoleCol] : undefined,
         organizationId: defaultOrganization,
         role: 'RESPONDENT' as const,
       }));
@@ -305,16 +295,6 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
                         Name
                       </th>
                     )}
-                    {columnMapping.division && (
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                        Division
-                      </th>
-                    )}
-                    {columnMapping.jobRole && (
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                        Job Role
-                      </th>
-                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
@@ -328,16 +308,6 @@ export function CSVImportForm({ organizations }: CSVImportFormProps) {
                       {columnMapping.name && (
                         <td className="px-4 py-2 text-sm text-gray-900">
                           {row[columnMapping.name]}
-                        </td>
-                      )}
-                      {columnMapping.division && (
-                        <td className="px-4 py-2 text-sm text-gray-500">
-                          {row[columnMapping.division]}
-                        </td>
-                      )}
-                      {columnMapping.jobRole && (
-                        <td className="px-4 py-2 text-sm text-gray-500">
-                          {row[columnMapping.jobRole]}
                         </td>
                       )}
                     </tr>
