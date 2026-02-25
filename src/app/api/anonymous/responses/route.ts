@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * Save Anonymous Survey Responses
@@ -24,6 +27,10 @@ const SaveRequestSchema = z.object({
 });
 
 export async function PATCH(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, { interval: 60_000, uniqueTokenPerInterval: 120 });
+  if (!rl.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
   try {
     const body = await request.json();
     const validation = SaveRequestSchema.safeParse(body);
@@ -53,7 +60,17 @@ export async function PATCH(request: NextRequest) {
     }
 
     // ============================================
-    // 2. Validate survey not already completed
+    // 2. Validate session has not expired
+    // ============================================
+    if (anonymousResponse.sessionExpiresAt && new Date() > anonymousResponse.sessionExpiresAt) {
+      return NextResponse.json(
+        { error: 'Session expired. Please start a new survey.' },
+        { status: 401 }
+      );
+    }
+
+    // ============================================
+    // 3. Validate survey not already completed
     // ============================================
     if (anonymousResponse.completedAt) {
       return NextResponse.json(
@@ -215,6 +232,13 @@ export async function GET(request: NextRequest) {
 
     if (!anonymousResponse) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    if (anonymousResponse.sessionExpiresAt && new Date() > anonymousResponse.sessionExpiresAt) {
+      return NextResponse.json(
+        { error: 'Session expired. Please start a new survey.' },
+        { status: 401 }
+      );
     }
 
     // ============================================

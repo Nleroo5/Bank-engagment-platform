@@ -1,23 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/surveys/queries';
+import { requireAdmin } from '@/lib/auth/helpers';
 import {
   calculateCategoryScores,
   prepareResponsesForScoring,
 } from '@/lib/scoring/categoryScoring';
 import { getFilterableOptionsAnonymous } from '@/lib/scoring/anonymity';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { campaignId: string } }
 ) {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.campaignId },
       include: {
         organization: true,
         anonymousResponses: {
-          where: { completedAt: { not: null } },
+          where: { completedAt: { not: null }, flaggedForReview: false },
           include: {
             responses: {
               orderBy: { questionNumber: 'asc' },
@@ -33,6 +44,10 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    const flaggedCount = await prisma.anonymousResponse.count({
+      where: { campaignId: params.campaignId, flaggedForReview: true },
+    });
 
     // Fetch survey from Sanity with full question and category data
     let survey;
@@ -161,6 +176,7 @@ export async function GET(
           totalInvitations: campaign.anonymousResponses.length,
           completedCount: campaign.anonymousResponses.length,
           completionRate: 100,
+          flaggedCount,
         },
         demographics: {
           respondentCount: demographicsData.length,
@@ -429,6 +445,7 @@ export async function GET(
         completedCount: campaign.anonymousResponses.length,
         completionRate,
         filteredCount: filteredData.length,
+        flaggedCount,
       },
       scores: {
         overall: Math.round(overallScore * 10) / 10,

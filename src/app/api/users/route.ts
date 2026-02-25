@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+
+export const dynamic = 'force-dynamic';
 import { z } from 'zod';
+import { requireAdmin, requireSuperAdmin } from '@/lib/auth/helpers';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 const CreateUserSchema = z.object({
   email: z.string().email(),
@@ -13,6 +17,14 @@ const CreateUserSchema = z.object({
 });
 
 export async function GET(_request: NextRequest) {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const users = await prisma.user.findMany({
       include: {
@@ -34,6 +46,18 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, { interval: 60_000, uniqueTokenPerInterval: 30 });
+  if (!rl.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
+  try {
     const body = await request.json();
     const parsed = CreateUserSchema.safeParse(body);
 
@@ -45,6 +69,18 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, name, password, role, organizationId, isActive } = parsed.data;
+
+    // Only super admins can create super admin accounts
+    if (role === 'SUPER_ADMIN') {
+      try {
+        await requireSuperAdmin();
+      } catch {
+        return NextResponse.json(
+          { error: 'Forbidden: Only super admins can create super admin accounts' },
+          { status: 403 }
+        );
+      }
+    }
 
     // Check for duplicate email
     const existing = await prisma.user.findUnique({ where: { email } });

@@ -1,19 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSurveyById } from '@/lib/surveys/queries';
+import { requireAdmin } from '@/lib/auth/helpers';
 import {
   calculateCategoryScores,
   prepareResponsesForScoring,
 } from '@/lib/scoring/categoryScoring';
 import { checkAnonymityThreshold } from '@/lib/scoring/anonymity';
-import ExcelJS from 'exceljs';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// ExcelJS, jsPDF, and jspdf-autotable are imported dynamically inside the handler
+// to prevent Next.js from loading these heavy libraries during the build
+// page-data collection phase, which would cause worker timeouts.
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { campaignId: string } }
 ) {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'xlsx';
@@ -31,7 +42,7 @@ export async function GET(
       include: {
         organization: true,
         anonymousResponses: {
-          where: { completedAt: { not: null } },
+          where: { completedAt: { not: null }, flaggedForReview: false },
           include: {
             responses: {
               orderBy: { questionNumber: 'asc' },
@@ -217,6 +228,7 @@ export async function GET(
     // EXCEL EXPORT
     // ================================================================================
     if (format === 'xlsx') {
+      const ExcelJS = await import('exceljs').then((m) => m.default);
       const workbook = new ExcelJS.Workbook();
 
       const overallWeightedScore =
@@ -316,6 +328,8 @@ export async function GET(
     // PDF EXPORT
     // ================================================================================
     if (format === 'pdf') {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
       const doc = new jsPDF();
       let yPosition = 20;
 

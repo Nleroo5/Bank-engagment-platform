@@ -7,16 +7,27 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'cdn.sanity.io',
       },
-      {
-        protocol: 'https',
-        hostname: '*.public.blob.vercel-storage.com',
-      },
     ],
   },
+  staticPageGenerationTimeout: 180,
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ];
   },
   webpack: (config, { isServer }) => {
     // Fix for @sanity/client browser build

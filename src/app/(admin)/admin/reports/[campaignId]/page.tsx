@@ -20,6 +20,12 @@ export default async function ReportPage({ params }: ReportPageProps) {
     },
   });
 
+  const flaggedCount = campaign
+    ? await prisma.anonymousResponse.count({
+        where: { campaignId: params.campaignId, flaggedForReview: true },
+      })
+    : 0;
+
   if (!campaign) {
     return (
       <div className="p-8">
@@ -104,6 +110,15 @@ export default async function ReportPage({ params }: ReportPageProps) {
           />
         </div>
       </div>
+
+      {/* Fraud warning banner */}
+      {flaggedCount > 0 && (
+        <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-medium text-amber-800">
+            {flaggedCount} response{flaggedCount === 1 ? ' was' : 's were'} flagged as suspicious and excluded from this report.
+          </p>
+        </div>
+      )}
 
       {/* Report Content */}
       <ReportView campaignId={params.campaignId} />

@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import type { User } from '@prisma/client';
+import { requireAdmin } from '@/lib/auth/helpers';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+
+export const dynamic = 'force-dynamic';
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1, 'Organization name is required'),
@@ -13,7 +17,19 @@ const createOrganizationSchema = z.object({
   emails: z.array(z.string().email('Invalid email address')).optional(),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, { interval: 60_000, uniqueTokenPerInterval: 30 });
+  if (!rl.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
   try {
     const body = await request.json();
     const validated = createOrganizationSchema.parse(body);
@@ -119,6 +135,14 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const organizations = await prisma.organization.findMany({
       orderBy: {

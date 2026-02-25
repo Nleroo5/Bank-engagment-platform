@@ -2,10 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth/helpers';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+
+export const dynamic = 'force-dynamic';
+
+// Accepts https:// URLs (legacy) and data: URLs (base64 from upload route)
+const logoUrlSchema = z
+  .string()
+  .max(2_000_000)
+  .refine(
+    (v) => /^https?:\/\//.test(v) || v.startsWith('data:image/'),
+    'Must be an HTTP URL or image data URL'
+  );
 
 const SplashConfigSchema = z.object({
   bankName: z.string().max(100).optional(),
-  logoUrl: z.string().url().max(500).optional(),
+  logoUrl: logoUrlSchema.optional(),
   logoHeight: z.number().int().min(24).max(200).optional(),
   welcomeTitle: z.string().max(200).optional(),
   titleFontSize: z.number().int().min(20).max(60).optional(),
@@ -19,7 +32,7 @@ const SplashConfigSchema = z.object({
   anonymityNotice: z.string().max(300).optional(),
   footerNotes: z.string().max(1000).optional(),
   footerNotesAlignment: z.enum(['left', 'center', 'right']).optional(),
-  platformLogoUrl: z.string().url().max(500).optional(),
+  platformLogoUrl: logoUrlSchema.optional(),
   platformLogoHeight: z.number().int().min(24).max(200).optional(),
   logoArrangement: z.enum(['side-by-side', 'stacked']).optional(),
 }).strict();
@@ -35,6 +48,14 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.id },
@@ -76,6 +97,18 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, { interval: 60_000, uniqueTokenPerInterval: 30 });
+  if (!rl.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
   try {
     const body = await request.json();
     const data = updateCampaignSchema.parse(body);
@@ -130,9 +163,21 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '';
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, { interval: 60_000, uniqueTokenPerInterval: 30 });
+  if (!rl.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
   try {
     const campaign = await prisma.surveyCampaign.findUnique({
       where: { id: params.id },

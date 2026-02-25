@@ -7,6 +7,15 @@ import {
 import { rateLimit, getRateLimitHeaders, getClientIp } from '@/lib/rate-limit';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
+// Warn at startup if hCaptcha is not configured in production
+if (process.env.NODE_ENV === 'production' && !process.env.HCAPTCHA_SECRET_KEY) {
+  console.warn(
+    '[SECURITY] hCaptcha is not configured in production. Anonymous surveys are unprotected against bots.'
+  );
+}
+
 /**
  * Validate Anonymous Survey Access Code
  *
