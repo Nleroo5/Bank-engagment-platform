@@ -32,11 +32,9 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
   // Splash config state — pre-populate from existing campaign data
   const existingSplash = parseSplashConfig(campaign.splashConfig);
   const [splashOpen, setSplashOpen] = useState(false);
-  const [splashData, setSplashData] = useState<Omit<SplashConfig, 'logoUrl' | 'platformLogoUrl'>>({
+  const [splashData, setSplashData] = useState<Omit<SplashConfig, 'logoUrl'>>({
     bankName: existingSplash?.bankName ?? '',
     logoHeight: existingSplash?.logoHeight ?? 64,
-    platformLogoHeight: existingSplash?.platformLogoHeight ?? 64,
-    logoArrangement: existingSplash?.logoArrangement ?? 'side-by-side',
     welcomeTitle: existingSplash?.welcomeTitle ?? '',
     titleFontSize: existingSplash?.titleFontSize ?? 30,
     titleAlignment: existingSplash?.titleAlignment ?? 'left',
@@ -57,19 +55,11 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(
     existingSplash?.logoUrl ?? null
   );
-  // Platform (your) logo
-  const [platformLogoFile, setPlatformLogoFile] = useState<File | null>(null);
-  const [platformLogoPreview, setPlatformLogoPreview] = useState<string | null>(null);
-  const [currentPlatformLogoUrl, setCurrentPlatformLogoUrl] = useState<string | null>(
-    existingSplash?.platformLogoUrl ?? null
-  );
-
   // Preview state
   const [previewVisible, setPreviewVisible] = useState(false);
   const previewInnerRef = useRef<HTMLDivElement>(null);
   const [previewInnerHeight, setPreviewInnerHeight] = useState(700);
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
-  const [isDraggingPlatformLogo, setIsDraggingPlatformLogo] = useState(false);
 
   // Client logo handlers
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,32 +85,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview(null);
     setCurrentLogoUrl(null);
-  };
-
-  // Platform logo handlers
-  const handlePlatformLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    setPlatformLogoFile(file);
-    if (platformLogoPreview) URL.revokeObjectURL(platformLogoPreview);
-    setPlatformLogoPreview(file ? URL.createObjectURL(file) : null);
-  };
-
-  const handlePlatformLogoDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDraggingPlatformLogo(false);
-    const file = e.dataTransfer.files?.[0] ?? null;
-    if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return;
-    setPlatformLogoFile(file);
-    if (platformLogoPreview) URL.revokeObjectURL(platformLogoPreview);
-    setPlatformLogoPreview(URL.createObjectURL(file));
-  };
-
-  const handleRemovePlatformLogo = () => {
-    setPlatformLogoFile(null);
-    if (platformLogoPreview) URL.revokeObjectURL(platformLogoPreview);
-    setPlatformLogoPreview(null);
-    setCurrentPlatformLogoUrl(null);
   };
 
   // Auto-grow textareas as content is typed
@@ -171,15 +135,11 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
       };
 
       let resolvedLogoUrl: string | null = currentLogoUrl;
-      let resolvedPlatformLogoUrl: string | null = currentPlatformLogoUrl;
 
       try {
-        const uploads = await Promise.all([
-          logoFile ? uploadFile(logoFile) : Promise.resolve(null),
-          platformLogoFile ? uploadFile(platformLogoFile) : Promise.resolve(null),
-        ]);
-        if (uploads[0] !== null) resolvedLogoUrl = uploads[0];
-        if (uploads[1] !== null) resolvedPlatformLogoUrl = uploads[1];
+        if (logoFile) {
+          resolvedLogoUrl = await uploadFile(logoFile);
+        }
       } catch (uploadErr) {
         setError((uploadErr instanceof Error ? uploadErr.message : 'Upload failed.') + ' Please try again, or remove the logo to save without one.');
         setIsSubmitting(false);
@@ -189,16 +149,10 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
       // Build splashConfig — only include fields that have values
       const splashConfigPayload: SplashConfig = {};
       if (splashData.bankName) splashConfigPayload.bankName = splashData.bankName;
-      if (resolvedPlatformLogoUrl) {
-        splashConfigPayload.platformLogoUrl = resolvedPlatformLogoUrl;
-        splashConfigPayload.platformLogoHeight = splashData.platformLogoHeight ?? 64;
-      }
       if (resolvedLogoUrl) {
         splashConfigPayload.logoUrl = resolvedLogoUrl;
         splashConfigPayload.logoHeight = splashData.logoHeight ?? 64;
       }
-      if (resolvedPlatformLogoUrl && resolvedLogoUrl)
-        splashConfigPayload.logoArrangement = splashData.logoArrangement ?? 'side-by-side';
       if (splashData.welcomeTitle) splashConfigPayload.welcomeTitle = splashData.welcomeTitle;
       if ((splashData.titleFontSize ?? 30) !== 30)
         splashConfigPayload.titleFontSize = splashData.titleFontSize;
@@ -244,9 +198,8 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
     }
   };
 
-  // Determine what to show for logos in the WelcomeScreen preview
+  // Determine what to show for client logo in the WelcomeScreen preview
   const previewLogoSrc = logoPreview ?? currentLogoUrl;
-  const previewPlatformLogoSrc = platformLogoPreview ?? currentPlatformLogoUrl;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -398,97 +351,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                   <p className="mt-1 text-xs text-gray-500">
                     Shown below the logo on the welcome screen
                   </p>
-                </div>
-
-                {/* Platform (Your) Logo */}
-                <div>
-                  <label
-                    htmlFor="splashPlatformLogo"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Your Logo
-                  </label>
-                  <p className="mb-1 text-xs text-gray-500">
-                    Your branding — replaces the default platform logo
-                  </p>
-                  {previewPlatformLogoSrc ? (
-                    <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDraggingPlatformLogo(true); }}
-                      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDraggingPlatformLogo(false); }}
-                      onDrop={handlePlatformLogoDrop}
-                      className={`flex items-center gap-3 rounded-lg border-2 border-dashed p-3 transition-colors ${isDraggingPlatformLogo ? 'border-primary-400 bg-primary-50' : 'border-gray-200 bg-white'}`}
-                    >
-                      <div className="relative h-14 w-28 shrink-0 overflow-hidden rounded border border-gray-200 bg-white p-1">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={previewPlatformLogoSrc} alt="Your logo preview" className="h-full w-full object-contain" />
-                        <button type="button" onClick={handleRemovePlatformLogo} className="absolute right-0.5 top-0.5 rounded-full bg-gray-800/70 p-0.5 text-white hover:bg-gray-800" aria-label="Remove platform logo">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                      <div className="min-w-0">
-                        <label htmlFor="splashPlatformLogo" className="cursor-pointer text-sm font-medium text-primary-600 underline hover:text-primary-700 focus-within:ring-2 focus-within:ring-primary-500">
-                          Change logo
-                          <input type="file" id="splashPlatformLogo" accept="image/jpeg,image/png,image/webp" onChange={handlePlatformLogoChange} className="sr-only" />
-                        </label>
-                        <p className="mt-0.5 text-xs text-gray-400">or drop a new file here</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDraggingPlatformLogo(true); }}
-                      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDraggingPlatformLogo(false); }}
-                      onDrop={handlePlatformLogoDrop}
-                      className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-6 transition-colors ${isDraggingPlatformLogo ? 'border-primary-400 bg-primary-50' : 'border-gray-300 bg-white hover:border-gray-400'}`}
-                    >
-                      <ImageIcon className="mb-2 h-8 w-8 text-gray-300" aria-hidden="true" />
-                      <p className="text-sm text-gray-500">
-                        Drop your logo here, or{' '}
-                        <label htmlFor="splashPlatformLogo" className="cursor-pointer text-primary-600 underline hover:text-primary-700 focus-within:ring-2 focus-within:ring-primary-500">
-                          browse
-                          <input type="file" id="splashPlatformLogo" accept="image/jpeg,image/png,image/webp" onChange={handlePlatformLogoChange} className="sr-only" />
-                        </label>
-                      </p>
-                      <p className="mt-1 text-xs text-gray-400">JPG, PNG or WebP · max 4 MB</p>
-                    </div>
-                  )}
-                  {/* Platform logo height slider */}
-                  {previewPlatformLogoSrc && (
-                    <div className="mt-3">
-                      <div className="mb-1 flex items-center justify-between">
-                        <p className="text-xs font-medium text-gray-600">Logo height</p>
-                        <span className="text-xs font-semibold text-gray-700">{splashData.platformLogoHeight ?? 64}px</span>
-                      </div>
-                      <input type="range" min={24} max={200} step={1} value={splashData.platformLogoHeight ?? 64}
-                        onChange={(e) => setSplashData({ ...splashData, platformLogoHeight: parseInt(e.target.value, 10) })}
-                        className="w-full accent-primary-600" aria-label="Your logo height"
-                      />
-                      <div className="mt-0.5 flex justify-between text-[10px] text-gray-400"><span>24px</span><span>200px</span></div>
-                    </div>
-                  )}
-                  {/* Arrangement picker — only shown when both logos are set */}
-                  {previewPlatformLogoSrc && previewLogoSrc && (
-                    <div className="mt-3">
-                      <p className="mb-1 text-xs font-medium text-gray-600">Logo arrangement</p>
-                      <div className="flex overflow-hidden rounded-md border border-gray-300">
-                        {([
-                          { value: 'side-by-side', label: 'Side by side' },
-                          { value: 'stacked', label: 'Stacked' },
-                        ] as const).map(({ value, label }, i) => (
-                          <button key={value} type="button"
-                            onClick={() => setSplashData({ ...splashData, logoArrangement: value })}
-                            aria-pressed={splashData.logoArrangement === value}
-                            className={[
-                              'flex flex-1 items-center justify-center py-1.5 text-xs transition-colors',
-                              i > 0 ? 'border-l border-gray-300' : '',
-                              splashData.logoArrangement === value ? 'bg-primary-50 font-medium text-primary-700' : 'bg-white text-gray-500 hover:bg-gray-50',
-                            ].join(' ')}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Client (Bank) Logo */}
@@ -983,7 +845,6 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                   const liveSplash: SplashConfig = {
                     ...splashData,
                     logoUrl: previewLogoSrc ?? undefined,
-                    platformLogoUrl: previewPlatformLogoSrc ?? undefined,
                   };
                   return (
                     <div
