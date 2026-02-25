@@ -110,7 +110,13 @@ export async function PUT(
   if (!rl.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+
     const data = updateCampaignSchema.parse(body);
 
     const existingCampaign = await prisma.surveyCampaign.findUnique({
@@ -197,13 +203,22 @@ export async function DELETE(
       );
     }
 
-    const deletedBy = campaign.createdById || 'system';
+    // Get the authenticated admin for audit trail
+    let adminId = 'system';
+    try {
+      const admin = await requireAdmin();
+      adminId = admin.id;
+    } catch {
+      // Fallback — already passed auth guard above
+    }
 
+    // Null the access code so the unique constraint is freed for reuse
     const updatedCampaign = await prisma.surveyCampaign.update({
       where: { id: params.id },
       data: {
         deletedAt: new Date(),
-        deletedBy: deletedBy,
+        deletedBy: adminId,
+        accessCode: null,
       },
     });
 

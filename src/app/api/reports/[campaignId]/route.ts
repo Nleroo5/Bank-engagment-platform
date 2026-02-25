@@ -428,6 +428,43 @@ export async function GET(
           allResponses.length
         : 0;
 
+    // Compute engagement distribution — classify each respondent by their
+    // average score as a percentage of scaleMax
+    const scaleMax = survey.scale!.max;
+    let highlyEngaged = 0;
+    let moderatelyEngaged = 0;
+    let disengaged = 0;
+
+    filteredData.forEach((data) => {
+      const values = data.responses
+        .filter((r) => r.value !== null)
+        .map((r) => (r.adjustedValue ?? r.value ?? 0) as number);
+      if (values.length === 0) return;
+
+      const avg = values.reduce((s, v) => s + v, 0) / values.length;
+      const pct = (avg / scaleMax) * 100;
+
+      if (pct >= 80) highlyEngaged++;
+      else if (pct >= 40) moderatelyEngaged++;
+      else disengaged++;
+    });
+
+    const totalClassified = highlyEngaged + moderatelyEngaged + disengaged;
+    const scoreDistribution = {
+      highlyEngaged: {
+        count: highlyEngaged,
+        percentage: totalClassified > 0 ? Math.round((highlyEngaged / totalClassified) * 1000) / 10 : 0,
+      },
+      moderatelyEngaged: {
+        count: moderatelyEngaged,
+        percentage: totalClassified > 0 ? Math.round((moderatelyEngaged / totalClassified) * 1000) / 10 : 0,
+      },
+      disengaged: {
+        count: disengaged,
+        percentage: totalClassified > 0 ? Math.round((disengaged / totalClassified) * 1000) / 10 : 0,
+      },
+    };
+
     return NextResponse.json({
       campaign: {
         id: campaign.id,
@@ -453,6 +490,7 @@ export async function GET(
         sections: sectionAggregates,
       },
       categoryAggregates: aggregateStats,
+      scoreDistribution,
       individualScores: undefined,
       respondentDemographics,
       filters: {
@@ -468,11 +506,7 @@ export async function GET(
   } catch (error) {
     console.error('Error generating weighted scoring report:', error);
     return NextResponse.json(
-      {
-        error: 'Internal server error',
-        message:
-          error instanceof Error ? error.message : 'Unknown error occurred',
-      },
+      { error: 'Failed to generate report. Please try again.' },
       { status: 500 }
     );
   }

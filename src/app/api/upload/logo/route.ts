@@ -58,10 +58,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: dataUrl }, { status: 200 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('[upload/logo] Failed to process logo:', message);
+    console.error('[upload/logo] Failed to process logo:', error);
     return NextResponse.json(
-      { error: `Logo processing failed: ${message}` },
+      { error: 'Logo processing failed. Please try a different file.' },
       { status: 500 }
     );
   }

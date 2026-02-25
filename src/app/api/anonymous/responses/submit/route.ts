@@ -111,7 +111,6 @@ export async function POST(request: NextRequest) {
         questions: {
           where: { isRequired: true },
         },
-        scale: true,
       },
     });
 
@@ -148,63 +147,29 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 5. ATOMIC CHECK: Verify maxResponses limit before submission
+    // 5 & 6. TRANSACTION: Check maxResponses + mark complete atomically
     // ============================================
-    // This prevents race conditions where multiple users bypass the limit
-    if (campaign.maxResponses) {
-      const completedCount = await prisma.anonymousResponse.count({
-        where: {
-          campaignId: campaign.id,
-          completedAt: { not: null },
-        },
-      });
-
-      if (completedCount >= campaign.maxResponses) {
-        return NextResponse.json(
-          {
-            error: 'This survey has reached its maximum number of responses.',
-            maxResponses: campaign.maxResponses,
-            currentCount: completedCount,
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    // ============================================
-    // 6. TRANSACTION: Apply reverse-scoring and mark complete atomically
-    // ============================================
-    // Wrap all database writes in a transaction for data integrity
-    // If any operation fails, entire transaction rolls back
-    const scaleMax = survey.scale?.max ?? 3;
+    // Both the limit check and the completion write happen inside one
+    // transaction so concurrent submissions cannot exceed maxResponses.
+    // Reverse-scoring is NOT applied here — it is already handled by
+    // the PATCH /api/anonymous/responses endpoint at save time.
 
     const updatedResponse = await prisma.$transaction(async (tx) => {
-      // 6a. Update adjusted values for all responses
-      for (const response of anonymousResponse.responses) {
-        const question = survey.questions.find(
-          (q) => q.id === response.questionId
-        );
-
-        let adjustedValue: number;
-
-        if (question?.isReversed && typeof response.value === 'number') {
-          // Apply reverse-scoring formula
-          adjustedValue = scaleMax + 1 - response.value;
-        } else if (typeof response.value === 'number') {
-          // For non-reversed questions, adjusted = raw
-          adjustedValue = response.value;
-        } else {
-          continue; // Skip non-numeric responses
-        }
-
-        await tx.anonymousResponseItem.update({
-          where: { id: response.id },
-          data: { adjustedValue },
+      // 5. Verify maxResponses inside transaction to prevent race conditions
+      if (campaign.maxResponses) {
+        const completedCount = await tx.anonymousResponse.count({
+          where: {
+            campaignId: campaign.id,
+            completedAt: { not: null },
+          },
         });
+
+        if (completedCount >= campaign.maxResponses) {
+          throw new Error('MAX_RESPONSES_REACHED');
+        }
       }
 
-      // 6b. Mark response as completed with demographics
-      // This is the final atomic operation that makes the response count
+      // 6. Mark response as completed with demographics
       const completed = await tx.anonymousResponse.update({
         where: { id: anonymousResponse.id },
         data: {
@@ -215,6 +180,13 @@ export async function POST(request: NextRequest) {
 
       return completed;
     });
+
+    if (!updatedResponse) {
+      return NextResponse.json(
+        { error: 'Failed to submit survey.' },
+        { status: 500 }
+      );
+    }
 
     // ============================================
     // 7. Run fraud detection
@@ -247,6 +219,14 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    // Handle maxResponses exceeded (thrown inside transaction)
+    if (error instanceof Error && error.message === 'MAX_RESPONSES_REACHED') {
+      return NextResponse.json(
+        { error: 'This survey has reached its maximum number of responses.' },
+        { status: 400 }
+      );
+    }
+
     console.error('Error submitting anonymous survey:', error);
     return NextResponse.json(
       { error: 'An error occurred while submitting the survey.' },

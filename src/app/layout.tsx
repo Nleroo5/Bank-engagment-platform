@@ -19,6 +19,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3000'),
   title: 'Bank Engagement Survey Platform',
   description: 'Professional employee engagement and assessment surveys for financial institutions',
 

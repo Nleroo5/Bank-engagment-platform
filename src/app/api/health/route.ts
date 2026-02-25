@@ -5,26 +5,17 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Test database connection
+    // Test database connection only — no sensitive data exposed
     await prisma.$queryRaw`SELECT 1`;
-
-    // Try to count users
-    const userCount = await prisma.user.count();
 
     return NextResponse.json({
       status: 'healthy',
-      database: 'connected',
-      userCount,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
-    console.error('Health check failed:', error);
-
+  } catch {
     return NextResponse.json(
       {
         status: 'unhealthy',
-        database: 'disconnected',
-        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       },
       { status: 500 }

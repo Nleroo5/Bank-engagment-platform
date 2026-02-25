@@ -67,8 +67,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  let adminUserId: string | null = null;
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
+    adminUserId = admin.id;
   } catch (error) {
     const msg = error instanceof Error ? error.message : '';
     if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -80,7 +82,13 @@ export async function POST(request: NextRequest) {
   if (!rl.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+
     const {
       surveyId,
       organizationId,
@@ -133,8 +141,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingCampaign = await prisma.surveyCampaign.findUnique({
-      where: { accessCode: accessCode.toUpperCase() },
+    const existingCampaign = await prisma.surveyCampaign.findFirst({
+      where: { accessCode: accessCode.toUpperCase(), deletedAt: null },
     });
 
     if (existingCampaign) {
@@ -167,6 +175,7 @@ export async function POST(request: NextRequest) {
         accessCode: accessCode.toUpperCase(),
         maxResponses: maxResponses ? parseInt(maxResponses) : null,
         splashConfig: validatedSplashConfig ?? Prisma.JsonNull,
+        createdById: adminUserId,
       },
       include: { organization: true },
     });

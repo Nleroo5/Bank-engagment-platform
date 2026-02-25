@@ -1,12 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth/helpers';
 
 export const dynamic = 'force-dynamic';
+
+function authError(error: unknown) {
+  const msg = error instanceof Error ? error.message : '';
+  if (msg === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+}
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    return authError(error);
+  }
+
   try {
     const survey = await prisma.survey.findUnique({
       where: { id: params.id },
@@ -65,6 +78,12 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    await requireAdmin();
+  } catch (error) {
+    return authError(error);
+  }
+
+  try {
     // Check if survey has campaigns
     const campaignCount = await prisma.surveyCampaign.count({
       where: {
@@ -99,7 +118,19 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json();
+    await requireAdmin();
+  } catch (error) {
+    return authError(error);
+  }
+
+  try {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+
     const { title, description, surveyType, surveyNumber, status, scaleId } =
       body;
 

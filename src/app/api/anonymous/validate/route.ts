@@ -9,25 +9,18 @@ import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
-// Warn at startup if hCaptcha is not configured in production
-if (process.env.NODE_ENV === 'production' && !process.env.HCAPTCHA_SECRET_KEY) {
-  console.warn(
-    '[SECURITY] hCaptcha is not configured in production. Anonymous surveys are unprotected against bots.'
-  );
-}
-
 /**
  * Validate Anonymous Survey Access Code
  *
  * POST /api/anonymous/validate
  *
- * Validates access code and CAPTCHA, creates AnonymousResponse session
+ * Validates access code, creates AnonymousResponse session
  * Returns session token for client-side cookie storage
  */
 
 const ValidateRequestSchema = z.object({
   accessCode: z.string().min(1, 'Access code is required'),
-  captchaToken: z.string().optional(), // Optional if hCaptcha not configured
+  captchaToken: z.string().optional(),
   browserFingerprint: z.string().optional(),
   device: z.string().optional(),
   userAgent: z.string().optional(),
@@ -64,36 +57,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { accessCode, captchaToken, browserFingerprint, device, userAgent } =
+    const { accessCode, browserFingerprint, device, userAgent } =
       validation.data;
-
-    // ============================================
-    // 1. Verify CAPTCHA (optional - skip if not configured)
-    // ============================================
-    const hCaptchaEnabled = Boolean(process.env.HCAPTCHA_SECRET_KEY);
-
-    if (hCaptchaEnabled && captchaToken) {
-      const captchaResponse = await fetch('https://hcaptcha.com/siteverify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          secret: process.env.HCAPTCHA_SECRET_KEY!,
-          response: captchaToken,
-        }),
-      });
-
-      const captchaResult = await captchaResponse.json();
-
-      if (!captchaResult.success) {
-        return NextResponse.json(
-          { error: 'CAPTCHA verification failed. Please try again.' },
-          { status: 400 }
-        );
-      }
-    }
-    // If hCaptcha not configured, skip verification (for development/testing)
 
     // ============================================
     // 2. Lookup campaign by access code
@@ -207,21 +172,9 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    // Enhanced error logging for debugging
     console.error('Error validating anonymous survey access:', error);
-    console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
-    console.error('Error message:', error instanceof Error ? error.message : String(error));
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-
     return NextResponse.json(
-      {
-        error: 'An error occurred while validating access code.',
-        // Include error details in development
-        ...(process.env.NODE_ENV === 'development' && {
-          details: error instanceof Error ? error.message : String(error),
-          errorType: error instanceof Error ? error.name : 'Unknown',
-        }),
-      },
+      { error: 'An error occurred while validating access code.' },
       { status: 500 }
     );
   }

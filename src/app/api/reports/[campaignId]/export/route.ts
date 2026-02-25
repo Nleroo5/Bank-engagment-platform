@@ -401,10 +401,7 @@ export async function GET(
   } catch (error) {
     console.error('Error generating export:', error);
     return NextResponse.json(
-      {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { error: 'Failed to generate export. Please try again.' },
       { status: 500 }
     );
   }

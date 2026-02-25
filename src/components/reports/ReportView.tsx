@@ -1,20 +1,28 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { CategoryBarChart } from '@/components/charts/CategoryBarChart';
+import { CategoryScoresChart } from '@/components/charts/CategoryScoresChart';
+import type { WeightedCategoryScore } from '@/components/charts/CategoryScoresChart';
 import { CategoryRadarChart } from '@/components/charts/CategoryRadarChart';
+import { EngagementDonutChart } from '@/components/charts/EngagementDonutChart';
+import { DemographicDonutGrid } from '@/components/charts/DemographicDonutChart';
+import { ParticipationBarChart } from '@/components/charts/ParticipationBarChart';
+import { CategoryScoreGrid } from '@/components/reports/CategoryScoreCard';
 import { DemographicFilters } from './DemographicFilters';
 import { DemographicsReportView } from './DemographicsReportView';
-import {
-  RespondentDemographicsSection,
-  RespondentDemographicsData,
-} from './RespondentDemographicsSection';
+import type { RespondentDemographicsData } from './RespondentDemographicsSection';
 import { AlertCircle, Users, TrendingUp } from 'lucide-react';
 import {
   SkeletonCard,
   SkeletonChart,
   SkeletonTable,
 } from '@/components/ui/Skeleton';
+
+interface ScoreDistribution {
+  highlyEngaged: { count: number; percentage: number };
+  moderatelyEngaged: { count: number; percentage: number };
+  disengaged: { count: number; percentage: number };
+}
 
 interface ReportData {
   campaign: {
@@ -49,6 +57,8 @@ interface ReportData {
       responseCount: number;
     }>;
   };
+  categoryAggregates?: WeightedCategoryScore[];
+  scoreDistribution?: ScoreDistribution;
   respondentDemographics?: RespondentDemographicsData;
   filters: {
     applied: Record<string, string>;
@@ -78,6 +88,11 @@ interface ReportData {
         count: number;
       }>;
     };
+  };
+  scale?: {
+    min: number;
+    max: number;
+    type: string;
   };
 }
 
@@ -131,17 +146,12 @@ export function ReportView({ campaignId }: ReportViewProps) {
         <div className="sr-only" role="status" aria-live="polite">
           Loading report data...
         </div>
-        {/* Summary cards skeleton */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
-
-        {/* Chart skeleton */}
         <SkeletonChart />
-
-        {/* Table skeleton */}
         <SkeletonTable rows={5} />
       </div>
     );
@@ -172,180 +182,219 @@ export function ReportView({ campaignId }: ReportViewProps) {
     return <DemographicsReportView campaignId={campaignId} />;
   }
 
-  const scaleMax = data.campaign.surveyType === 'likert3' ? 3 : 5;
+  const scaleMax = data.scale?.max ?? (data.campaign.surveyType === 'likert3' ? 3 : 5);
+
+  // Find the division distribution for participation chart
+  const divisionDist = data.respondentDemographics?.distributions.find(
+    (d) => d.field === 'division'
+  );
 
   return (
     <div className="space-y-6">
-      {/* Respondent Demographics — collapsed by default */}
-      {data.respondentDemographics && (
-        <RespondentDemographicsSection data={data.respondentDemographics} />
-      )}
-
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-      {/* Main Content - 3 columns */}
-      <div className="space-y-6 lg:col-span-3">
-        {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-primary-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Respondents</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {data.metrics.filteredCount}
-                </p>
-                {data.metrics.filteredCount !== data.metrics.completedCount && (
-                  <p className="text-xs text-gray-500">
-                    of {data.metrics.completedCount} total
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        {/* Main Content - 3 columns */}
+        <div className="space-y-6 lg:col-span-3">
+          {/* 1. Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-primary-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Respondents</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {data.metrics.filteredCount}
                   </p>
-                )}
+                  {data.metrics.filteredCount !== data.metrics.completedCount && (
+                    <p className="text-xs text-gray-500">
+                      of {data.metrics.completedCount} total
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="flex items-center">
+                <TrendingUp className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Response Rate
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {data.metrics.completionRate}%
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {data.metrics.completedCount} /{' '}
+                    {data.metrics.totalInvitations}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="flex items-center">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                  <span className="text-xl font-bold">
+                    {data.scores.overall.toFixed(1)}
+                  </span>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Overall Score
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    out of {scaleMax}.0
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* 2. Engagement Distribution Donut */}
+          {data.scoreDistribution && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Engagement Distribution
+              </h2>
+              <EngagementDonutChart
+                distribution={data.scoreDistribution}
+                overallScore={data.scores.overall}
+                scaleMax={scaleMax}
+              />
+            </div>
+          )}
+
+          {/* 3. Category Weighted Scores Chart */}
+          {data.categoryAggregates && data.categoryAggregates.length > 0 ? (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Weighted Category Scores
+              </h2>
+              <CategoryScoresChart data={data.categoryAggregates} />
+            </div>
+          ) : (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Average Score by Category
+              </h2>
+              <CategoryRadarChart data={data.scores.categories} scaleMax={scaleMax} />
+            </div>
+          )}
+
+          {/* 4. Category Score Cards Grid */}
+          {data.categoryAggregates && data.categoryAggregates.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Category Performance
+              </h2>
+              <CategoryScoreGrid categories={data.categoryAggregates} />
+            </div>
+          )}
+
+          {/* 5. Sections Table */}
           <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <div className="flex items-center">
-              <TrendingUp className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Response Rate
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {data.metrics.completionRate}%
-                </p>
-                <p className="text-xs text-gray-500">
-                  {data.metrics.completedCount} /{' '}
-                  {data.metrics.totalInvitations}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <div className="flex items-center">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                <span className="text-xl font-bold">
-                  {data.scores.overall.toFixed(1)}
-                </span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Overall Score
-                </p>
-                <p className="text-lg font-semibold text-gray-900">
-                  out of {scaleMax}.0
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Overall Score Display */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="mb-4 text-xl font-bold text-gray-900">
-            Overall Score
-          </h2>
-          <div className="flex items-center">
-            <div className="text-6xl font-bold text-primary-600">
-              {data.scores.overall.toFixed(1)}
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">out of {scaleMax}.0</p>
-              <div className="mt-2 h-2 w-48 overflow-hidden rounded-full bg-gray-200">
-                <div
-                  className="h-full bg-primary-600"
-                  style={{
-                    width: `${(data.scores.overall / scaleMax) * 100}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Category Bar Chart */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="mb-4 text-xl font-bold text-gray-900">
-            Average Score by Category
-          </h2>
-          <CategoryBarChart data={data.scores.categories} scaleMax={scaleMax} />
-        </div>
-
-        {/* Sections Table */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="mb-4 text-xl font-bold text-gray-900">
-            Scores by Section
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Section
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Items
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Average Score
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Progress
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {data.scores.sections.map((section) => (
-                  <tr key={section.sectionId}>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                      {section.sectionTitle}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                      {section.questionCount}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-gray-900">
-                      {section.averageScore.toFixed(1)} / {scaleMax}.0
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                      <div className="h-2 w-32 overflow-hidden rounded-full bg-gray-200">
-                        <div
-                          className="h-full bg-primary-600"
-                          style={{
-                            width: `${(section.averageScore / scaleMax) * 100}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </td>
+            <h2 className="mb-4 text-xl font-bold text-gray-900">
+              Scores by Section
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Section
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Items
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Average Score
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Progress
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {data.scores.sections.map((section) => (
+                    <tr key={section.sectionId}>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                        {section.sectionTitle}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {section.questionCount}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-gray-900">
+                        {section.averageScore.toFixed(1)} / {scaleMax}.0
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        <div className="h-2 w-32 overflow-hidden rounded-full bg-gray-200">
+                          <div
+                            className="h-full bg-primary-600"
+                            style={{
+                              width: `${(section.averageScore / scaleMax) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 6. Demographic Breakdown — Donut Charts */}
+          {data.respondentDemographics &&
+            data.respondentDemographics.distributions.some(
+              (d) => d.distribution.length > 0
+            ) && (
+              <div className="rounded-lg border border-gray-200 bg-white p-6">
+                <h2 className="mb-2 text-xl font-bold text-gray-900">
+                  Respondent Demographics
+                </h2>
+                <p className="mb-6 text-sm text-gray-500">
+                  {data.respondentDemographics.respondentCount} respondent
+                  {data.respondentDemographics.respondentCount !== 1 ? 's' : ''}
+                </p>
+                <DemographicDonutGrid
+                  distributions={data.respondentDemographics.distributions}
+                />
+              </div>
+            )}
+
+          {/* 7. Division Participation */}
+          {divisionDist && divisionDist.distribution.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Participation by Division
+              </h2>
+              <ParticipationBarChart distribution={divisionDist} />
+            </div>
+          )}
+
+          {/* 8. Category Radar Chart */}
+          <div className="rounded-lg border border-gray-200 bg-white p-6">
+            <h2 className="mb-4 text-xl font-bold text-gray-900">
+              Category Comparison
+            </h2>
+            <CategoryRadarChart
+              data={data.scores.categories}
+              scaleMax={scaleMax}
+            />
           </div>
         </div>
 
-        {/* Category Radar Chart */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="mb-4 text-xl font-bold text-gray-900">
-            Category Comparison
-          </h2>
-          <CategoryRadarChart
-            data={data.scores.categories}
-            scaleMax={scaleMax}
-          />
+        {/* Sidebar - Filters - 1 column */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-6">
+            <DemographicFilters
+              filterOptions={data.filters.available}
+              appliedFilters={data.filters.applied}
+              onFilterChange={handleFilterChange}
+            />
+          </div>
         </div>
       </div>
-
-      {/* Sidebar - Filters - 1 column */}
-      <div className="lg:col-span-1">
-        <div className="sticky top-6">
-          <DemographicFilters
-            filterOptions={data.filters.available}
-            appliedFilters={data.filters.applied}
-            onFilterChange={handleFilterChange}
-          />
-        </div>
-      </div>
-    </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ export default withAuth(
       path.startsWith('/a/') || // Anonymous access code URLs
       path.startsWith('/api/anonymous/') || // Anonymous API endpoints
       path.startsWith('/api/sanity/') || // Sanity CMS data (surveys, questions) - needed for survey rendering
+      path === '/api/health' || // Health check - must be public for monitoring
       path === '/' || // Home page
       path === '/admin/login' // Login page
     ) {
@@ -30,11 +31,9 @@ export default withAuth(
       }
 
       const role = token.role as string | undefined;
-      const method = req.method;
 
       // Ensure role exists
       if (!role) {
-        console.error('Token exists but role is missing:', { path, email: token.email });
         if (path.startsWith('/admin')) {
           return NextResponse.redirect(new URL('/admin/login', req.url));
         }
@@ -44,41 +43,18 @@ export default withAuth(
         );
       }
 
-      // Role-based access control
-      // SUPER_ADMIN: Full access to everything
-      // ORG_ADMIN: Cannot access /api/users or /admin/users
-      // VIEWER: GET requests only (no POST/PUT/DELETE)
-      // RESPONDENT: Should not access admin/API routes
-
-      if (role === 'SUPER_ADMIN') {
-        return NextResponse.next(); // Full access
-      }
-
-      if (role === 'ORG_ADMIN') {
-        return NextResponse.next();
-      }
-
-      if (role === 'VIEWER') {
-        // Viewers can only make GET requests
-        if (method !== 'GET') {
-          return NextResponse.json(
-            { error: 'Forbidden: Viewers can only perform read operations' },
-            { status: 403 }
-          );
+      // Only SUPER_ADMIN has access to admin pages and API routes
+      if (role !== 'SUPER_ADMIN') {
+        if (path.startsWith('/admin')) {
+          return NextResponse.redirect(new URL('/admin/login', req.url));
         }
-        // Allow GET requests to admin and API
-        return NextResponse.next();
+        return NextResponse.json(
+          { error: 'Forbidden: Insufficient permissions' },
+          { status: 403 }
+        );
       }
 
-      // RESPONDENT or unknown role - block access to admin/API
-      console.warn('User with insufficient role attempted access:', { role, path });
-      if (path.startsWith('/admin')) {
-        return NextResponse.redirect(new URL('/admin/login', req.url));
-      }
-      return NextResponse.json(
-        { error: 'Forbidden: Insufficient permissions' },
-        { status: 403 }
-      );
+      return NextResponse.next();
     }
 
     return NextResponse.next();

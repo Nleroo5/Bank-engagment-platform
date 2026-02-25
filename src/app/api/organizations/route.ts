@@ -30,8 +30,14 @@ export async function POST(request: NextRequest) {
   const rl = rateLimit(ip, { interval: 60_000, uniqueTokenPerInterval: 30 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
+  let body;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+  }
+
+  try {
     const validated = createOrganizationSchema.parse(body);
 
     // Create organization and users in a transaction
