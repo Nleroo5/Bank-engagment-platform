@@ -8,6 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        body: ['var(--font-body)', 'Calibri', 'Arial', 'sans-serif'],
+      },
       colors: {
         // Brand Colors
         brand: {

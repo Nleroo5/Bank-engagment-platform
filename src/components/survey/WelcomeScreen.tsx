@@ -139,7 +139,7 @@ export function WelcomeScreen({
           height={80}
           className="h-16 w-auto object-contain"
         />
-        <span className="text-lg font-medium text-gray-600">Welcomes...</span>
+        <span className="font-serif font-normal text-gray-600" style={{ fontSize: '16pt' }}>Welcomes...</span>
         {hasClientLogo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -154,11 +154,11 @@ export function WelcomeScreen({
       </div>
 
       <div
-        className="rounded-lg p-8 shadow-lg"
+        className="rounded-lg p-8 font-body shadow-lg"
         style={{ backgroundColor: cardBackground ?? '#ffffff' }}
       >
         <h1
-          className={`mb-4 font-bold text-gray-900 ${ALIGN_CLASS[titleAlignment]}`}
+          className={`mb-4 font-serif font-bold text-gray-900 ${ALIGN_CLASS[titleAlignment]}`}
           style={{ fontSize: `${titleFontSize}px` }}
         >
           {title}
