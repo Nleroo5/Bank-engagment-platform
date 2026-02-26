@@ -11,7 +11,7 @@ export default async function ImportUsersPage() {
   });
 
   return (
-    <div className="p-8">
+    <div className="space-y-6">
       <div className="mb-8">
         <Link
           href="/admin/users"

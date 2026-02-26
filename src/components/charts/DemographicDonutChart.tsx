@@ -62,7 +62,7 @@ export function DemographicDonutChart({ distribution }: DemographicDonutChartPro
     >
       <h3 className="mb-2 text-sm font-semibold text-gray-900">{distribution.label}</h3>
 
-      <div className="relative" style={{ width: 200, height: 200 }}>
+      <div className="relative aspect-square w-full max-w-[200px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -71,8 +71,8 @@ export function DemographicDonutChart({ distribution }: DemographicDonutChartPro
               nameKey="value"
               cx="50%"
               cy="50%"
-              innerRadius={50}
-              outerRadius={85}
+              innerRadius="25%"
+              outerRadius="42%"
               startAngle={90}
               endAngle={-270}
               paddingAngle={1}

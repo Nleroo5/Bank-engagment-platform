@@ -28,7 +28,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
 
   if (!campaign) {
     return (
-      <div className="p-8">
+      <div className="space-y-6">
         <div className="rounded-md bg-red-50 p-4">
           <h3 className="text-sm font-medium text-red-800">
             Campaign not found
@@ -50,7 +50,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
   }
 
   return (
-    <div className="p-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="mb-6">
         <Link
@@ -61,7 +61,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
           Back to Reports
         </Link>
 
-        <div className="mt-4 flex items-start justify-between">
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               {campaign.surveyTitle}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Filter } from 'lucide-react';
 
 interface DemographicFilter {
@@ -30,6 +30,11 @@ export function DemographicFilters({
 }: DemographicFiltersProps) {
   const [filters, setFilters] =
     useState<Record<string, string>>(appliedFilters);
+
+  // Sync local state when parent appliedFilters change (e.g., after data refetch)
+  useEffect(() => {
+    setFilters(appliedFilters);
+  }, [appliedFilters]);
 
   const handleFilterChange = (field: string, value: string) => {
     const newFilters = { ...filters };

@@ -228,16 +228,17 @@ export function DemographicsReportView({
             </h2>
 
             {/* Bar Chart */}
-            <div className="mb-6" style={{ height: Math.max(300, dist.distribution.length * 50) }}>
+            <div className="-mx-2 mb-6 overflow-x-auto px-2">
+              <div style={{ height: Math.min(600, Math.max(300, dist.distribution.length * 50)), minWidth: 480 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={dist.distribution}
                   layout="vertical"
-                  margin={{ top: 5, right: 30, left: 150, bottom: 5 }}
+                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
-                  <YAxis dataKey="value" type="category" width={140} />
+                  <YAxis dataKey="value" type="category" width={130} tick={{ fontSize: 11 }} />
                   <Tooltip
                     formatter={(value: number, name: string) => {
                       if (name === 'count') {
@@ -261,6 +262,7 @@ export function DemographicsReportView({
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              </div>
             </div>
 
             {/* Data Table */}

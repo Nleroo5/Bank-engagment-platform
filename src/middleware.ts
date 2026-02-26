@@ -43,8 +43,9 @@ export default withAuth(
         );
       }
 
-      // Only SUPER_ADMIN has access to admin pages and API routes
-      if (role !== 'SUPER_ADMIN') {
+      // SUPER_ADMIN and ORG_ADMIN have access to admin pages and API routes
+      const ADMIN_ROLES = ['SUPER_ADMIN', 'ORG_ADMIN'];
+      if (!ADMIN_ROLES.includes(role)) {
         if (path.startsWith('/admin')) {
           return NextResponse.redirect(new URL('/admin/login', req.url));
         }

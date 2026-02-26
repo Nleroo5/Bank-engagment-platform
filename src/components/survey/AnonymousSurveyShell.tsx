@@ -162,7 +162,19 @@ export default function AnonymousSurveyShell({
     setDemographics((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleDemographicsComplete = () => {
+  const handleDemographicsComplete = async () => {
+    try {
+      const response = await fetch('/api/anonymous/responses/demographics', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken, demographics }),
+      });
+      if (!response.ok) {
+        console.error('Failed to save demographics:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error saving demographics:', error);
+    }
     setStage('survey');
   };
 

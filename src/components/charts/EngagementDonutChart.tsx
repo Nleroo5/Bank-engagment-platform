@@ -65,7 +65,7 @@ export function EngagementDonutChart({
 
   return (
     <div role="img" aria-label="Engagement distribution donut chart">
-      <div className="relative mx-auto" style={{ width: 280, height: 280 }}>
+      <div className="relative mx-auto aspect-square w-full max-w-[280px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -74,8 +74,8 @@ export function EngagementDonutChart({
               nameKey="label"
               cx="50%"
               cy="50%"
-              innerRadius={75}
-              outerRadius={120}
+              innerRadius="28%"
+              outerRadius="44%"
               startAngle={90}
               endAngle={-270}
               paddingAngle={2}

@@ -134,7 +134,9 @@ export function CategoryScoresChart({
       role="img"
       aria-label="Category weighted scores bar chart"
     >
-      <ResponsiveContainer width="100%" height={height}>
+      <div className="-mx-2 overflow-x-auto px-2">
+        <div style={{ minWidth: 480, height }}>
+        <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartData}
           margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
@@ -155,9 +157,10 @@ export function CategoryScoresChart({
             height={100}
             interval={0}
             tick={{ fontSize: 12, fill: '#374151' }}
-            tickFormatter={(value, index) => {
-              const weight = chartData[index]?.weight;
-              return weight !== 1 ? `${value} (×${weight})` : value;
+            tickFormatter={(value) => {
+              const item = chartData.find((d) => d.name === value);
+              const weight = item?.weight;
+              return weight !== undefined && weight !== 1 ? `${value} (×${weight})` : value;
             }}
           />
 
@@ -206,6 +209,8 @@ export function CategoryScoresChart({
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+        </div>
+      </div>
 
       {/* Accessible table alternative */}
       <div

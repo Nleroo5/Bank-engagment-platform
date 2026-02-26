@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth/helpers';
+import { rateLimit, getClientIp, getRateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,13 +75,27 @@ export async function GET(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     await requireAdmin();
   } catch (error) {
     return authError(error);
+  }
+
+  // Rate limit: 10 deletes per minute
+  const clientIp = getClientIp(request);
+  const rateLimitResult = rateLimit(`delete-survey:${clientIp}`, {
+    interval: 60 * 1000,
+    uniqueTokenPerInterval: 10,
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
   }
 
   try {

@@ -71,10 +71,25 @@ export async function GET(
       );
     }
 
-    if (!survey || !survey.scale) {
+    if (!survey) {
       return NextResponse.json(
-        { error: 'Survey content not found or incomplete' },
+        { error: 'Survey content not found' },
         { status: 404 }
+      );
+    }
+
+    // Demographics surveys have no scored questions — export not supported
+    if (survey.surveyType === 'demographics') {
+      return NextResponse.json(
+        { error: 'Export is not available for demographics-only surveys. View the report dashboard for demographic breakdowns.' },
+        { status: 400 }
+      );
+    }
+
+    if (!survey.scale) {
+      return NextResponse.json(
+        { error: 'Survey configuration incomplete — missing scale information.' },
+        { status: 400 }
       );
     }
 

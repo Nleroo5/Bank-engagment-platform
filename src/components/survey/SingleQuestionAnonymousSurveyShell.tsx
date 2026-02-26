@@ -363,7 +363,19 @@ export function SingleQuestionAnonymousSurveyShell({
   const handleSubmit = async () => {
     try {
       setIsSaving(true);
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+      // Flush any pending debounced save so the last answer is persisted
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+        // Save the current question's answer if it exists
+        const q = allQuestions[currentQuestionIndex];
+        const pendingValue = q ? answers[q._id] : undefined;
+        if (q && pendingValue !== undefined) {
+          await saveToServer(q._id, q.number, pendingValue);
+        }
+      }
+
       const response = await fetch('/api/anonymous/responses/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

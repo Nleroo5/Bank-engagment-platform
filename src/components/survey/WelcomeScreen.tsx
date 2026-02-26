@@ -131,7 +131,7 @@ export function WelcomeScreen({
       </div>
 
       {/* Power Banking "Welcomes..." Client Logo row */}
-      <div className="mb-8 flex items-center justify-center gap-4">
+      <div className="mb-8 flex flex-wrap items-center justify-center gap-4">
         <Image
           src="/power-banking.png"
           alt="Power Banking"
@@ -154,12 +154,12 @@ export function WelcomeScreen({
       </div>
 
       <div
-        className="rounded-lg p-8 font-body shadow-lg"
+        className="rounded-lg p-5 font-body shadow-lg sm:p-8"
         style={{ backgroundColor: cardBackground ?? '#ffffff' }}
       >
         <h1
           className={`mb-4 font-serif font-bold text-gray-900 ${ALIGN_CLASS[titleAlignment]}`}
-          style={{ fontSize: `${titleFontSize}px` }}
+          style={{ fontSize: `clamp(${Math.round(titleFontSize * 0.7)}px, 5vw, ${titleFontSize}px)` }}
         >
           {title}
         </h1>

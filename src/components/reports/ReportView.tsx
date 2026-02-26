@@ -178,7 +178,7 @@ export function ReportView({ campaignId }: ReportViewProps) {
   }
 
   // Check if this is a demographics survey and render the appropriate view
-  if ('demographics' in data) {
+  if (data.campaign.surveyType === 'demographics') {
     return <DemographicsReportView campaignId={campaignId} />;
   }
 
@@ -233,8 +233,8 @@ export function ReportView({ campaignId }: ReportViewProps) {
 
             <div className="rounded-lg border border-gray-200 bg-white p-6">
               <div className="flex items-center">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                  <span className="text-xl font-bold">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                  <span className="text-sm font-bold">
                     {data.scores.overall.toFixed(1)}
                   </span>
                 </div>
@@ -372,21 +372,23 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 8. Category Radar Chart */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <h2 className="mb-4 text-xl font-bold text-gray-900">
-              Category Comparison
-            </h2>
-            <CategoryRadarChart
-              data={data.scores.categories}
-              scaleMax={scaleMax}
-            />
-          </div>
+          {/* 8. Category Radar Chart — only if bar chart was shown above (avoids duplicate radar) */}
+          {data.categoryAggregates && data.categoryAggregates.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="mb-4 text-xl font-bold text-gray-900">
+                Category Comparison
+              </h2>
+              <CategoryRadarChart
+                data={data.scores.categories}
+                scaleMax={scaleMax}
+              />
+            </div>
+          )}
         </div>
 
         {/* Sidebar - Filters - 1 column */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-6">
+        <div className="order-first lg:order-last lg:col-span-1">
+          <div className="lg:sticky lg:top-6">
             <DemographicFilters
               filterOptions={data.filters.available}
               appliedFilters={data.filters.applied}

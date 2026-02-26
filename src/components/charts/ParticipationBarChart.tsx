@@ -66,39 +66,43 @@ export function ParticipationBarChart({
       role="img"
       aria-label={`${distribution.label} participation bar chart`}
     >
-      <ResponsiveContainer width="100%" height={chartHeight}>
-        <BarChart
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 5, right: 60, left: 10, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-          <XAxis
-            type="number"
-            domain={[0, 100]}
-            tickFormatter={(v) => `${v}%`}
-            tick={{ fontSize: 12, fill: '#6b7280' }}
-          />
-          <YAxis
-            type="category"
-            dataKey="name"
-            width={140}
-            tick={{ fontSize: 12, fill: '#374151' }}
-          />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
-          <Bar dataKey="percentage" radius={[0, 6, 6, 0]} maxBarSize={32}>
-            {chartData.map((entry, index) => (
-              <Cell key={index} fill={entry.fill} />
-            ))}
-            <LabelList
-              dataKey="percentage"
-              position="right"
-              formatter={(v: number) => `${v}%`}
-              style={{ fontSize: 12, fontWeight: 600, fill: '#374151' }}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="-mx-2 overflow-x-auto px-2">
+        <div style={{ minWidth: 480, height: chartHeight }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              layout="vertical"
+              margin={{ top: 5, right: 60, left: 10, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+              <XAxis
+                type="number"
+                domain={[0, 100]}
+                tickFormatter={(v) => `${v}%`}
+                tick={{ fontSize: 12, fill: '#6b7280' }}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={130}
+                tick={{ fontSize: 11, fill: '#374151' }}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+              <Bar dataKey="percentage" radius={[0, 6, 6, 0]} maxBarSize={32}>
+                {chartData.map((entry, index) => (
+                  <Cell key={index} fill={entry.fill} />
+                ))}
+                <LabelList
+                  dataKey="percentage"
+                  position="right"
+                  formatter={(v: number) => `${v}%`}
+                  style={{ fontSize: 12, fontWeight: 600, fill: '#374151' }}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
       {/* Color legend */}
       <div className="mt-3 flex flex-wrap justify-center gap-4 text-xs text-gray-500">

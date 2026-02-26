@@ -108,26 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 6. Check max responses limit
-    // ============================================
-    if (campaign.maxResponses) {
-      const completedCount = await prisma.anonymousResponse.count({
-        where: {
-          campaignId: campaign.id,
-          completedAt: { not: null },
-        },
-      });
-
-      if (completedCount >= campaign.maxResponses) {
-        return NextResponse.json(
-          { error: 'This survey has reached its maximum number of responses.' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // ============================================
-    // 7. Hash IP address for duplicate detection
+    // 6. Hash IP address for duplicate detection
     // ============================================
     const clientIpForHash = getClientIpFingerprint(request);
     let ipHash: string | null = null;
@@ -141,19 +122,53 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 8. Create AnonymousResponse session
+    // 7. Check max responses + create session atomically
+    //    Uses a transaction to prevent race conditions where
+    //    concurrent requests could exceed maxResponses
     // ============================================
-    const anonymousResponse = await prisma.anonymousResponse.create({
-      data: {
-        campaignId: campaign.id,
-        ipHash,
-        browserFingerprint,
-        device,
-        userAgent: userAgent || request.headers.get('user-agent') || undefined,
-        startedAt: new Date(),
-        lastActiveAt: new Date(),
-      },
+    const sessionExpiresAt = campaign.endDate
+      ? new Date(campaign.endDate)
+      : new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours default
+
+    const anonymousResponse = await prisma.$transaction(async (tx) => {
+      if (campaign.maxResponses) {
+        const completedCount = await tx.anonymousResponse.count({
+          where: {
+            campaignId: campaign.id,
+            completedAt: { not: null },
+          },
+        });
+
+        if (completedCount >= campaign.maxResponses) {
+          throw new Error('MAX_RESPONSES_REACHED');
+        }
+      }
+
+      return tx.anonymousResponse.create({
+        data: {
+          campaignId: campaign.id,
+          ipHash,
+          browserFingerprint,
+          device,
+          userAgent: userAgent || request.headers.get('user-agent') || undefined,
+          startedAt: new Date(),
+          lastActiveAt: new Date(),
+          sessionExpiresAt,
+        },
+      });
+    }).catch((err) => {
+      if (err instanceof Error && err.message === 'MAX_RESPONSES_REACHED') {
+        return null;
+      }
+      throw err;
     });
+
+    if (!anonymousResponse) {
+      return NextResponse.json(
+        { error: 'This survey has reached its maximum number of responses.' },
+        { status: 400 }
+      );
+    }
 
     // ============================================
     // 9. Return session token and campaign details

@@ -15,8 +15,8 @@ export default function CampaignsError({
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center p-8">
-      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+    <div className="flex min-h-[60vh] items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="mb-2 text-xl font-bold text-gray-900">
           Campaign page unavailable
         </h2>

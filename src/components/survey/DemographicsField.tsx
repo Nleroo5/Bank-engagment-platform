@@ -165,6 +165,8 @@ export function DemographicsField({
 
     if (newValue === 'Other') {
       setShowOther(true);
+      // Immediately notify parent so the question is marked as answered
+      onChange(questionId, 'Other');
     } else {
       setShowOther(false);
       setOtherValue('');
@@ -220,7 +222,7 @@ export function DemographicsField({
         {/* Question Text - Apple Style: Large, Bold, Prominent */}
         <div className="mb-8">
           <p
-            className="text-3xl font-semibold leading-tight tracking-tight text-gray-900 md:text-4xl"
+            className="text-xl font-semibold leading-tight tracking-tight text-gray-900 sm:text-2xl md:text-3xl"
             id={`question-${questionId}`}
           >
             {questionText}
@@ -271,7 +273,7 @@ export function DemographicsField({
         {/* Question Text - Apple Style: Large, Bold, Prominent */}
         <div className="mb-8">
           <p
-            className="text-3xl font-semibold leading-tight tracking-tight text-gray-900 md:text-4xl"
+            className="text-xl font-semibold leading-tight tracking-tight text-gray-900 sm:text-2xl md:text-3xl"
             id={`question-${questionId}`}
           >
             {questionText}
@@ -329,7 +331,7 @@ export function DemographicsField({
       {/* Question Text - Apple Style: Large, Bold, Prominent */}
       <div className="mb-8">
         <p
-          className="text-3xl font-semibold leading-tight tracking-tight text-gray-900 md:text-4xl"
+          className="text-xl font-semibold leading-tight tracking-tight text-gray-900 sm:text-2xl md:text-3xl"
           id={`question-${questionId}`}
         >
           {questionText}
