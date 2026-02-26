@@ -72,7 +72,7 @@ type SurveyStage = 'demographics' | 'welcome' | 'survey' | 'completed';
  *
  * Flow:
  *   1. Demographics stage  — hardcoded 13 questions, always shown first
- *   2. Survey stage        — Likert questions fetched from Sanity
+ *   2. Survey stage        — Likert questions fetched from database
  *   3. Completed stage     — thank-you screen
  *
  * Demographics are stored as JSON on AnonymousResponse.demographics.
@@ -130,7 +130,7 @@ export function SingleQuestionAnonymousSurveyShell({
     async function fetchSurvey() {
       try {
         const response = await fetch(
-          `/api/sanity/surveys?surveyId=${campaign.surveyId}`
+          `/api/public/surveys?surveyId=${campaign.surveyId}`
         );
         if (!response.ok) throw new Error('Failed to fetch survey');
 

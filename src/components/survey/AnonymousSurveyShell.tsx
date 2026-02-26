@@ -51,12 +51,12 @@ export default function AnonymousSurveyShell({
   const [isNavigating, setIsNavigating] = useState(false);
   const surveyContainerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch survey data from Sanity
+  // Fetch survey data from database
   useEffect(() => {
     async function fetchSurvey() {
       try {
         const response = await fetch(
-          `/api/sanity/surveys?surveyId=${campaign.surveyId}`
+          `/api/public/surveys?surveyId=${campaign.surveyId}`
         );
         if (!response.ok) throw new Error('Failed to fetch survey');
 

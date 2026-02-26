@@ -1,5 +1,3 @@
-import { PortableTextBlock } from '@portabletext/types';
-
 // Demographics question shown as inline preamble before every survey
 export type DemographicsQuestion = {
   _id: string;
@@ -61,7 +59,7 @@ export interface Section {
   title: string;
   sortOrder: number;
   description?: string;
-  directions?: PortableTextBlock[];
+  directions?: string;
   questions: Question[];
 }
 
@@ -82,7 +80,7 @@ export interface Survey {
     | 'ote'
     | 'associate_180';
   description?: string;
-  instructions?: PortableTextBlock[] | string;
+  instructions?: string;
   sections: Section[];
   scale?: Scale;
   respondentNameField?: string;

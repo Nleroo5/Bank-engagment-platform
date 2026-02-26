@@ -11,13 +11,12 @@ A web-based survey platform for banks. Digitizes 5 paper-based employee engageme
 - **Framework**: Next.js 14+ with App Router (NOT Pages Router)
 - **Language**: TypeScript (strict mode, no `any` types)
 - **Styling**: Tailwind CSS (no CSS modules, no styled-components)
-- **CMS**: Sanity.io v3 (GROQ queries, NOT GraphQL)
 - **Database**: PostgreSQL via Supabase
 - **ORM**: Prisma (always run `npx prisma generate` after schema changes)
-- **Auth**: NextAuth.js (Auth.js v5) — magic links for respondents, credentials for admins
-- **Email**: Resend (primary) or SendGrid (fallback)
+- **Auth**: NextAuth.js (Auth.js v5) — credentials for admins, anonymous access-code flow for respondents
+- **Email**: Resend
 - **Charts**: Recharts
-- **Exports**: SheetJS (xlsx) for Excel, jsPDF for PDF
+- **Exports**: ExcelJS for Excel, jsPDF for PDF
 - **Testing**: Vitest (unit), Playwright (e2e)
 - **Deployment**: Vercel
 
@@ -34,28 +33,27 @@ src/
       users/
       reports/
     (survey)/             # Public survey route group
-      s/[token]/          # Survey page — token-based, no auth
+      a/[code]/           # Access-code entry page
     api/                  # API routes
-      auth/
+      anonymous/          # Anonymous survey endpoints (validate, respond, submit)
       campaigns/
-      responses/
+      public/             # Public endpoints (survey data for respondents)
       reports/
+      surveys/
   components/
     ui/                   # Reusable primitives (Button, Input, Card, etc.)
     survey/               # Survey-specific components (LikertScale, ProgressBar, etc.)
     admin/                # Admin dashboard components
     charts/               # Recharts wrappers
+    reports/              # Report display components
   lib/
-    sanity/               # Sanity client, queries, types
     prisma/               # Prisma client singleton
+    surveys/              # Survey query functions (PostgreSQL)
     email/                # Email templates and sending logic
     scoring/              # Score calculation and reverse-scoring logic
     auth/                 # Auth configuration
     utils/                # Shared utilities
   types/                  # TypeScript type definitions
-sanity/
-  schemas/                # Sanity schema definitions
-  lib/                    # Sanity client config
 prisma/
   schema.prisma           # Database schema
   migrations/             # Prisma migrations
@@ -64,8 +62,9 @@ prisma/
 ### Routing Convention
 
 - Admin routes: `/admin/dashboard`, `/admin/campaigns`, `/admin/users`, `/admin/reports`
-- Survey routes: `/s/[token]` (public, no auth required)
-- API routes: `/api/campaigns`, `/api/responses`, `/api/reports`
+- Survey routes: `/a/[code]` (public, access-code based, no auth required)
+- API routes: `/api/campaigns`, `/api/anonymous/*`, `/api/reports`
+- Public API: `/api/public/surveys` (survey data for anonymous respondents)
 - Use route groups `(admin)` and `(survey)` for layout separation
 
 ### Component Rules
@@ -108,7 +107,7 @@ Dropdown/radio form. Fields: Name of Bank, Location (Country > State > Metro Cit
 
 ## Reverse Scoring (CRITICAL)
 
-Some questions on Surveys 6 and 7 are reverse-scored (marked `isReversed: true` in Sanity). The scoring engine MUST:
+Some questions on Surveys 6 and 7 are reverse-scored (marked `isReversed: true` in the database). The scoring engine MUST:
 
 1. Store the RAW value as the respondent selected it
 2. At report time, apply: `adjustedScore = (scaleMax + 1) - rawScore`
@@ -117,33 +116,22 @@ Some questions on Surveys 6 and 7 are reverse-scored (marked `isReversed: true` 
 
 ## Database (PostgreSQL via Prisma)
 
-The Prisma schema is in `prisma/schema.prisma`. Key tables:
+The Prisma schema is in `prisma/schema.prisma`. All survey content (surveys, sections, questions, categories, scales) lives in PostgreSQL. Key tables:
 
 - `organizations` — bank profiles
-- `users` — admin and respondent accounts (role: SUPER_ADMIN, ORG_ADMIN, VIEWER, RESPONDENT)
+- `users` — admin accounts (role: SUPER_ADMIN only)
+- `surveys` — survey definitions with sections, questions, categories
 - `survey_campaigns` — a distribution of a survey to an org with date range
-- `invitations` — per-respondent unique tokens linking to a campaign
-- `response_sessions` — metadata about a survey completion
-- `responses` — individual answer values per question
+- `anonymous_responses` — anonymous survey completion sessions
+- `anonymous_response_items` — individual answer values per question
 
 Always use `@db.Uuid` for IDs. Always use `@default(uuid())`. Never use auto-increment for primary keys.
 
-## Sanity CMS (Content)
-
-Sanity manages survey content. Document types: `survey`, `section`, `question`, `category`, `scale`, `surveyConfig`. See `sanity/schemas/` for full definitions.
-
-Key rules:
-
-- Query with GROQ, never GraphQL
-- Use `sanity/lib/client.ts` for the shared client
-- Cache Sanity responses in Next.js with `revalidateTag`
-- When fetching a survey for rendering, fetch ALL nested content in one GROQ query (survey > sections > questions with category refs)
-
 ## Authentication
 
-- **Respondents**: Access surveys via tokenized links (`/s/[token]`). NO login required. Token is a UUID v4 stored in the `invitations` table. Validate token exists, is not expired, and has not been used.
+- **Respondents**: Access surveys via access code at `/a/[code]`. NO login required. Access code validated against `survey_campaigns.accessCode`. Creates anonymous session with UUID session token.
 - **Admins**: Login via `/admin/login` with email/password credentials. Use NextAuth session with JWT strategy.
-- **Role hierarchy**: SUPER_ADMIN > ORG_ADMIN > VIEWER. Enforce in middleware.
+- **Role**: SUPER_ADMIN only. Enforced in middleware.
 
 ## Email System
 
@@ -160,9 +148,9 @@ All emails use React Email templates in `src/lib/email/templates/`.
 
 - All tokens are UUID v4 — never sequential, never guessable
 - Hash IP addresses before storing (SHA-256)
-- Rate limit API routes (especially `/api/responses`)
+- Rate limit API routes (especially `/api/anonymous/*`)
 - Validate all inputs server-side with Zod (never trust client data)
-- Set proper CORS headers
+- Set proper security headers (X-Frame-Options, X-Content-Type-Options, etc.)
 - Use `httpOnly`, `secure`, `sameSite` cookie flags for auth
 - No PII in URLs or query params
 - Database credentials only in environment variables, never committed
@@ -196,7 +184,6 @@ npm run dev                          # Start Next.js dev server
 npx prisma studio                   # Open Prisma database GUI
 npx prisma migrate dev               # Run database migrations
 npx prisma generate                  # Regenerate Prisma client
-npx sanity dev                       # Start Sanity Studio
 
 # Testing
 npm run test                         # Run Vitest
@@ -212,11 +199,9 @@ npm run build                        # Production build
 
 See `.env.example` for all required variables. NEVER commit `.env` files. Critical vars:
 
-- `DATABASE_URL` — PostgreSQL connection string
-- `NEXT_PUBLIC_SANITY_PROJECT_ID` — Sanity project ID
-- `NEXT_PUBLIC_SANITY_DATASET` — Sanity dataset (usually "production")
-- `SANITY_API_TOKEN` — Server-side Sanity token (read/write)
+- `DATABASE_URL` — PostgreSQL connection string (with `?pgbouncer=true` for Supabase pooler)
+- `DIRECT_URL` — Direct PostgreSQL connection (bypasses PgBouncer, used for migrations)
 - `NEXTAUTH_SECRET` — Auth.js secret key
 - `NEXTAUTH_URL` — Base URL for auth callbacks
 - `RESEND_API_KEY` — Email service API key
-- `BASE_URL` — Public-facing base URL for survey links in emails
+- `NEXT_PUBLIC_BASE_URL` — Public-facing base URL for survey links in emails

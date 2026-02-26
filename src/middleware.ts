@@ -10,7 +10,7 @@ export default withAuth(
     if (
       path.startsWith('/a/') || // Anonymous access code URLs
       path.startsWith('/api/anonymous/') || // Anonymous API endpoints
-      path.startsWith('/api/sanity/') || // Sanity CMS data (surveys, questions) - needed for survey rendering
+      path.startsWith('/api/public/') || // Public API endpoints (survey data for anonymous respondents)
       path === '/api/health' || // Health check - must be public for monitoring
       path === '/' || // Home page
       path === '/admin/login' // Login page

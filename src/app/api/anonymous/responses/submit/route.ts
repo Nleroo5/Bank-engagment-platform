@@ -30,12 +30,16 @@ const SubmitRequestSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     // ============================================
-    // 0. Rate limiting - 10 requests per minute
+    // 0. Rate limiting - 60 requests per minute per IP
+    // (Bank employees share a corporate IP, so the limit must be
+    //  generous enough for an entire office submitting concurrently.
+    //  Abuse is already prevented by session-token validation,
+    //  double-submit protection, and transaction-based maxResponses.)
     // ============================================
     const clientIp = getClientIp(request);
     const rateLimitResult = rateLimit(clientIp, {
       interval: 60 * 1000, // 1 minute
-      uniqueTokenPerInterval: 10, // 10 requests per minute
+      uniqueTokenPerInterval: 60, // 60 requests per minute
     });
 
     if (!rateLimitResult.success) {

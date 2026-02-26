@@ -102,10 +102,11 @@ const rateLimiter = new RateLimiter();
  * Rate limit configurations for different API endpoints
  */
 export const RATE_LIMITS = {
-  // Survey submission - prevent spam while allowing legitimate retries
+  // Survey submission - generous limit since bank employees share corporate IPs
+  // (abuse is prevented by session validation, double-submit checks, and maxResponses)
   SURVEY_SUBMIT: {
     interval: 60 * 1000, // 1 minute
-    uniqueTokenPerInterval: 10, // 10 requests per minute
+    uniqueTokenPerInterval: 60, // 60 requests per minute
   },
 
   // Email sending - strict limit to prevent abuse

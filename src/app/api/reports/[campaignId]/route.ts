@@ -49,22 +49,16 @@ export async function GET(
       where: { campaignId: params.campaignId, flaggedForReview: true },
     });
 
-    // Fetch survey from Sanity with full question and category data
+    // Fetch survey with full question and category data
     let survey;
     try {
       survey = await getSurveyById(campaign.surveyId);
-    } catch (sanityError) {
-      console.error('Sanity fetch error:', sanityError);
+    } catch (fetchError) {
+      console.error('Survey fetch error:', fetchError);
       return NextResponse.json(
         {
-          error: 'Sanity CMS not configured',
-          message:
-            'Survey content could not be loaded from Sanity CMS. Please configure your Sanity project and ensure survey content exists.\n\n' +
-            'Steps to fix:\n' +
-            '1. Set SANITY_API_TOKEN in your environment variables\n' +
-            '2. Create survey content in Sanity Studio\n' +
-            '3. Ensure the survey ID matches: ' +
-            campaign.surveyId,
+          error: 'Failed to load survey data',
+          message: 'Survey content could not be loaded. Survey ID: ' + campaign.surveyId,
         },
         { status: 503 }
       );
@@ -73,10 +67,8 @@ export async function GET(
     if (!survey) {
       return NextResponse.json(
         {
-          error: 'Survey content not found',
-          message:
-            `Survey with ID "${campaign.surveyId}" was not found in Sanity.\n\n` +
-            'Please create the survey content in Sanity Studio first, or update the campaign to reference an existing survey.',
+          error: 'Survey not found',
+          message: `Survey with ID "${campaign.surveyId}" was not found. Please ensure the campaign references a valid survey.`,
         },
         { status: 404 }
       );
@@ -88,8 +80,7 @@ export async function GET(
       return NextResponse.json(
         {
           error: 'Survey configuration incomplete',
-          message:
-            'Survey is missing scale information. Please configure the scale in Sanity Studio.',
+          message: 'Survey is missing scale information. Please add a scale to this survey.',
         },
         { status: 400 }
       );

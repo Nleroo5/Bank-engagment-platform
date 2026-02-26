@@ -3,7 +3,7 @@ import type { Survey } from '@/types/survey';
 
 /**
  * Fetch a survey by ID from PostgreSQL with all nested content
- * Returns data in the same format as Sanity for backward compatibility
+ * Returns data in the legacy format expected by survey shell components
  */
 export async function getSurveyById(surveyId: string): Promise<Survey | null> {
   const survey = await prisma.survey.findUnique({
@@ -59,7 +59,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
     ];
   }
 
-  // Transform PostgreSQL data to match Sanity structure
+  // Transform to legacy format expected by survey shell components
   return {
     _id: survey.id,
     _type: 'survey' as const,
@@ -135,10 +135,10 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
           })),
         }
       : undefined,
-    respondentNameField: undefined, // Not yet migrated from Sanity
-    welcomeMessage: undefined, // Not yet migrated from Sanity
-    completionMessage: undefined, // Not yet migrated from Sanity
-    estimatedMinutes: undefined, // Not yet migrated from Sanity
+    respondentNameField: undefined,
+    welcomeMessage: undefined,
+    completionMessage: undefined,
+    estimatedMinutes: undefined,
     isActive: survey.status === 'PUBLISHED',
   };
 }

@@ -59,14 +59,14 @@ export async function GET(
       );
     }
 
-    // Fetch survey from Sanity
+    // Fetch survey with full question and category data
     let survey;
     try {
       survey = await getSurveyById(campaign.surveyId);
-    } catch (sanityError) {
-      console.error('[export] Sanity fetch error:', sanityError);
+    } catch (fetchError) {
+      console.error('[export] Survey fetch error:', fetchError);
       return NextResponse.json(
-        { error: 'Survey content could not be loaded from Sanity CMS.' },
+        { error: 'Survey content could not be loaded.' },
         { status: 503 }
       );
     }

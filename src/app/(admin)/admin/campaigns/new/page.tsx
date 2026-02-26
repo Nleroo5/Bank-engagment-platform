@@ -38,7 +38,7 @@ export default async function NewCampaignPage() {
       _id: survey.id,
       title: survey.title,
       slug: {
-        current: survey.id, // PostgreSQL uses ID instead of Sanity slug
+        current: survey.id,
       },
       surveyNumber: survey.surveyNumber
         ? parseInt(survey.surveyNumber, 10)
