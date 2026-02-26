@@ -16,7 +16,7 @@ const CreateUserSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
   } catch (error) {
@@ -26,18 +26,30 @@ export async function GET(_request: NextRequest) {
   }
 
   try {
-    const users = await prisma.user.findMany({
-      include: {
-        organization: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10) || 20));
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        include: {
+          organization: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.user.count(),
+    ]);
 
     // Never expose passwordHash
     const safe = users.map(({ passwordHash: _ph, ...u }) => u);
-    return NextResponse.json(safe);
+    return NextResponse.json({
+      users: safe,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   } catch (error) {
     console.error('Failed to fetch users:', error);
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });

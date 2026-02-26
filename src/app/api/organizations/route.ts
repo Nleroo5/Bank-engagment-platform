@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
   } catch (error) {
@@ -150,21 +150,33 @@ export async function GET() {
   }
 
   try {
-    const organizations = await prisma.organization.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-      include: {
-        _count: {
-          select: {
-            users: true,
-            campaigns: true,
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10) || 20));
+
+    const [organizations, total] = await Promise.all([
+      prisma.organization.findMany({
+        orderBy: {
+          name: 'asc',
+        },
+        include: {
+          _count: {
+            select: {
+              users: true,
+              campaigns: true,
+            },
           },
         },
-      },
-    });
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.organization.count(),
+    ]);
 
-    return NextResponse.json({ organizations });
+    return NextResponse.json({
+      organizations,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   } catch (error) {
     console.error('Error fetching organizations:', error);
     return NextResponse.json(

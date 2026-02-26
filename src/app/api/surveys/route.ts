@@ -5,7 +5,7 @@ import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
   } catch (error) {
@@ -15,22 +15,34 @@ export async function GET(_request: NextRequest) {
   }
 
   try {
-    const surveys = await prisma.survey.findMany({
-      include: {
-        scale: true,
-        _count: {
-          select: {
-            questions: true,
-            campaigns: true,
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10) || 20));
+
+    const [surveys, total] = await Promise.all([
+      prisma.survey.findMany({
+        include: {
+          scale: true,
+          _count: {
+            select: {
+              questions: true,
+              campaigns: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.survey.count(),
+    ]);
 
-    return NextResponse.json(surveys);
+    return NextResponse.json({
+      surveys,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   } catch (error) {
     console.error('Failed to fetch surveys:', error);
     return NextResponse.json(

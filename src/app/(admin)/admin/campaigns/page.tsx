@@ -2,34 +2,51 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Plus } from 'lucide-react';
 import { CampaignsTable } from '@/components/admin/CampaignsTable';
+import { Pagination, PAGE_SIZE } from '@/components/ui/Pagination';
 
 // Force dynamic rendering - admin pages need database access at runtime
 export const dynamic = 'force-dynamic';
 
-export default async function CampaignsPage() {
-  const campaigns = await prisma.surveyCampaign.findMany({
-    where: {
-      deletedAt: null,
-    },
-    include: {
-      organization: true,
-      anonymousResponses: {
-        where: {
-          completedAt: {
-            not: null,
+interface PageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function CampaignsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page || '1', 10) || 1);
+
+  const [campaigns, totalCount] = await Promise.all([
+    prisma.surveyCampaign.findMany({
+      where: {
+        deletedAt: null,
+      },
+      include: {
+        organization: true,
+        anonymousResponses: {
+          where: {
+            completedAt: {
+              not: null,
+            },
+          },
+        },
+        _count: {
+          select: {
+            anonymousResponses: true,
           },
         },
       },
-      _count: {
-        select: {
-          anonymousResponses: true,
-        },
+      orderBy: {
+        createdAt: 'desc',
       },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.surveyCampaign.count({
+      where: { deletedAt: null },
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
     <div>
@@ -51,7 +68,7 @@ export default async function CampaignsPage() {
       </div>
 
       {/* Campaigns Table */}
-      {campaigns.length === 0 ? (
+      {campaigns.length === 0 && page === 1 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
           <p className="text-gray-500">No campaigns yet</p>
           <Link
@@ -63,7 +80,14 @@ export default async function CampaignsPage() {
           </Link>
         </div>
       ) : (
-        <CampaignsTable campaigns={campaigns} />
+        <>
+          <CampaignsTable campaigns={campaigns} />
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            basePath="/admin/campaigns"
+          />
+        </>
       )}
     </div>
   );

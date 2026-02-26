@@ -2,25 +2,39 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Plus, FileText, Edit } from 'lucide-react';
 import { DeleteSurveyButton } from '@/components/admin/DeleteSurveyButton';
+import { Pagination, PAGE_SIZE } from '@/components/ui/Pagination';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SurveysPage() {
-  // Fetch all surveys with question count
-  const surveys = await prisma.survey.findMany({
-    include: {
-      _count: {
-        select: {
-          questions: true,
-          campaigns: true,
+interface PageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function SurveysPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page || '1', 10) || 1);
+
+  const [surveys, totalCount] = await Promise.all([
+    prisma.survey.findMany({
+      include: {
+        _count: {
+          select: {
+            questions: true,
+            campaigns: true,
+          },
         },
+        scale: true,
       },
-      scale: true,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.survey.count(),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -44,7 +58,7 @@ export default async function SurveysPage() {
       </div>
 
       {/* Surveys Table */}
-      {surveys.length === 0 ? (
+      {surveys.length === 0 && page === 1 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
           <FileText className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -64,6 +78,7 @@ export default async function SurveysPage() {
           </div>
         </div>
       ) : (
+        <>
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -153,6 +168,12 @@ export default async function SurveysPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          basePath="/admin/surveys"
+        />
+        </>
       )}
     </div>
   );

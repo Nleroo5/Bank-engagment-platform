@@ -1,22 +1,37 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Plus, Building2 } from 'lucide-react';
+import { Pagination, PAGE_SIZE } from '@/components/ui/Pagination';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OrganizationsPage() {
-  const organizations = await prisma.organization.findMany({
-    orderBy: {
-      name: 'asc',
-    },
-    include: {
-      _count: {
-        select: {
-          users: true,
+interface PageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function OrganizationsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page || '1', 10) || 1);
+
+  const [organizations, totalCount] = await Promise.all([
+    prisma.organization.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+      include: {
+        _count: {
+          select: {
+            users: true,
+          },
         },
       },
-    },
-  });
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.organization.count(),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
     <div>
@@ -36,7 +51,7 @@ export default async function OrganizationsPage() {
         </Link>
       </div>
 
-      {organizations.length === 0 ? (
+      {organizations.length === 0 && page === 1 ? (
         <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
           <Building2 className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-semibold text-gray-900">
@@ -56,42 +71,49 @@ export default async function OrganizationsPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {organizations.map((org) => (
-            <Link
-              key={org.id}
-              href={`/admin/organizations/${org.id}`}
-              className="block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {org.name}
-                  </h3>
-                  {org.sizeRange && (
-                    <p className="mt-1 text-sm text-gray-500">
-                      Size: {org.sizeRange}
-                    </p>
-                  )}
-                  {org.locationCity && org.locationState && (
-                    <p className="mt-1 text-sm text-gray-500">
-                      {org.locationCity}, {org.locationState}
-                    </p>
-                  )}
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {organizations.map((org) => (
+              <Link
+                key={org.id}
+                href={`/admin/organizations/${org.id}`}
+                className="block rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {org.name}
+                    </h3>
+                    {org.sizeRange && (
+                      <p className="mt-1 text-sm text-gray-500">
+                        Size: {org.sizeRange}
+                      </p>
+                    )}
+                    {org.locationCity && org.locationState && (
+                      <p className="mt-1 text-sm text-gray-500">
+                        {org.locationCity}, {org.locationState}
+                      </p>
+                    )}
+                  </div>
+                  <Building2 className="h-8 w-8 text-gray-400" />
                 </div>
-                <Building2 className="h-8 w-8 text-gray-400" />
-              </div>
-              <div className="mt-4 flex items-center gap-4 border-t border-gray-200 pt-4">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {org._count.users}
-                  </p>
-                  <p className="text-xs text-gray-500">Users</p>
+                <div className="mt-4 flex items-center gap-4 border-t border-gray-200 pt-4">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {org._count.users}
+                    </p>
+                    <p className="text-xs text-gray-500">Users</p>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            basePath="/admin/organizations"
+          />
+        </>
       )}
     </div>
   );

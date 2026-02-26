@@ -37,7 +37,7 @@ const SplashConfigSchema = z.object({
   logoArrangement: z.enum(['side-by-side', 'stacked']).optional(),
 }).strict();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
   } catch (error) {
@@ -47,16 +47,30 @@ export async function GET() {
   }
 
   try {
-    const campaigns = await prisma.surveyCampaign.findMany({
-      where: { deletedAt: null },
-      include: {
-        organization: true,
-        anonymousResponses: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10) || 20));
 
-    return NextResponse.json({ campaigns });
+    const where = { deletedAt: null };
+
+    const [campaigns, total] = await Promise.all([
+      prisma.surveyCampaign.findMany({
+        where,
+        include: {
+          organization: true,
+          anonymousResponses: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.surveyCampaign.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      campaigns,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   } catch (error) {
     console.error('Error fetching campaigns:', error);
     return NextResponse.json(
