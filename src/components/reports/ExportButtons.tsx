@@ -29,11 +29,19 @@ export function ExportButtons({ campaignId, surveyTitle }: ExportButtonsProps) {
       // Get the blob from the response
       const blob = await response.blob();
 
+      // Extract filename from Content-Disposition header, fall back to generic
+      let filename = `${surveyTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Report.${format}`;
+      const disposition = response.headers.get('Content-Disposition');
+      if (disposition) {
+        const match = disposition.match(/filename="(.+)"/);
+        if (match?.[1]) filename = match[1];
+      }
+
       // Create a download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${surveyTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Report.${format}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
