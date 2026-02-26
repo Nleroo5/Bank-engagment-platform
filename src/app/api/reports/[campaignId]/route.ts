@@ -106,8 +106,20 @@ export async function GET(
     // DEMOGRAPHICS SURVEY HANDLING
     // ============================================
     if (isDemographicsSurvey) {
+      // Apply demographic filters (same as scored surveys)
+      const filteredDemoResponses = campaign.anonymousResponses.filter(
+        (anonResp) => {
+          if (Object.keys(filters).length === 0) return true;
+          const demographics =
+            (anonResp.demographics as Record<string, unknown>) || {};
+          return Object.entries(filters).every(
+            ([key, value]) => demographics[key] === value
+          );
+        }
+      );
+
       const demographicsData: Record<string, unknown>[] =
-        campaign.anonymousResponses.map((r) => {
+        filteredDemoResponses.map((r) => {
           return (r.demographics as Record<string, unknown>) || {};
         });
 
@@ -140,7 +152,7 @@ export async function GET(
           .map(([value, count]) => ({
             value,
             count,
-            percentage: Math.round((count / total) * 1000) / 10,
+            percentage: total > 0 ? Math.round((count / total) * 1000) / 10 : 0,
           }))
           .sort((a, b) => b.count - a.count);
 
@@ -152,6 +164,8 @@ export async function GET(
         };
       });
 
+      const totalCount = campaign.anonymousResponses.length;
+
       return NextResponse.json({
         campaign: {
           id: campaign.id,
@@ -161,17 +175,21 @@ export async function GET(
           startDate: campaign.startDate,
           endDate: campaign.endDate,
           status: campaign.status,
-          isAnonymous: true,
         },
         metrics: {
-          totalInvitations: campaign.anonymousResponses.length,
-          completedCount: campaign.anonymousResponses.length,
+          totalInvitations: totalCount,
+          completedCount: totalCount,
           completionRate: 100,
+          filteredCount: filteredDemoResponses.length,
           flaggedCount,
         },
-        demographics: {
+        respondentDemographics: {
           respondentCount: demographicsData.length,
           distributions,
+        },
+        filters: {
+          applied: filters,
+          available: filterOptions,
         },
       });
     }
