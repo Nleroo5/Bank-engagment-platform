@@ -8,6 +8,13 @@ import { EngagementDonutChart } from '@/components/charts/EngagementDonutChart';
 import { DemographicDonutGrid } from '@/components/charts/DemographicDonutChart';
 import { ParticipationBarChart } from '@/components/charts/ParticipationBarChart';
 import { CategoryScoreGrid } from '@/components/reports/CategoryScoreCard';
+import { EngagementGauge } from '@/components/charts/EngagementGauge';
+import { DemographicsTreemap } from '@/components/charts/DemographicsTreemap';
+import { DivergingBarChart } from '@/components/charts/DivergingBarChart';
+import type { CategoryResponseDistribution } from '@/components/charts/DivergingBarChart';
+import { HeatmapChart } from '@/components/charts/HeatmapChart';
+import type { DemographicBreakdown } from '@/components/charts/HeatmapChart';
+import { GroupedScoreBar } from '@/components/charts/GroupedScoreBar';
 import { DemographicFilters } from './DemographicFilters';
 import { DemographicsDetailSection } from './DemographicsDetailSection';
 import type { RespondentDemographicsData } from './RespondentDemographicsSection';
@@ -59,6 +66,8 @@ interface ReportData {
   };
   categoryAggregates?: WeightedCategoryScore[];
   scoreDistribution?: ScoreDistribution;
+  responseDistribution?: CategoryResponseDistribution[];
+  demographicBreakdowns?: Record<string, DemographicBreakdown>;
   respondentDemographics?: RespondentDemographicsData;
   filters: {
     applied: Record<string, string>;
@@ -314,17 +323,33 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 2. Engagement Distribution Donut — scored only */}
+          {/* 2. Engagement Gauge + Distribution Donut — scored only */}
           {!isDemographics && data.scoreDistribution && data.scores && (
             <div className="rounded-lg border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-gray-900">
-                Engagement Distribution
+                Engagement Overview
               </h2>
-              <EngagementDonutChart
-                distribution={data.scoreDistribution}
-                overallScore={data.scores.overall}
-                scaleMax={scaleMax}
-              />
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="flex flex-col items-center">
+                  <h3 className="mb-2 text-sm font-semibold text-gray-600">
+                    Overall Score
+                  </h3>
+                  <EngagementGauge
+                    score={data.scores.overall}
+                    maxScore={scaleMax}
+                  />
+                </div>
+                <div className="flex flex-col items-center">
+                  <h3 className="mb-2 text-sm font-semibold text-gray-600">
+                    Distribution
+                  </h3>
+                  <EngagementDonutChart
+                    distribution={data.scoreDistribution}
+                    overallScore={data.scores.overall}
+                    scaleMax={scaleMax}
+                  />
+                </div>
+              </div>
             </div>
           )}
 
@@ -359,7 +384,23 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 5. Sections Table — scored only */}
+          {/* 5. Diverging Stacked Bar — Response Sentiment Breakdown — scored only */}
+          {!isDemographics && data.responseDistribution && data.responseDistribution.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="mb-2 text-xl font-bold text-gray-900">
+                Response Sentiment by Category
+              </h2>
+              <p className="mb-4 text-sm text-gray-500">
+                Distribution of responses across the rating scale for each category
+              </p>
+              <DivergingBarChart
+                data={data.responseDistribution}
+                scaleMax={scaleMax}
+              />
+            </div>
+          )}
+
+          {/* 6. Sections Table — scored only */}
           {!isDemographics && data.scores && (
             <div className="rounded-lg border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-gray-900">
@@ -413,7 +454,70 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 6. Demographic Breakdown — Donut Charts (both survey types) */}
+          {/* 7. Heatmap — Category Scores by Demographic — scored only */}
+          {!isDemographics && data.demographicBreakdowns && (
+            (() => {
+              const hasGroups = Object.values(data.demographicBreakdowns).some(
+                (b) => b.groups.length >= 2
+              );
+              if (!hasGroups) return null;
+              return (
+                <div className="rounded-lg border border-gray-200 bg-white p-6">
+                  <h2 className="mb-2 text-xl font-bold text-gray-900">
+                    Score Heatmap
+                  </h2>
+                  <p className="mb-4 text-sm text-gray-500">
+                    Category scores across demographic groups — color-coded from red (low) to green (high)
+                  </p>
+                  <HeatmapChart
+                    breakdowns={data.demographicBreakdowns}
+                    scaleMax={scaleMax}
+                  />
+                </div>
+              );
+            })()
+          )}
+
+          {/* 8. Grouped Bar Chart — Category Scores by Demographic — scored only */}
+          {!isDemographics && data.demographicBreakdowns && (
+            (() => {
+              const hasMultipleGroups = Object.values(data.demographicBreakdowns).some(
+                (b) => b.groups.length >= 2
+              );
+              if (!hasMultipleGroups) return null;
+              return (
+                <div className="rounded-lg border border-gray-200 bg-white p-6">
+                  <h2 className="mb-2 text-xl font-bold text-gray-900">
+                    Category Scores by Group
+                  </h2>
+                  <p className="mb-4 text-sm text-gray-500">
+                    Compare how each demographic group scores across categories
+                  </p>
+                  <GroupedScoreBar
+                    breakdowns={data.demographicBreakdowns}
+                    scaleMax={scaleMax}
+                  />
+                </div>
+              );
+            })()
+          )}
+
+          {/* 9. Demographics Treemap — demographics-only surveys */}
+          {isDemographics && hasDemographicData && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="mb-2 text-xl font-bold text-gray-900">
+                Demographic Composition
+              </h2>
+              <p className="mb-4 text-sm text-gray-500">
+                Hierarchical view of respondent demographics — rectangle size represents count
+              </p>
+              <DemographicsTreemap
+                distributions={data.respondentDemographics!.distributions}
+              />
+            </div>
+          )}
+
+          {/* 10. Demographic Breakdown — Donut Charts (both survey types) */}
           {hasDemographicData && (
             <div className="rounded-lg border border-gray-200 bg-white p-6">
               <h2 className="mb-2 text-xl font-bold text-gray-900">
@@ -429,7 +533,7 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 7. Division Participation (both survey types) */}
+          {/* 11. Division Participation (both survey types) */}
           {divisionDist && divisionDist.distribution.length > 0 && (
             <div className="rounded-lg border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-gray-900">
@@ -439,14 +543,14 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 8. Demographics Detail Tables — demographics-only surveys */}
+          {/* 12. Demographics Detail Tables — demographics-only surveys */}
           {isDemographics && data.respondentDemographics && (
             <DemographicsDetailSection
               distributions={data.respondentDemographics.distributions}
             />
           )}
 
-          {/* 9. Category Radar Chart — scored only, when bar chart shown above */}
+          {/* 13. Category Radar Chart — scored only, when bar chart shown above */}
           {!isDemographics &&
             data.categoryAggregates &&
             data.categoryAggregates.length > 0 &&

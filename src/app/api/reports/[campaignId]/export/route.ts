@@ -185,6 +185,22 @@ export async function GET(
     }> = [];
     const engagementDistribution = { highlyEngaged: 0, moderatelyEngaged: 0, disengaged: 0 };
 
+    let responseDistribution: Array<{
+      categoryName: string;
+      total: number;
+      distribution: Record<string, number>;
+    }> = [];
+
+    const demographicBreakdowns: Record<string, {
+      dimensionLabel: string;
+      groups: Array<{
+        group: string;
+        respondentCount: number;
+        overallScore: number;
+        categoryScores: Array<{ categoryName: string; averageScore: number }>;
+      }>;
+    }> = {};
+
     if (!isDemographicsSurvey) {
       const questions = survey.sections.flatMap((section) =>
         section.questions.map((q) => ({
@@ -358,6 +374,119 @@ export async function GET(
         else if (pct >= 40) engagementDistribution.moderatelyEngaged++;
         else engagementDistribution.disengaged++;
       });
+
+      // ============================================
+      // RESPONSE DISTRIBUTION (for diverging bar export)
+      // ============================================
+      const questionCategoryMap = new Map(
+        questions.map((q) => [q._id, q.category._id])
+      );
+
+      const categoryDistCounts = new Map<string, Map<string, number>>();
+      categories.forEach((cat) => {
+        categoryDistCounts.set(cat._id, new Map());
+      });
+
+      campaign.anonymousResponses.forEach((anonResp) => {
+        anonResp.responses.forEach((r) => {
+          if (r.value === null) return;
+          const catId = questionCategoryMap.get(r.questionId);
+          if (!catId) return;
+          const catMap = categoryDistCounts.get(catId);
+          if (!catMap) return;
+          const adjustedVal = r.adjustedValue ?? r.value;
+          const key = String(adjustedVal);
+          catMap.set(key, (catMap.get(key) || 0) + 1);
+        });
+      });
+
+      responseDistribution = categories.map((cat) => {
+        const catMap = categoryDistCounts.get(cat._id) ?? new Map<string, number>();
+        const distribution: Record<string, number> = {};
+        catMap.forEach((count, value) => {
+          distribution[value] = count;
+        });
+        const total = Array.from(catMap.values()).reduce((s, v) => s + v, 0);
+        return { categoryName: cat.name, total, distribution };
+      });
+
+      // ============================================
+      // DEMOGRAPHIC BREAKDOWNS (for heatmap / grouped bar export)
+      // ============================================
+      const BREAKDOWN_DIMENSIONS = [
+        { key: 'division', label: 'Division' },
+        { key: 'jobRole', label: 'Job Role' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'timeAtBank', label: 'Time at Bank' },
+      ];
+
+      for (const dim of BREAKDOWN_DIMENSIONS) {
+        const groupMap = new Map<string, typeof campaign.anonymousResponses>();
+
+        campaign.anonymousResponses.forEach((anonResp) => {
+          const demographics = (anonResp.demographics as Record<string, unknown>) || {};
+          const dimValue = demographics[dim.key];
+          if (!dimValue || typeof dimValue !== 'string') return;
+          if (!groupMap.has(dimValue)) groupMap.set(dimValue, []);
+          groupMap.get(dimValue)!.push(anonResp);
+        });
+
+        if (groupMap.size < 2) {
+          demographicBreakdowns[dim.key] = { dimensionLabel: dim.label, groups: [] };
+          continue;
+        }
+
+        const groups = Array.from(groupMap.entries())
+          .sort((a, b) => b[1].length - a[1].length)
+          .slice(0, 10)
+          .map(([groupName, groupRespondents]) => {
+            const catScores = categories.map((cat) => {
+              const catQuestionIds = questions
+                .filter((q) => q.category._id === cat._id)
+                .map((q) => q._id);
+
+              const values: number[] = [];
+              groupRespondents.forEach((resp) => {
+                resp.responses
+                  .filter((r) => catQuestionIds.includes(r.questionId) && r.value !== null)
+                  .forEach((r) => {
+                    values.push((r.adjustedValue ?? r.value ?? 0) as number);
+                  });
+              });
+
+              const avg = values.length > 0
+                ? values.reduce((s, v) => s + v, 0) / values.length
+                : 0;
+
+              return {
+                categoryName: cat.name,
+                averageScore: Math.round(avg * 10) / 10,
+              };
+            });
+
+            const allValues: number[] = [];
+            groupRespondents.forEach((resp) => {
+              resp.responses
+                .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
+                .forEach((r) => {
+                  allValues.push((r.adjustedValue ?? r.value ?? 0) as number);
+                });
+            });
+
+            const overallGroupScore = allValues.length > 0
+              ? allValues.reduce((s, v) => s + v, 0) / allValues.length
+              : 0;
+
+            return {
+              group: groupName,
+              respondentCount: groupRespondents.length,
+              overallScore: Math.round(overallGroupScore * 10) / 10,
+              categoryScores: catScores,
+            };
+          });
+
+        demographicBreakdowns[dim.key] = { dimensionLabel: dim.label, groups };
+      }
     }
 
     // ================================================================================
@@ -585,6 +714,106 @@ export async function GET(
         autoWidth(sectionSheet);
       }
 
+      // Sheet 4: Response Distribution (scored surveys only)
+      if (!isDemographicsSurvey && responseDistribution.some((r) => r.total > 0)) {
+        const rdSheet = workbook.addWorksheet('Response Distribution');
+        const rdTitle = rdSheet.addRow(['RESPONSE DISTRIBUTION BY CATEGORY']);
+        rdTitle.getCell(1).font = { bold: true, size: 14 };
+        rdSheet.addRow([]);
+
+        const isLikert3 = survey.scale!.max === 3;
+        const scaleLabels = isLikert3
+          ? ['1 (Rarely)', '2 (Sometimes)', '3 (Frequently)']
+          : ['1 (Strongly Disagree)', '2 (Disagree)', '3 (Neutral)', '4 (Agree)', '5 (Strongly Agree)'];
+
+        const rdHeaderRow = rdSheet.addRow(['Category', ...scaleLabels, 'Total Responses']);
+        styleHeaderRow(rdSheet, rdHeaderRow.number, scaleLabels.length + 2);
+
+        responseDistribution.forEach((cat, idx) => {
+          const values = scaleLabels.map((_, i) => {
+            const key = String(i + 1);
+            const count = cat.distribution[key] || 0;
+            const pct = cat.total > 0 ? Math.round((count / cat.total) * 1000) / 10 : 0;
+            return `${count} (${pct}%)`;
+          });
+          const row = rdSheet.addRow([cat.categoryName, ...values, cat.total]);
+          if (idx % 2 === 1) {
+            for (let c = 1; c <= scaleLabels.length + 2; c++) {
+              row.getCell(c).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: LIGHT_GRAY },
+              };
+            }
+          }
+        });
+
+        rdSheet.addRow([]);
+        rdSheet.addRow([
+          isLikert3
+            ? 'Scale: 1 = Rarely, 2 = Sometimes, 3 = Frequently'
+            : 'Scale: 1 = Strongly Disagree, 2 = Disagree, 3 = Neutral, 4 = Agree, 5 = Strongly Agree',
+        ]);
+
+        autoWidth(rdSheet);
+      }
+
+      // Sheet 5: Score Breakdown by Demographics (scored surveys only)
+      if (!isDemographicsSurvey) {
+        const hasBreakdownData = Object.values(demographicBreakdowns).some(
+          (b) => b.groups.length > 0
+        );
+
+        if (hasBreakdownData) {
+          const bdSheet = workbook.addWorksheet('Score Breakdown');
+          const bdTitle = bdSheet.addRow(['CATEGORY SCORES BY DEMOGRAPHIC GROUP']);
+          bdTitle.getCell(1).font = { bold: true, size: 14 };
+          bdSheet.addRow([]);
+
+          for (const breakdown of Object.values(demographicBreakdowns)) {
+            if (breakdown.groups.length === 0) continue;
+
+            const dimLabel = bdSheet.addRow([breakdown.dimensionLabel]);
+            dimLabel.getCell(1).font = { bold: true, size: 12 };
+
+            const groupNames = breakdown.groups.map(
+              (g) => `${g.group} (n=${g.respondentCount})`
+            );
+            const bdHeaderRow = bdSheet.addRow(['Category', ...groupNames]);
+            styleHeaderRow(bdSheet, bdHeaderRow.number, groupNames.length + 1);
+
+            const categoryNames =
+              breakdown.groups[0]?.categoryScores.map((cs) => cs.categoryName) ?? [];
+
+            categoryNames.forEach((catName, idx) => {
+              const scores = breakdown.groups.map((g) => {
+                const cs = g.categoryScores.find((c) => c.categoryName === catName);
+                return cs ? cs.averageScore.toFixed(1) : '-';
+              });
+              const row = bdSheet.addRow([catName, ...scores]);
+              if (idx % 2 === 1) {
+                for (let c = 1; c <= groupNames.length + 1; c++) {
+                  row.getCell(c).fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: LIGHT_GRAY },
+                  };
+                }
+              }
+            });
+
+            const overallScores = breakdown.groups.map((g) => g.overallScore.toFixed(1));
+            const overallRow = bdSheet.addRow(['Overall', ...overallScores]);
+            for (let c = 1; c <= groupNames.length + 1; c++) {
+              overallRow.getCell(c).font = { bold: true };
+            }
+            bdSheet.addRow([]);
+          }
+
+          autoWidth(bdSheet);
+        }
+      }
+
       // Demographics sheet (both survey types)
       if (demoDistributions.length > 0) {
         const demoSheet = workbook.addWorksheet('Demographics');
@@ -790,6 +1019,99 @@ export async function GET(
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         yPosition = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // Response Distribution table (scored surveys only)
+      if (!isDemographicsSurvey && responseDistribution.some((r) => r.total > 0)) {
+        if (yPosition > 240) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Response Distribution by Category', 20, yPosition);
+        yPosition += 10;
+
+        const isLikert3Pdf = survey.scale!.max === 3;
+        const pdfScaleLabels = isLikert3Pdf
+          ? ['Rarely', 'Sometimes', 'Frequently']
+          : ['SD', 'D', 'N', 'A', 'SA'];
+
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['Category', ...pdfScaleLabels]],
+          body: responseDistribution.map((cat) => [
+            cat.categoryName,
+            ...pdfScaleLabels.map((_, i) => {
+              const count = cat.distribution[String(i + 1)] || 0;
+              const pct = cat.total > 0 ? Math.round((count / cat.total) * 1000) / 10 : 0;
+              return `${count} (${pct}%)`;
+            }),
+          ]),
+          theme: 'grid',
+          headStyles: { fillColor: [220, 38, 38], fontStyle: 'bold', fontSize: 8 },
+          alternateRowStyles: { fillColor: [245, 247, 250] },
+          styles: { fontSize: 8 },
+          columnStyles: { 0: { cellWidth: 35 } },
+        });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        yPosition = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // Score Breakdown by Demographics (scored surveys only)
+      if (!isDemographicsSurvey) {
+        const hasBdData = Object.values(demographicBreakdowns).some(
+          (b) => b.groups.length > 0
+        );
+
+        if (hasBdData) {
+          for (const breakdown of Object.values(demographicBreakdowns)) {
+            if (breakdown.groups.length === 0) continue;
+
+            if (yPosition > 200) {
+              doc.addPage();
+              yPosition = 20;
+            }
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Scores by ${breakdown.dimensionLabel}`, 20, yPosition);
+            yPosition += 8;
+
+            const groupNames = breakdown.groups.map((g) => g.group);
+            const categoryNames =
+              breakdown.groups[0]?.categoryScores.map((cs) => cs.categoryName) ?? [];
+
+            const bodyRows = categoryNames.map((catName) => [
+              catName,
+              ...breakdown.groups.map((g) => {
+                const cs = g.categoryScores.find((c) => c.categoryName === catName);
+                return cs ? cs.averageScore.toFixed(1) : '-';
+              }),
+            ]);
+
+            bodyRows.push([
+              'Overall',
+              ...breakdown.groups.map((g) => g.overallScore.toFixed(1)),
+            ]);
+
+            autoTable(doc, {
+              startY: yPosition,
+              head: [['Category', ...groupNames]],
+              body: bodyRows,
+              theme: 'grid',
+              headStyles: { fillColor: [99, 102, 241], fontStyle: 'bold', fontSize: 7 },
+              alternateRowStyles: { fillColor: [245, 247, 250] },
+              styles: { fontSize: 7 },
+              columnStyles: { 0: { cellWidth: 30 } },
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            yPosition = (doc as any).lastAutoTable.finalY + 12;
+          }
+        }
       }
 
       // Demographics tables (both survey types)

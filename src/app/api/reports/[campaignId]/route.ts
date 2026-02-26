@@ -96,11 +96,13 @@ export async function GET(
     const jobRole = searchParams.get('jobRole');
     const timeAtBank = searchParams.get('timeAtBank');
     const bankExperience = searchParams.get('bankExperience');
+    const gender = searchParams.get('gender');
 
     if (division) filters.division = division;
     if (jobRole) filters.jobRole = jobRole;
     if (timeAtBank) filters.timeAtBank = timeAtBank;
     if (bankExperience) filters.bankExperience = bankExperience;
+    if (gender) filters.gender = gender;
 
     // ============================================
     // DEMOGRAPHICS SURVEY HANDLING
@@ -381,11 +383,9 @@ export async function GET(
     });
 
     const totalCount = campaign.anonymousResponses.length;
-    const completedCount = filteredData.length;
-    const completionRate =
-      totalCount > 0
-        ? Math.round((completedCount / totalCount) * 100 * 10) / 10
-        : 0;
+    // completionRate is total completions / total completions (all loaded responses are completed)
+    // filteredCount separately tracks how many match the current demographic filters
+    const completionRate = 100;
 
     const sectionAggregates = survey.sections.map((section) => {
       const sectionQuestionIds = section.questions.map((q) => q._id);
@@ -474,6 +474,155 @@ export async function GET(
       },
     };
 
+    // ============================================
+    // RESPONSE DISTRIBUTION (for diverging stacked bar)
+    // Count how many responses per Likert value for each category
+    // ============================================
+    const questionCategoryMap = new Map(
+      questions.map((q) => [q._id, q.category._id])
+    );
+
+    const categoryDistCounts = new Map<string, Map<string, number>>();
+    categories.forEach((cat) => {
+      categoryDistCounts.set(cat._id, new Map());
+    });
+
+    filteredData.forEach((data) => {
+      data.responses.forEach((r) => {
+        if (r.value === null) return;
+        const catId = questionCategoryMap.get(r.questionId);
+        if (!catId) return;
+        const catMap = categoryDistCounts.get(catId);
+        if (!catMap) return;
+        const adjustedVal = r.adjustedValue ?? r.value;
+        const key = String(adjustedVal);
+        catMap.set(key, (catMap.get(key) || 0) + 1);
+      });
+    });
+
+    const responseDistribution = categories.map((cat) => {
+      const catMap = categoryDistCounts.get(cat._id) ?? new Map<string, number>();
+      const distribution: Record<string, number> = {};
+      catMap.forEach((count, value) => {
+        distribution[value] = count;
+      });
+      const total = Array.from(catMap.values()).reduce((s, v) => s + v, 0);
+      return {
+        categoryId: cat._id,
+        categoryName: cat.name,
+        colorCode: cat.colorCode,
+        total,
+        distribution,
+      };
+    });
+
+    // ============================================
+    // DEMOGRAPHIC BREAKDOWNS (for heatmap + grouped bar)
+    // Compute category scores grouped by demographic dimension
+    // ============================================
+    const BREAKDOWN_DIMENSIONS = [
+      { key: 'division', label: 'Division' },
+      { key: 'jobRole', label: 'Job Role' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'timeAtBank', label: 'Time at Bank' },
+    ];
+
+    const demographicBreakdowns: Record<string, {
+      dimension: string;
+      dimensionLabel: string;
+      groups: Array<{
+        group: string;
+        respondentCount: number;
+        overallScore: number;
+        categoryScores: Array<{
+          categoryId: string;
+          categoryName: string;
+          averageScore: number;
+        }>;
+      }>;
+    }> = {};
+
+    for (const dim of BREAKDOWN_DIMENSIONS) {
+      // Group respondents by this demographic dimension
+      const groupMap = new Map<string, typeof filteredData>();
+
+      filteredData.forEach((item) => {
+        const demographics = (item.demographics as Record<string, unknown>) || {};
+        const dimValue = demographics[dim.key];
+        if (!dimValue || typeof dimValue !== 'string') return;
+        if (!groupMap.has(dimValue)) groupMap.set(dimValue, []);
+        groupMap.get(dimValue)!.push(item);
+      });
+
+      // Skip dimensions with fewer than 2 groups
+      if (groupMap.size < 2) {
+        demographicBreakdowns[dim.key] = {
+          dimension: dim.key,
+          dimensionLabel: dim.label,
+          groups: [],
+        };
+        continue;
+      }
+
+      const groups = Array.from(groupMap.entries())
+        .sort((a, b) => b[1].length - a[1].length) // largest groups first
+        .slice(0, 10) // limit to top 10 groups
+        .map(([groupName, groupRespondents]) => {
+          // Compute category averages for this group
+          const catScores = categories.map((cat) => {
+            const catQuestionIds = questions
+              .filter((q) => q.category._id === cat._id)
+              .map((q) => q._id);
+
+            const values: number[] = [];
+            groupRespondents.forEach((resp) => {
+              resp.responses
+                .filter((r) => catQuestionIds.includes(r.questionId) && r.value !== null)
+                .forEach((r) => {
+                  values.push((r.adjustedValue ?? r.value ?? 0) as number);
+                });
+            });
+
+            const avg = values.length > 0
+              ? values.reduce((s, v) => s + v, 0) / values.length
+              : 0;
+
+            return {
+              categoryId: cat._id,
+              categoryName: cat.name,
+              averageScore: Math.round(avg * 10) / 10,
+            };
+          });
+
+          // Compute overall score for this group
+          const allValues: number[] = [];
+          groupRespondents.forEach((resp) => {
+            resp.responses
+              .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
+              .forEach((r) => {
+                allValues.push((r.adjustedValue ?? r.value ?? 0) as number);
+              });
+          });
+
+          const overallGroupScore = allValues.length > 0
+            ? allValues.reduce((s, v) => s + v, 0) / allValues.length
+            : 0;
+
+          return {
+            group: groupName,
+            respondentCount: groupRespondents.length,
+            overallScore: Math.round(overallGroupScore * 10) / 10,
+            categoryScores: catScores,
+          };
+        });
+
+      demographicBreakdowns[dim.key] = {
+        dimension: dim.key,
+        dimensionLabel: dim.label,
+        groups,
+      };
+    }
+
     return NextResponse.json({
       campaign: {
         id: campaign.id,
@@ -500,6 +649,8 @@ export async function GET(
       },
       categoryAggregates: aggregateStats,
       scoreDistribution,
+      responseDistribution,
+      demographicBreakdowns,
       individualScores: undefined,
       respondentDemographics,
       filters: {
