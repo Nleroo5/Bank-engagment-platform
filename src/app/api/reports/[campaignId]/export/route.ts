@@ -7,6 +7,13 @@ import {
   prepareResponsesForScoring,
 } from '@/lib/scoring/categoryScoring';
 import { checkAnonymityThreshold } from '@/lib/scoring/anonymity';
+import {
+  drawEngagementVisual,
+  drawCategoryBars,
+  drawResponseDistributionBars,
+  drawDemographicBars,
+  getHeatmapColor,
+} from '@/lib/export/pdfCharts';
 // ExcelJS, jsPDF, and jspdf-autotable are imported dynamically inside the handler
 // to prevent Next.js from loading these heavy libraries during the build
 // page-data collection phase, which would cause worker timeouts.
@@ -178,6 +185,7 @@ export async function GET(
       averagePercentage: number;
     }> = [];
     let overallWeightedScore = 0;
+    let overallAverageScore = 0; // per-item average (between scale.min and scale.max) for gauge
     let sectionAggregates: Array<{
       sectionTitle: string;
       questionCount: number;
@@ -374,6 +382,21 @@ export async function GET(
         else if (pct >= 40) engagementDistribution.moderatelyEngaged++;
         else engagementDistribution.disengaged++;
       });
+
+      // Per-item average score (between scale.min and scale.max) — used for the gauge
+      const allAdjustedValues: number[] = [];
+      campaign.anonymousResponses.forEach((anonResp) => {
+        anonResp.responses
+          .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
+          .forEach((r) => {
+            allAdjustedValues.push((r.adjustedValue ?? r.value ?? 0) as number);
+          });
+      });
+      overallAverageScore = allAdjustedValues.length > 0
+        ? Math.round(
+            (allAdjustedValues.reduce((s, v) => s + v, 0) / allAdjustedValues.length) * 10
+          ) / 10
+        : 0;
 
       // ============================================
       // RESPONSE DISTRIBUTION (for diverging bar export)
@@ -904,18 +927,32 @@ export async function GET(
         );
         yPosition += 7;
       }
-      doc.text(`Completed Responses: ${completedCount}`, 20, yPosition);
+      const maxResponses = campaign.maxResponses ?? completedCount;
+      doc.text(`Completed Responses: ${completedCount} / ${maxResponses}`, 20, yPosition);
       yPosition += 7;
       if (!isDemographicsSurvey) {
-        const responseRate = completedCount > 0
-          ? Math.round((completedCount / completedCount) * 100)
+        const responseRate = maxResponses > 0
+          ? Math.round((completedCount / maxResponses) * 1000) / 10
           : 0;
         doc.text(`Response Rate: ${responseRate}%`, 20, yPosition);
         yPosition += 7;
+        doc.text(`Overall Weighted Score: ${overallWeightedScore.toFixed(1)}`, 20, yPosition);
+        yPosition += 7;
       }
-      yPosition += 8;
+      yPosition += 5;
 
-      // Engagement Distribution summary (scored surveys only)
+      // ── CHART: Engagement Gauge + Distribution Pie (scored only) ──
+      if (!isDemographicsSurvey) {
+        yPosition = drawEngagementVisual(
+          doc, yPosition,
+          overallAverageScore,
+          survey.scale!.max,
+          engagementDistribution
+        );
+        yPosition += 3;
+      }
+
+      // Engagement Distribution table (scored surveys only)
       if (!isDemographicsSurvey) {
         const totalClassified =
           engagementDistribution.highlyEngaged +
@@ -956,6 +993,15 @@ export async function GET(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           yPosition = (doc as any).lastAutoTable.finalY + 15;
         }
+      }
+
+      // ── CHART: Category Score Bars (scored only) ──
+      if (!isDemographicsSurvey && aggregateStats.length > 0) {
+        if (yPosition + aggregateStats.length * 9 + 15 > 280) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        yPosition = drawCategoryBars(doc, yPosition, aggregateStats);
       }
 
       // Category scores table (scored surveys only)
@@ -1019,6 +1065,17 @@ export async function GET(
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         yPosition = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // ── CHART: Response Distribution Stacked Bars (scored only) ──
+      if (!isDemographicsSurvey && responseDistribution.some((r) => r.total > 0)) {
+        if (yPosition + responseDistribution.length * 10 + 20 > 280) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        yPosition = drawResponseDistributionBars(
+          doc, yPosition, responseDistribution, survey.scale!.max
+        );
       }
 
       // Response Distribution table (scored surveys only)
@@ -1097,15 +1154,27 @@ export async function GET(
               ...breakdown.groups.map((g) => g.overallScore.toFixed(1)),
             ]);
 
+            const heatmapScaleMax = survey.scale!.max;
             autoTable(doc, {
               startY: yPosition,
               head: [['Category', ...groupNames]],
               body: bodyRows,
               theme: 'grid',
               headStyles: { fillColor: [99, 102, 241], fontStyle: 'bold', fontSize: 7 },
-              alternateRowStyles: { fillColor: [245, 247, 250] },
               styles: { fontSize: 7 },
               columnStyles: { 0: { cellWidth: 30 } },
+              didParseCell: function (data) {
+                // Color-code score cells (not header, not first column)
+                if (data.section === 'body' && data.column.index > 0) {
+                  const val = parseFloat(String(data.cell.raw ?? ''));
+                  if (!isNaN(val) && val > 0) {
+                    const hm = getHeatmapColor(val, heatmapScaleMax);
+                    data.cell.styles.fillColor = hm.fill;
+                    data.cell.styles.textColor = hm.textWhite ? [255, 255, 255] : [17, 24, 39];
+                    data.cell.styles.fontStyle = 'bold';
+                  }
+                }
+              },
             });
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1114,51 +1183,18 @@ export async function GET(
         }
       }
 
-      // Demographics tables (both survey types)
+      // ── CHART: Demographics Bar Charts (both survey types) ──
       if (demoDistributions.length > 0) {
-        // Check if we need a new page
-        if (yPosition > 240) {
+        if (yPosition > 220) {
           doc.addPage();
           yPosition = 20;
         }
-
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Respondent Demographics', 20, yPosition);
-        yPosition += 10;
-
-        for (const dist of demoDistributions) {
-          // Check if we need a new page before each table
-          if (yPosition > 250) {
-            doc.addPage();
-            yPosition = 20;
-          }
-
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.text(dist.label, 20, yPosition);
-          yPosition += 8;
-
-          autoTable(doc, {
-            startY: yPosition,
-            head: [['Value', 'Count', 'Percentage']],
-            body: [
-              ...dist.distribution.map((item) => [
-                item.value,
-                item.count.toString(),
-                `${item.percentage}%`,
-              ]),
-              ['Total', dist.total.toString(), '100%'],
-            ],
-            theme: 'grid',
-            headStyles: { fillColor: [0, 61, 165], fontStyle: 'bold' },
-            alternateRowStyles: { fillColor: [245, 247, 250] },
-            styles: { fontSize: 9 },
-          });
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          yPosition = (doc as any).lastAutoTable.finalY + 12;
-        }
+        yPosition = drawDemographicBars(
+          doc,
+          yPosition,
+          demoDistributions,
+          () => { doc.addPage(); }
+        );
       }
 
       // Footer
