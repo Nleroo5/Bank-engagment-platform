@@ -404,7 +404,6 @@ export function SingleQuestionAnonymousSurveyShell({
   const totalQuestions = allQuestions.length;
   const currentQuestion = allQuestions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-  const isFirstQuestion = currentQuestionIndex === 0;
   const progressPercentage = Math.round(
     ((currentQuestionIndex + 1) / totalQuestions) * 100
   );
@@ -539,9 +538,18 @@ export function SingleQuestionAnonymousSurveyShell({
         clearTimeout(demoAdvanceTimeoutRef.current);
         setIsDemoAdvancing(false);
       }
-      setCurrentDemoIndex((prev) => prev - 1);
+      const prevIndex = currentDemoIndex - 1;
+      const prevQuestion = demoQuestions[prevIndex];
+      if (prevQuestion) {
+        setDemoAnswers((prev) => {
+          const next = { ...prev };
+          delete next[prevQuestion._id];
+          return next;
+        });
+      }
+      setCurrentDemoIndex(prevIndex);
     }
-  }, [currentDemoIndex, isDemoAdvancing]);
+  }, [currentDemoIndex, isDemoAdvancing, demoQuestions]);
 
   // ============================================
   // 9. HANDLE SURVEY ANSWER WITH AUTO-ADVANCE
@@ -576,18 +584,8 @@ export function SingleQuestionAnonymousSurveyShell({
   );
 
   // ============================================
-  // 10. SURVEY NAVIGATION
+  // 10. SURVEY NAVIGATION (no back button — forward-only for scored surveys)
   // ============================================
-  const handleBack = useCallback(() => {
-    if (currentQuestionIndex > 0 && !isAdvancing) {
-      if (advanceTimeoutRef.current) {
-        clearTimeout(advanceTimeoutRef.current);
-        setIsAdvancing(false);
-      }
-      setCurrentQuestionIndex((prev) => prev - 1);
-      setJustAnswered(false);
-    }
-  }, [currentQuestionIndex, isAdvancing]);
 
   // ============================================
   // 11. SUBMIT SURVEY
@@ -639,13 +637,12 @@ export function SingleQuestionAnonymousSurveyShell({
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         if (stage === 'demographics') handleDemographicsBack();
-        else if (stage === 'survey') handleBack();
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [stage, handleBack, handleDemographicsBack]);
+  }, [stage, handleDemographicsBack]);
 
   // ============================================
   // 13. CLEANUP TIMEOUTS ON UNMOUNT
@@ -998,16 +995,7 @@ export function SingleQuestionAnonymousSurveyShell({
         </AnimatePresence>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={handleBack}
-            disabled={isFirstQuestion || isAdvancing}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </button>
-
+        <div className="flex items-center justify-center">
           {isLastQuestion && answers[currentQuestion._id] !== undefined && (
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -1033,10 +1021,6 @@ export function SingleQuestionAnonymousSurveyShell({
             Select an answer to automatically continue
           </div>
         )}
-
-        <div className="mt-4 text-center text-xs text-gray-300">
-          Use ← arrow key to go back
-        </div>
       </div>
     </div>
   );
