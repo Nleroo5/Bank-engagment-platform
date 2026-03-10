@@ -122,11 +122,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Survey not found' }, { status: 404 });
     }
 
-    // Check if this is a demographics-only survey (all required questions have fieldType)
-    const isDemographicsOnly = survey.questions.every((q) => {
-      const config = q.config as { fieldType?: string } | null;
-      return config?.fieldType;
-    });
+    // Check if this is a demographics-only survey
+    const isDemographicsOnly =
+      survey.surveyType === 'demographics' ||
+      survey.questions.every((q) => {
+        const config = q.config as { fieldType?: string } | null;
+        return config?.fieldType;
+      });
 
     // Only validate question responses for non-demographics-only surveys
     if (!isDemographicsOnly) {
