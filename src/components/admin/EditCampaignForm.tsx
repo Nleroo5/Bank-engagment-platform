@@ -27,6 +27,7 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
     endDate: campaign.endDate
       ? new Date(campaign.endDate).toISOString().split('T')[0]
       : '',
+    maxResponses: campaign.maxResponses?.toString() ?? '',
   });
 
   // Splash config state — pre-populate from existing campaign data
@@ -184,6 +185,9 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
           status: formData.status,
           startDate: formData.startDate || undefined,
           endDate: formData.endDate || undefined,
+          maxResponses: formData.maxResponses
+            ? parseInt(formData.maxResponses, 10)
+            : null,
           splashConfig: hasSplashConfig ? splashConfigPayload : null,
         }),
       });
@@ -299,6 +303,30 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
             Leave blank for no expiration
           </p>
         </div>
+      </div>
+
+      {/* Maximum Responses */}
+      <div>
+        <label
+          htmlFor="maxResponses"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Maximum Total Responses (Optional)
+        </label>
+        <input
+          type="number"
+          id="maxResponses"
+          min="1"
+          value={formData.maxResponses}
+          onChange={(e) =>
+            setFormData({ ...formData, maxResponses: e.target.value })
+          }
+          placeholder="Unlimited"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+        />
+        <p className="mt-1 text-sm text-gray-500">
+          Leave blank for unlimited responses. Cannot be set below current completed count.
+        </p>
       </div>
 
       {/* Splash Page Editor */}

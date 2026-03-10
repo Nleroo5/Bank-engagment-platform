@@ -41,6 +41,7 @@ const updateCampaignSchema = z.object({
   status: z.enum(['DRAFT', 'ACTIVE', 'COMPLETED', 'ARCHIVED']).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  maxResponses: z.number().int().min(1).nullable().optional(),
   splashConfig: SplashConfigSchema.nullable().optional(),
 });
 
@@ -130,12 +131,36 @@ export async function PUT(
       );
     }
 
+    // Guard: maxResponses cannot be set below current completed count
+    if (data.maxResponses !== undefined && data.maxResponses !== null) {
+      const completedCount = await prisma.anonymousResponse.count({
+        where: { campaignId: params.id, completedAt: { not: null } },
+      });
+      if (data.maxResponses < completedCount) {
+        return NextResponse.json(
+          { error: `Cannot set max responses below ${completedCount} (current completed count)` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Guard: endDate cannot be in the past for active campaigns
+    if (data.endDate && existingCampaign.status === 'ACTIVE') {
+      if (new Date(data.endDate) < new Date()) {
+        return NextResponse.json(
+          { error: 'End date cannot be in the past for an active campaign' },
+          { status: 400 }
+        );
+      }
+    }
+
     await prisma.surveyCampaign.update({
       where: { id: params.id },
       data: {
         ...data,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
+        maxResponses: data.maxResponses === null ? null : data.maxResponses ?? undefined,
         splashConfig:
           data.splashConfig === null
             ? Prisma.JsonNull

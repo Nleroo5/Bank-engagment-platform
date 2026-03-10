@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Shield, ChevronLeft, Save, CheckCircle2, ChevronRight } from 'lucide-react';
 import type { Survey } from '@/types/survey';
-import { parseSplashConfig } from '@/types/splash';
-import { WelcomeScreen } from './WelcomeScreen';
 import { LikertScale5 } from './LikertScale5';
 import { LikertScale3 } from './LikertScale3';
 import { DemographicsField } from './DemographicsField';
@@ -65,7 +63,7 @@ interface SingleQuestionAnonymousSurveyShellProps {
   demographics: Record<string, unknown> | null;
 }
 
-type SurveyStage = 'demographics' | 'welcome' | 'survey' | 'completed';
+type SurveyStage = 'demographics' | 'survey' | 'completed';
 
 /**
  * Single-Question Auto-Advance Survey Shell for Anonymous Surveys
@@ -89,12 +87,10 @@ export function SingleQuestionAnonymousSurveyShell({
   const [loading, setLoading] = useState(true);
   // Stage logic:
   // - No demographics yet → start at demographics
-  // - Demographics done + survey answers exist → resume at survey (skip welcome)
-  // - Demographics done + no survey answers → show welcome first
+  // - Demographics done → go straight to survey (welcome was already shown on first entry)
   const [stage, setStage] = useState<SurveyStage>(() => {
     if (!existingDemographics) return 'demographics';
-    if (existingResponses.length > 0) return 'survey';
-    return 'welcome';
+    return 'survey';
   });
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
@@ -256,7 +252,7 @@ export function SingleQuestionAnonymousSurveyShell({
         body: JSON.stringify({ sessionToken, demographics: demoAnswers }),
       });
       if (!response.ok) throw new Error('Failed to save demographics');
-      setStage('welcome');
+      setStage('survey');
     } catch (error) {
       console.error('Error completing demographics:', error);
       alert('Failed to save your demographics. Please try again.');
@@ -560,26 +556,6 @@ export function SingleQuestionAnonymousSurveyShell({
           </div>
         </div>
       </div>
-    );
-  }
-
-  // ── Welcome stage ─────────────────────────────────────────────────────────
-  if (stage === 'welcome') {
-    if (loading || !survey) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
-        </div>
-      );
-    }
-    return (
-      <WelcomeScreen
-        survey={survey}
-        splashConfig={parseSplashConfig(campaign.splashConfig) ?? undefined}
-        isAnonymous={campaign.isAnonymous ?? true}
-        campaignEndDate={campaign.endDate}
-        onBegin={() => setStage('survey')}
-      />
     );
   }
 
