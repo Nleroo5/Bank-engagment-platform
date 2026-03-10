@@ -11,6 +11,15 @@ interface Category {
   colorCode: string | null;
 }
 
+interface DemographicsConfig {
+  inputType?: 'text' | 'dropdown' | 'radio';
+  demographicKey?: string;
+  options?: string[];
+  allowOther?: boolean;
+  placeholder?: string;
+  autoAdvance?: boolean;
+}
+
 interface Question {
   id?: string;
   questionNumber: number;
@@ -20,6 +29,7 @@ interface Question {
   isReversed: boolean;
   sortOrder: number;
   categories: { category?: Category; categoryId: string }[];
+  config?: DemographicsConfig | null;
 }
 
 interface QuestionListProps {
@@ -147,6 +157,46 @@ export function QuestionList({
                   </span>
                 ))}
               </div>
+              {/* Demographics config preview */}
+              {question.config?.inputType && (
+                <div className="mt-2 rounded-md border border-gray-100 bg-gray-50 p-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="font-medium">
+                      {question.config.inputType === 'text'
+                        ? 'Text Input'
+                        : question.config.inputType === 'dropdown'
+                          ? 'Dropdown'
+                          : 'Radio Buttons'}
+                    </span>
+                    {question.config.demographicKey && (
+                      <span className="text-gray-400">
+                        · key: {question.config.demographicKey}
+                      </span>
+                    )}
+                    {question.config.allowOther && (
+                      <span className="text-gray-400">· has &quot;Other&quot;</span>
+                    )}
+                  </div>
+                  {question.config.options &&
+                    question.config.options.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {question.config.options.slice(0, 6).map((opt) => (
+                          <span
+                            key={opt}
+                            className="inline-block rounded bg-white px-1.5 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200"
+                          >
+                            {opt}
+                          </span>
+                        ))}
+                        {question.config.options.length > 6 && (
+                          <span className="inline-block px-1.5 py-0.5 text-xs text-gray-400">
+                            +{question.config.options.length - 6} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+                </div>
+              )}
             </div>
 
             {/* Actions */}
