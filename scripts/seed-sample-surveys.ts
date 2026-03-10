@@ -360,8 +360,8 @@ async function seedSurveys() {
             },
           },
         });
-      } else if (!existing.config) {
-        // Backfill config on existing questions that are missing it
+      } else {
+        // Always update config on existing demographics questions
         await prisma.question.update({
           where: { id: existing.id },
           data: {
