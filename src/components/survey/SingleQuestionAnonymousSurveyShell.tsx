@@ -27,6 +27,205 @@ interface DBDemoQuestion {
   autoAdvance: boolean;
 }
 
+// ── Hardcoded demographics questions (used as primary source OR fallback) ──────
+const DEMOGRAPHICS_QUESTIONS: DBDemoQuestion[] = [
+  {
+    _id: 'bankName',
+    number: 1,
+    text: 'Name of Bank',
+    fieldType: 'bankName',
+    inputType: 'text',
+    options: [],
+    allowOther: false,
+    placeholder: 'Enter your bank name',
+    autoAdvance: false,
+  },
+  {
+    _id: 'country',
+    number: 2,
+    text: 'Country',
+    fieldType: 'country',
+    inputType: 'dropdown',
+    options: [
+      'United States', 'Canada', 'United Kingdom', 'Australia', 'Germany',
+      'France', 'Japan', 'Singapore', 'Hong Kong', 'India',
+      'Brazil', 'Mexico', 'South Africa', 'United Arab Emirates', 'Switzerland',
+    ],
+    allowOther: true,
+    placeholder: 'Select your country',
+    autoAdvance: false,
+  },
+  {
+    _id: 'state',
+    number: 3,
+    text: 'State/Province',
+    fieldType: 'state',
+    inputType: 'dropdown',
+    options: [
+      'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California',
+      'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia',
+      'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa',
+      'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland',
+      'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri',
+      'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
+      'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio',
+      'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina',
+      'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont',
+      'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
+      'District of Columbia',
+    ],
+    allowOther: true,
+    placeholder: 'Select your state or province',
+    autoAdvance: false,
+  },
+  {
+    _id: 'metroArea',
+    number: 4,
+    text: 'Metro City Area',
+    fieldType: 'metroArea',
+    inputType: 'text',
+    options: [],
+    allowOther: false,
+    placeholder: 'Enter your metro area',
+    autoAdvance: false,
+  },
+  {
+    _id: 'city',
+    number: 5,
+    text: 'City',
+    fieldType: 'city',
+    inputType: 'text',
+    options: [],
+    allowOther: false,
+    placeholder: 'Enter your city',
+    autoAdvance: false,
+  },
+  {
+    _id: 'bankSize',
+    number: 6,
+    text: 'Size of Bank (Total Assets)',
+    fieldType: 'bankSize',
+    inputType: 'dropdown',
+    options: [
+      'Under $100 Million',
+      '$100 Million - $500 Million',
+      '$500 Million - $1 Billion',
+      '$1 Billion - $5 Billion',
+      '$5 Billion - $10 Billion',
+      '$10 Billion - $20 Billion',
+      '$20 Billion - $50 Billion',
+      '$50 Billion - $100 Billion',
+      '$100 Billion - $500 Billion',
+      '$500 Billion - $1 Trillion',
+      '$1 Trillion - $2 Trillion',
+      'Over $2 Trillion',
+    ],
+    allowOther: false,
+    placeholder: 'Select bank size',
+    autoAdvance: false,
+  },
+  {
+    _id: 'device',
+    number: 7,
+    text: 'Device Used',
+    fieldType: 'device',
+    inputType: 'radio',
+    options: ['Desktop', 'Laptop', 'Tablet', 'Mobile Phone'],
+    allowOther: false,
+    placeholder: '',
+    autoAdvance: true,
+  },
+  {
+    _id: 'employmentStatus',
+    number: 8,
+    text: 'Employment Status',
+    fieldType: 'employmentStatus',
+    inputType: 'radio',
+    options: ['Full-time', 'Part-time', 'Contract', 'Temporary'],
+    allowOther: false,
+    placeholder: '',
+    autoAdvance: true,
+  },
+  {
+    _id: 'gender',
+    number: 9,
+    text: 'Gender',
+    fieldType: 'gender',
+    inputType: 'radio',
+    options: ['Male', 'Female', 'Non-binary', 'Prefer not to say'],
+    allowOther: false,
+    placeholder: '',
+    autoAdvance: true,
+  },
+  {
+    _id: 'timeAtBank',
+    number: 10,
+    text: 'Time at Current Bank',
+    fieldType: 'timeAtBank',
+    inputType: 'radio',
+    options: [
+      'Less than 1 year', '1-2 years', '3-5 years',
+      '5-10 years', '10-20 years', '20+ years',
+    ],
+    allowOther: false,
+    placeholder: '',
+    autoAdvance: true,
+  },
+  {
+    _id: 'bankExperience',
+    number: 11,
+    text: 'Banking Industry Experience',
+    fieldType: 'bankExperience',
+    inputType: 'radio',
+    options: [
+      'Less than 1 year', '1-2 years', '3-5 years',
+      '5-10 years', '10-20 years', '20+ years',
+    ],
+    allowOther: false,
+    placeholder: '',
+    autoAdvance: true,
+  },
+  {
+    _id: 'division',
+    number: 12,
+    text: 'Bank Division',
+    fieldType: 'division',
+    inputType: 'dropdown',
+    options: [
+      'Retail Banking', 'Commercial Banking', 'Wealth Management',
+      'Investment Banking', 'Risk Management', 'Operations',
+      'Technology / IT', 'Human Resources', 'Compliance / Legal',
+      'Marketing', 'Finance / Accounting',
+    ],
+    allowOther: true,
+    placeholder: 'Select your division',
+    autoAdvance: false,
+  },
+  {
+    _id: 'jobRole',
+    number: 13,
+    text: 'Job Role/Title',
+    fieldType: 'jobRole',
+    inputType: 'dropdown',
+    options: [
+      'Teller / Customer Service Representative',
+      'Personal Banker / Relationship Manager',
+      'Loan Officer / Underwriter',
+      'Branch Manager',
+      'Assistant Vice President (AVP)',
+      'Vice President (VP)',
+      'Senior Vice President (SVP)',
+      'Executive Vice President (EVP)',
+      'C-Suite (CEO, CFO, COO, CIO, etc.)',
+      'Director', 'Manager', 'Analyst', 'Specialist',
+      'Coordinator', 'Administrative / Support', 'Intern',
+    ],
+    allowOther: true,
+    placeholder: 'Select your role',
+    autoAdvance: false,
+  },
+];
+
 interface SingleQuestionAnonymousSurveyShellProps {
   campaign: {
     id: string;
@@ -106,52 +305,61 @@ export function SingleQuestionAnonymousSurveyShell({
     : 0;
 
   // ============================================
-  // 0. FETCH DEMOGRAPHICS QUESTIONS FROM DB
+  // 0. LOAD DEMOGRAPHICS QUESTIONS
+  // Uses hardcoded defaults. If DB has config, those values override.
   // ============================================
   useEffect(() => {
-    async function fetchDemographics() {
+    async function loadDemographics() {
+      // Start with hardcoded defaults
+      let questions = [...DEMOGRAPHICS_QUESTIONS];
+
+      // Try to fetch DB config to override defaults
       try {
         const res = await fetch('/api/public/surveys?surveyType=demographics');
-        if (!res.ok) throw new Error('Failed to fetch demographics survey');
-        const data = await res.json();
+        if (res.ok) {
+          const data = await res.json();
+          const dbQuestions = (data.sections ?? [])
+            .flatMap((section: { questions: Array<{
+              _id: string;
+              number: number;
+              text: string;
+              config: DemographicsQuestionConfig | null;
+            }> }) => section.questions);
 
-        const questions: DBDemoQuestion[] = (data.sections ?? [])
-          .flatMap((section: { questions: Array<{
-            _id: string;
-            number: number;
-            text: string;
-            config: DemographicsQuestionConfig | null;
-          }> }) => section.questions)
-          .map((q: {
-            _id: string;
-            number: number;
-            text: string;
-            config: DemographicsQuestionConfig | null;
-          }) => {
-            const cfg = q.config as DemographicsQuestionConfig | null;
-            return {
-              _id: cfg?.demographicKey ?? q._id,
+          // If DB has questions with config, use them instead
+          const dbWithConfig = dbQuestions.filter(
+            (q: { config: DemographicsQuestionConfig | null }) => q.config !== null
+          );
+
+          if (dbWithConfig.length > 0) {
+            questions = dbWithConfig.map((q: {
+              _id: string;
+              number: number;
+              text: string;
+              config: DemographicsQuestionConfig;
+            }) => ({
+              _id: q.config.demographicKey ?? q._id,
               number: q.number,
               text: q.text,
-              fieldType: cfg?.fieldType ?? '',
-              inputType: cfg?.inputType ?? 'text',
-              options: cfg?.options ?? [],
-              allowOther: cfg?.allowOther ?? false,
-              placeholder: cfg?.placeholder ?? '',
-              autoAdvance: cfg?.autoAdvance ?? false,
-            } satisfies DBDemoQuestion;
-          });
-
-        setDemoQuestions(questions);
+              fieldType: q.config.fieldType ?? '',
+              inputType: q.config.inputType ?? 'text',
+              options: q.config.options ?? [],
+              allowOther: q.config.allowOther ?? false,
+              placeholder: q.config.placeholder ?? '',
+              autoAdvance: q.config.autoAdvance ?? false,
+            } satisfies DBDemoQuestion));
+          }
+        }
       } catch (error) {
-        console.error('Error fetching demographics questions:', error);
-      } finally {
-        setDemoLoading(false);
+        console.error('Error fetching demographics from DB, using defaults:', error);
       }
+
+      setDemoQuestions(questions);
+      setDemoLoading(false);
     }
 
     if (stage === 'demographics' || !existingDemographics) {
-      fetchDemographics();
+      loadDemographics();
     } else {
       setDemoLoading(false);
     }
