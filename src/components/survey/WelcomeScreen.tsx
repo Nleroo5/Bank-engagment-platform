@@ -118,50 +118,49 @@ export function WelcomeScreen({
   defaultFooterLines.push('• All questions must be answered to complete the survey');
 
   return (
-    <div className="mx-auto max-w-2xl">
-      {/* USF Platform Header — always shown */}
-      <div className="mb-6 flex justify-center">
-        <Image
-          src="/header-logo.png"
-          alt="USF"
-          width={260}
-          height={87}
-          priority
-          className="h-auto w-auto"
-        />
-      </div>
-
-      {/* Power Banking "Welcomes" Client Logo row */}
-      <div
-        className={`mb-8 flex items-center justify-center gap-4 ${
-          logoArrangement === 'stacked' ? 'flex-col' : 'flex-wrap'
-        }`}
-      >
-        <Image
-          src="/power-banking.png"
-          alt="Power Banking"
-          width={80}
-          height={80}
-          className="h-16 w-auto object-contain"
-        />
-        <span className="font-serif font-normal text-gray-600" style={{ fontSize: '16pt' }}>Welcomes</span>
-        {hasClientLogo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUrl!}
-            alt={bankName ? `${bankName} logo` : 'Organization logo'}
-            style={{ height: `${logoHeight}px` }}
-            className="w-auto max-w-[200px] object-contain"
-          />
-        ) : bankName ? (
-          <span className="text-lg font-semibold text-gray-800">{bankName}</span>
-        ) : null}
-      </div>
-
+    <div className="mx-auto max-w-2xl pt-8">
       <div
         className="rounded-lg p-5 font-body shadow-lg sm:p-8"
         style={{ backgroundColor: cardBackground ?? '#ffffff' }}
       >
+        {/* USF Platform Header — inside card */}
+        <div className="mb-6">
+          <Image
+            src="/header-logo.png"
+            alt="USF"
+            width={672}
+            height={225}
+            priority
+            className="h-auto w-full"
+          />
+        </div>
+
+        {/* Power Banking "Welcomes" Client Logo row */}
+        <div
+          className={`mb-8 flex items-center justify-center gap-4 ${
+            logoArrangement === 'stacked' ? 'flex-col' : 'flex-wrap'
+          }`}
+        >
+          <Image
+            src="/power-banking.png"
+            alt="Power Banking"
+            width={80}
+            height={80}
+            className="h-16 w-auto object-contain"
+          />
+          <span className="font-serif font-normal text-gray-600" style={{ fontSize: '16pt' }}>Welcomes</span>
+          {hasClientLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl!}
+              alt={bankName ? `${bankName} logo` : 'Organization logo'}
+              style={{ height: `${logoHeight}px` }}
+              className="w-auto max-w-[200px] object-contain"
+            />
+          ) : bankName ? (
+            <span className="text-lg font-semibold text-gray-800">{bankName}</span>
+          ) : null}
+        </div>
         <h1
           className={`mb-4 font-serif font-bold text-gray-900 ${ALIGN_CLASS[titleAlignment]}`}
           style={{ fontSize: `clamp(${Math.round(titleFontSize * 0.7)}px, 5vw, ${titleFontSize}px)` }}
