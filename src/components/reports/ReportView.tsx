@@ -502,8 +502,8 @@ export function ReportView({ campaignId }: ReportViewProps) {
             })()
           )}
 
-          {/* 9. Demographics Treemap — demographics-only surveys */}
-          {isDemographics && hasDemographicData && (
+          {/* 9. Demographics Treemap */}
+          {hasDemographicData && (
             <div className="rounded-lg border border-gray-200 bg-white p-6">
               <h2 className="mb-2 text-xl font-bold text-gray-900">
                 Demographic Composition
@@ -543,8 +543,8 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 12. Demographics Detail Tables — demographics-only surveys */}
-          {isDemographics && data.respondentDemographics && (
+          {/* 12. Demographics Detail Tables */}
+          {data.respondentDemographics && (
             <DemographicsDetailSection
               distributions={data.respondentDemographics.distributions}
             />

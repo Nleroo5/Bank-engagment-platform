@@ -116,31 +116,20 @@ export async function GET(
     // ============================================
     // BUILD DEMOGRAPHICS DISTRIBUTIONS
     // ============================================
-    const DEMO_FIELDS = isDemographicsSurvey
-      ? [
-          { key: 'bankSize', label: 'Bank Size' },
-          { key: 'device', label: 'Device Used' },
-          { key: 'employmentStatus', label: 'Employment Status' },
-          { key: 'gender', label: 'Gender' },
-          { key: 'timeAtBank', label: 'Time at Bank' },
-          { key: 'bankExperience', label: 'Banking Industry Experience' },
-          { key: 'division', label: 'Division' },
-          { key: 'jobRole', label: 'Job Role/Title' },
-          { key: 'country', label: 'Country' },
-          { key: 'state', label: 'State' },
-          { key: 'metroArea', label: 'Metro Area' },
-          { key: 'city', label: 'City' },
-        ]
-      : [
-          { key: 'bankSize', label: 'Bank Size' },
-          { key: 'device', label: 'Device Used' },
-          { key: 'employmentStatus', label: 'Employment Status' },
-          { key: 'gender', label: 'Gender' },
-          { key: 'timeAtBank', label: 'Time at Bank' },
-          { key: 'bankExperience', label: 'Banking Industry Experience' },
-          { key: 'division', label: 'Division' },
-          { key: 'jobRole', label: 'Job Role/Title' },
-        ];
+    const DEMO_FIELDS = [
+      { key: 'bankSize', label: 'Bank Size' },
+      { key: 'device', label: 'Device Used' },
+      { key: 'employmentStatus', label: 'Employment Status' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'timeAtBank', label: 'Time at Bank' },
+      { key: 'bankExperience', label: 'Banking Industry Experience' },
+      { key: 'division', label: 'Division' },
+      { key: 'jobRole', label: 'Job Role/Title' },
+      { key: 'country', label: 'Country' },
+      { key: 'state', label: 'State' },
+      { key: 'metroArea', label: 'Metro Area' },
+      { key: 'city', label: 'City' },
+    ];
 
     const demoData: Record<string, unknown>[] = campaign.anonymousResponses.map(
       (r) => (r.demographics as Record<string, unknown>) || {}

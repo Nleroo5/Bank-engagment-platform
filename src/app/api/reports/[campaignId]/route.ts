@@ -252,6 +252,10 @@ export async function GET(
       { key: 'bankExperience', label: 'Banking Industry Experience' },
       { key: 'division', label: 'Division' },
       { key: 'jobRole', label: 'Job Role / Title' },
+      { key: 'country', label: 'Country' },
+      { key: 'state', label: 'State' },
+      { key: 'metroArea', label: 'Metro Area' },
+      { key: 'city', label: 'City' },
     ];
 
     const respondentDemoData: Record<string, unknown>[] = filteredData.map(
