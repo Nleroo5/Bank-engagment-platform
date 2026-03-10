@@ -103,6 +103,7 @@ export function WelcomeScreen({
   const buttonColor = splashConfig?.buttonColor;
   const cardBackground = splashConfig?.cardBackground;
 
+  const logoArrangement = splashConfig?.logoArrangement ?? 'side-by-side';
   const hasClientLogo = !!logoUrl;
   const anonymityNotice = splashConfig?.anonymityNotice
     ?? 'Anonymous — individual answers are never visible to anyone';
@@ -130,8 +131,12 @@ export function WelcomeScreen({
         />
       </div>
 
-      {/* Power Banking "Welcomes..." Client Logo row */}
-      <div className="mb-8 flex flex-wrap items-center justify-center gap-4">
+      {/* Power Banking "Welcomes" Client Logo row */}
+      <div
+        className={`mb-8 flex items-center justify-center gap-4 ${
+          logoArrangement === 'stacked' ? 'flex-col' : 'flex-wrap'
+        }`}
+      >
         <Image
           src="/power-banking.png"
           alt="Power Banking"
@@ -139,7 +144,7 @@ export function WelcomeScreen({
           height={80}
           className="h-16 w-auto object-contain"
         />
-        <span className="font-serif font-normal text-gray-600" style={{ fontSize: '16pt' }}>Welcomes...</span>
+        <span className="font-serif font-normal text-gray-600" style={{ fontSize: '16pt' }}>Welcomes</span>
         {hasClientLogo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

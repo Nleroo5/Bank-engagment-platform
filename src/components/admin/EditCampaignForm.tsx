@@ -35,6 +35,7 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
   const [splashData, setSplashData] = useState<Omit<SplashConfig, 'logoUrl'>>({
     bankName: existingSplash?.bankName ?? '',
     logoHeight: existingSplash?.logoHeight ?? 64,
+    logoArrangement: existingSplash?.logoArrangement ?? 'side-by-side',
     welcomeTitle: existingSplash?.welcomeTitle ?? '',
     titleFontSize: existingSplash?.titleFontSize ?? 30,
     titleAlignment: existingSplash?.titleAlignment ?? 'left',
@@ -152,6 +153,8 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
       if (resolvedLogoUrl) {
         splashConfigPayload.logoUrl = resolvedLogoUrl;
         splashConfigPayload.logoHeight = splashData.logoHeight ?? 64;
+        if (splashData.logoArrangement === 'stacked')
+          splashConfigPayload.logoArrangement = 'stacked';
       }
       if (splashData.welcomeTitle) splashConfigPayload.welcomeTitle = splashData.welcomeTitle;
       if ((splashData.titleFontSize ?? 30) !== 30)
@@ -462,6 +465,37 @@ export function EditCampaignForm({ campaign }: EditCampaignFormProps) {
                       <div className="mt-0.5 flex justify-between text-[10px] text-gray-400">
                         <span>24px</span>
                         <span>200px</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Logo arrangement toggle */}
+                  {previewLogoSrc && (
+                    <div className="mt-3">
+                      <p className="mb-1 text-xs font-medium text-gray-600">Logo layout</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSplashData({ ...splashData, logoArrangement: 'side-by-side' })}
+                          className={`rounded-md border px-3 py-1.5 text-xs font-medium ${
+                            splashData.logoArrangement === 'side-by-side'
+                              ? 'border-primary-500 bg-primary-50 text-primary-700'
+                              : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          Horizontal
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSplashData({ ...splashData, logoArrangement: 'stacked' })}
+                          className={`rounded-md border px-3 py-1.5 text-xs font-medium ${
+                            splashData.logoArrangement === 'stacked'
+                              ? 'border-primary-500 bg-primary-50 text-primary-700'
+                              : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          Stacked
+                        </button>
                       </div>
                     </div>
                   )}
