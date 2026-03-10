@@ -70,6 +70,7 @@ export async function POST(
       isRequired = true,
       isReversed = false,
       categoryIds = [],
+      config,
     } = body;
 
     // Validate required fields
@@ -99,6 +100,7 @@ export async function POST(
         isRequired,
         isReversed,
         sortOrder,
+        config: config ?? undefined,
         categories: {
           create: categoryIds.map((categoryId: string) => ({
             categoryId,

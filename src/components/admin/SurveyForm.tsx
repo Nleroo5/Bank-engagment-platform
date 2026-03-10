@@ -56,44 +56,53 @@ interface SurveyFormProps {
 const SURVEY_TYPE_OPTIONS = [
   {
     value: 'likert5',
-    label: '5-Point Likert Scale — Team Effectiveness',
-    description: 'Survey 4 (LTE) or Survey 5 (OTE) · 1 = Strongly Disagree → 5 = Strongly Agree',
+    label: '5-Point Likert Scale',
+    description: '1 = Strongly Disagree → 5 = Strongly Agree · All surveys are anonymous',
     scaleType: 'likert5',
   },
   {
-    value: 'managerial_assessment',
-    label: '3-Point Likert Scale — Managerial Assessment',
-    description: 'Survey 6 · 1 = Rarely / 2 = Sometimes / 3 = Frequently · Includes reverse-scored items',
+    value: 'likert3',
+    label: '3-Point Likert Scale',
+    description: '1 = Rarely / 2 = Sometimes / 3 = Frequently · Supports reverse-scored items · All surveys are anonymous',
     scaleType: 'likert3',
   },
   {
-    value: 'associate_180',
-    label: '3-Point Likert Scale — Associate 180 (Anonymous)',
-    description: 'Survey 7 · 1 = Rarely / 2 = Sometimes / 3 = Frequently · Requires 5+ respondents before reports generate',
-    scaleType: 'likert3',
-  },
-  {
-    value: 'demographics',
-    label: 'Demographics — No Rating Scale',
-    description: 'Survey 1 · Collects demographic information only · No Likert scale',
+    value: 'custom',
+    label: 'Custom — Per-Question Response Types',
+    description: 'Each question has its own response type: text field, dropdown, multiple choice, or checkboxes',
     scaleType: null,
   },
 ] as const;
 
-// Fallback entry shown when editing a survey with a legacy surveyType not in the list above.
-const LEGACY_SURVEY_TYPE_OPTION = {
-  value: 'likert3',
-  label: '3-Point Survey (legacy)',
-  description: '3-point scale · Rarely / Sometimes / Frequently',
-  scaleType: 'likert3',
+// Legacy survey types that map to one of the 3 current options.
+// Shown only when editing a survey that was created with an older type.
+const LEGACY_SURVEY_TYPE_OPTIONS: Record<string, { value: string; label: string; description: string; scaleType: string | null }> = {
+  managerial_assessment: {
+    value: 'managerial_assessment',
+    label: '3-Point Likert — Managerial Assessment (legacy)',
+    description: '3-point scale · Rarely / Sometimes / Frequently',
+    scaleType: 'likert3',
+  },
+  associate_180: {
+    value: 'associate_180',
+    label: '3-Point Likert — Associate 180 (legacy)',
+    description: '3-point scale · Rarely / Sometimes / Frequently · Requires 5+ respondents',
+    scaleType: 'likert3',
+  },
+  demographics: {
+    value: 'demographics',
+    label: 'Demographics (legacy)',
+    description: 'Collects demographic information only · No Likert scale',
+    scaleType: null,
+  },
 };
 
-type SurveyTypeOption = (typeof SURVEY_TYPE_OPTIONS)[number] | typeof LEGACY_SURVEY_TYPE_OPTION;
+type SurveyTypeOption = (typeof SURVEY_TYPE_OPTIONS)[number] | (typeof LEGACY_SURVEY_TYPE_OPTIONS)[string];
 
 function getSurveyTypeOption(value: string): SurveyTypeOption | undefined {
   return (
     (SURVEY_TYPE_OPTIONS as readonly SurveyTypeOption[]).find((o) => o.value === value) ??
-    (value === LEGACY_SURVEY_TYPE_OPTION.value ? LEGACY_SURVEY_TYPE_OPTION : undefined)
+    LEGACY_SURVEY_TYPE_OPTIONS[value]
   );
 }
 
@@ -179,9 +188,10 @@ export function SurveyForm({ scales, categories, survey }: SurveyFormProps) {
   };
 
   // All options shown in the dropdown — include legacy option only when editing a survey that uses it
+  const legacyOption = survey?.surveyType ? LEGACY_SURVEY_TYPE_OPTIONS[survey.surveyType] : undefined;
   const typeOptionsToShow: SurveyTypeOption[] = [
     ...SURVEY_TYPE_OPTIONS,
-    ...(survey?.surveyType === LEGACY_SURVEY_TYPE_OPTION.value ? [LEGACY_SURVEY_TYPE_OPTION] : []),
+    ...(legacyOption ? [legacyOption] : []),
   ];
 
   return (

@@ -15,45 +15,39 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const surveyId = searchParams.get('surveyId');
+    const surveyType = searchParams.get('surveyType');
 
-    if (!surveyId) {
+    if (!surveyId && !surveyType) {
       return NextResponse.json(
-        { error: 'surveyId query parameter is required' },
+        { error: 'surveyId or surveyType query parameter is required' },
         { status: 400 }
       );
     }
 
-    const survey = await prisma.survey.findUnique({
-      where: { id: surveyId },
-      include: {
-        scale: true,
-        sections: {
-          include: {
-            questions: {
-              include: {
-                categories: {
-                  include: {
-                    category: true,
-                  },
-                },
-              },
-              orderBy: { questionNumber: 'asc' },
+    const surveyInclude = {
+      scale: true,
+      sections: {
+        include: {
+          questions: {
+            include: {
+              categories: { include: { category: true } },
             },
+            orderBy: { questionNumber: 'asc' as const },
           },
-          orderBy: { sortOrder: 'asc' },
         },
-        questions: {
-          include: {
-            categories: {
-              include: {
-                category: true,
-              },
-            },
-          },
-          orderBy: { questionNumber: 'asc' },
-        },
+        orderBy: { sortOrder: 'asc' as const },
       },
-    });
+      questions: {
+        include: {
+          categories: { include: { category: true } },
+        },
+        orderBy: { questionNumber: 'asc' as const },
+      },
+    };
+
+    const survey = surveyId
+      ? await prisma.survey.findUnique({ where: { id: surveyId }, include: surveyInclude })
+      : await prisma.survey.findFirst({ where: { surveyType: surveyType!, status: 'ACTIVE' }, include: surveyInclude });
 
     if (!survey) {
       return NextResponse.json(
@@ -109,10 +103,8 @@ export async function GET(request: NextRequest) {
         directions: section.description || '',
         description: section.description,
         questions: section.questions.map((question) => {
-          // Extract config fields (fieldType, anchorText) from JSON config
-          const config = question.config as
-            | { fieldType?: string; anchorText?: string }
-            | null;
+          // Extract config fields from JSON config
+          const config = question.config as Record<string, unknown> | null;
 
           return {
             _id: question.id,
@@ -120,8 +112,9 @@ export async function GET(request: NextRequest) {
             number: question.questionNumber,
             text: question.text,
             isReversed: question.isReversed,
-            anchorText: config?.anchorText || null,
-            fieldType: config?.fieldType || null,
+            anchorText: (config?.anchorText as string) || null,
+            fieldType: (config?.fieldType as string) || null,
+            config: config || null,
             category: question.categories[0]?.category
               ? {
                   _id: question.categories[0].category.id,

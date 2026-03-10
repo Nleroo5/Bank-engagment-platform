@@ -1,14 +1,10 @@
 import { prisma } from '@/lib/prisma';
 
 /**
- * Minimum number of respondents required for Survey 7 (Associate 180) reports
+ * Minimum number of respondents required before reports can be generated.
+ * All surveys are anonymous — individual responses are never exposed.
  */
 export const ANONYMITY_THRESHOLD = 5;
-
-/**
- * Survey types that require anonymity protection
- */
-export const ANONYMOUS_SURVEY_TYPES = ['associate_180', 'survey-7'];
 
 /**
  * Demographic filter option
@@ -23,27 +19,17 @@ export interface DemographicFilter {
 /**
  * Checks if a campaign has enough respondents to meet the anonymity threshold.
  *
- * CRITICAL: For Survey 7 (Associate 180), individual responses are NEVER visible.
+ * All surveys are anonymous — individual responses are NEVER visible.
  * Reports require a minimum of 5 respondents before generating any aggregated data.
  *
  * @param campaignId - The ID of the campaign to check
- * @param surveyType - The type of survey (e.g., 'associate-180', 'survey-7')
- * @returns True if the campaign meets the anonymity threshold (or doesn't require it)
+ * @param _surveyType - Unused — all surveys enforce the threshold
+ * @returns True if the campaign meets the anonymity threshold
  */
 export async function checkAnonymityThreshold(
   campaignId: string,
-  surveyType?: string
+  _surveyType?: string
 ): Promise<boolean> {
-  // Only enforce threshold for anonymous survey types
-  const requiresAnonymity = surveyType
-    ? ANONYMOUS_SURVEY_TYPES.includes(surveyType.toLowerCase())
-    : false;
-
-  if (!requiresAnonymity) {
-    return true; // No anonymity requirements, allow access
-  }
-
-  // Count completed anonymous responses
   const completedCount = await prisma.anonymousResponse.count({
     where: {
       campaignId,

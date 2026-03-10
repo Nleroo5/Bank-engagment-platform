@@ -74,6 +74,7 @@ export async function PUT(
       isRequired,
       isReversed,
       categoryIds = [],
+      config,
     } = body;
 
     // Validate required fields
@@ -99,6 +100,7 @@ export async function PUT(
         surveyjsName: `q${questionNumber}`,
         isRequired,
         isReversed,
+        config: config ?? undefined,
         categories: {
           create: categoryIds.map((categoryId: string) => ({
             categoryId,

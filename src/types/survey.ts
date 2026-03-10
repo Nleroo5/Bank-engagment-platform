@@ -1,9 +1,21 @@
+// Configuration stored in Question.config for demographics questions
+export interface DemographicsQuestionConfig {
+  fieldType: string;        // e.g., "bankSize", "division", "bankName"
+  demographicKey: string;   // Key used in demographics JSON storage (must match report keys)
+  inputType: 'text' | 'dropdown' | 'radio';
+  options?: string[];       // Selectable values for dropdown/radio
+  allowOther?: boolean;     // Show "Other" text input option
+  placeholder?: string;     // Placeholder for text/dropdown inputs
+  autoAdvance?: boolean;    // Whether selecting an option auto-advances to next question
+}
+
 // Demographics question shown as inline preamble before every survey
 export type DemographicsQuestion = {
   _id: string;
   number: number;
   text: string;
   fieldType: string;
+  config?: DemographicsQuestionConfig;
 };
 
 // Scale label for rating scales
@@ -47,6 +59,7 @@ export interface Question {
   isReversed: boolean;
   anchorText?: string;
   fieldType?: string; // For demographics: 'bankName', 'state', 'bankSize', 'division', etc.
+  config?: DemographicsQuestionConfig | null;
   slug?: {
     current: string;
   };

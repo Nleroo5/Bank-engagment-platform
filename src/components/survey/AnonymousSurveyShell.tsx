@@ -306,6 +306,10 @@ export default function AnonymousSurveyShell({
                   questionNumber={question.number}
                   questionText={question.text}
                   fieldType={question.fieldType || question.slug?.current || ''}
+                  inputType={question.config?.inputType ?? 'text'}
+                  options={question.config?.options ?? []}
+                  allowOther={question.config?.allowOther ?? false}
+                  placeholder={question.config?.placeholder ?? ''}
                   value={demographics[question.fieldType || question._id] || ''}
                   onChange={(_, value) =>
                     handleDemographicsChange(

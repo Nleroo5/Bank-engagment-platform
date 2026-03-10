@@ -20,6 +20,7 @@ export default async function EditQuestionPage({
         select: {
           id: true,
           title: true,
+          surveyType: true,
         },
       },
     },
@@ -45,6 +46,7 @@ export default async function EditQuestionPage({
 
       <QuestionForm
         surveyId={params.id}
+        surveyType={question.survey.surveyType}
         categories={categories}
         question={question}
       />

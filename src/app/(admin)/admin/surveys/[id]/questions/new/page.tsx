@@ -13,6 +13,7 @@ export default async function NewQuestionPage({
     select: {
       id: true,
       title: true,
+      surveyType: true,
     },
   });
 
@@ -44,6 +45,7 @@ export default async function NewQuestionPage({
 
       <QuestionForm
         surveyId={params.id}
+        surveyType={survey.surveyType}
         categories={categories}
         defaultQuestionNumber={nextQuestionNumber}
       />

@@ -4,45 +4,28 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Shield, ChevronLeft, Save, CheckCircle2, ChevronRight } from 'lucide-react';
-import type { Survey } from '@/types/survey';
+import type { Survey, DemographicsQuestionConfig } from '@/types/survey';
 import { LikertScale5 } from './LikertScale5';
 import { LikertScale3 } from './LikertScale3';
 import { DemographicsField } from './DemographicsField';
 import { ConfettiEffect } from './ConfettiEffect';
 
 // ── Module-level constants ─────────────────────────────────────────────────────
-// Hardcoded demographics questions — identical to the invitation-based shell.
-// These are shown before EVERY anonymous survey regardless of survey type.
-// Stable demo_* IDs are stored as JSON on AnonymousResponse.demographics.
-const DEMOGRAPHICS_QUESTIONS = [
-  { _id: 'demo_bankName', number: 1, text: 'Name of Bank', fieldType: 'bankName' },
-  { _id: 'demo_country', number: 2, text: 'Country', fieldType: 'country' },
-  { _id: 'demo_state', number: 3, text: 'State / Province', fieldType: 'state' },
-  { _id: 'demo_metroArea', number: 4, text: 'Metro City Area', fieldType: 'metroArea' },
-  { _id: 'demo_city', number: 5, text: 'City', fieldType: 'city' },
-  { _id: 'demo_bankSize', number: 6, text: 'Size of Bank (Assets)', fieldType: 'bankSize' },
-  { _id: 'demo_device', number: 7, text: 'Device Used', fieldType: 'device' },
-  { _id: 'demo_employmentStatus', number: 8, text: 'Employment Status', fieldType: 'employmentStatus' },
-  { _id: 'demo_gender', number: 9, text: 'Gender', fieldType: 'gender' },
-  { _id: 'demo_timeAtBank', number: 10, text: 'Time at This Bank', fieldType: 'timeAtBank' },
-  { _id: 'demo_bankExperience', number: 11, text: 'Total Banking Industry Experience', fieldType: 'bankExperience' },
-  { _id: 'demo_division', number: 12, text: 'Bank Division', fieldType: 'division' },
-  { _id: 'demo_jobRole', number: 13, text: 'Job Role', fieldType: 'jobRole' },
-];
-
-// Fields that auto-advance on selection (radio groups).
-// All other field types (dropdowns, text inputs) require a manual "Next" click.
-const AUTO_ADVANCE_FIELDS = new Set([
-  'device',
-  'employmentStatus',
-  'gender',
-  'timeAtBank',
-  'bankExperience',
-]);
-
 const AUTO_ADVANCE_DELAY = 800; // ms
 const SAVE_DEBOUNCE_DELAY = 500; // ms
-const TOTAL_DEMO_QUESTIONS = DEMOGRAPHICS_QUESTIONS.length;
+
+/** Shape of a demographics question fetched from the database. */
+interface DBDemoQuestion {
+  _id: string;           // demographicKey from config (used as storage key)
+  number: number;
+  text: string;
+  fieldType: string;
+  inputType: 'text' | 'dropdown' | 'radio';
+  options: string[];
+  allowOther: boolean;
+  placeholder: string;
+  autoAdvance: boolean;
+}
 
 interface SingleQuestionAnonymousSurveyShellProps {
   campaign: {
@@ -69,7 +52,7 @@ type SurveyStage = 'demographics' | 'survey' | 'completed';
  * Single-Question Auto-Advance Survey Shell for Anonymous Surveys
  *
  * Flow:
- *   1. Demographics stage  — hardcoded 13 questions, always shown first
+ *   1. Demographics stage  — questions fetched from DB (surveyType=demographics)
  *   2. Survey stage        — Likert questions fetched from database
  *   3. Completed stage     — thank-you screen
  *
@@ -95,7 +78,9 @@ export function SingleQuestionAnonymousSurveyShell({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
 
-  // ── Demographics state ────────────────────────────────────────────────────
+  // ── Demographics state (DB-driven) ──────────────────────────────────────
+  const [demoQuestions, setDemoQuestions] = useState<DBDemoQuestion[]>([]);
+  const [demoLoading, setDemoLoading] = useState(true);
   const [currentDemoIndex, setCurrentDemoIndex] = useState(0);
   const [demoAnswers, setDemoAnswers] = useState<Record<string, string>>(
     (existingDemographics as Record<string, string> | null) ?? {}
@@ -114,10 +99,63 @@ export function SingleQuestionAnonymousSurveyShell({
   const demoAdvanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Derived: current demo question ────────────────────────────────────────
-  const currentDemoQuestion = DEMOGRAPHICS_QUESTIONS[currentDemoIndex];
-  const demoProgressPercentage = Math.round(
-    ((currentDemoIndex + 1) / TOTAL_DEMO_QUESTIONS) * 100
-  );
+  const currentDemoQuestion = demoQuestions[currentDemoIndex] ?? null;
+  const totalDemoQuestions = demoQuestions.length;
+  const demoProgressPercentage = totalDemoQuestions > 0
+    ? Math.round(((currentDemoIndex + 1) / totalDemoQuestions) * 100)
+    : 0;
+
+  // ============================================
+  // 0. FETCH DEMOGRAPHICS QUESTIONS FROM DB
+  // ============================================
+  useEffect(() => {
+    async function fetchDemographics() {
+      try {
+        const res = await fetch('/api/public/surveys?surveyType=demographics');
+        if (!res.ok) throw new Error('Failed to fetch demographics survey');
+        const data = await res.json();
+
+        const questions: DBDemoQuestion[] = (data.sections ?? [])
+          .flatMap((section: { questions: Array<{
+            _id: string;
+            number: number;
+            text: string;
+            config: DemographicsQuestionConfig | null;
+          }> }) => section.questions)
+          .map((q: {
+            _id: string;
+            number: number;
+            text: string;
+            config: DemographicsQuestionConfig | null;
+          }) => {
+            const cfg = q.config as DemographicsQuestionConfig | null;
+            return {
+              _id: cfg?.demographicKey ?? q._id,
+              number: q.number,
+              text: q.text,
+              fieldType: cfg?.fieldType ?? '',
+              inputType: cfg?.inputType ?? 'text',
+              options: cfg?.options ?? [],
+              allowOther: cfg?.allowOther ?? false,
+              placeholder: cfg?.placeholder ?? '',
+              autoAdvance: cfg?.autoAdvance ?? false,
+            } satisfies DBDemoQuestion;
+          });
+
+        setDemoQuestions(questions);
+      } catch (error) {
+        console.error('Error fetching demographics questions:', error);
+      } finally {
+        setDemoLoading(false);
+      }
+    }
+
+    if (stage === 'demographics' || !existingDemographics) {
+      fetchDemographics();
+    } else {
+      setDemoLoading(false);
+    }
+  }, [stage, existingDemographics]);
 
   // ============================================
   // 1. FETCH SURVEY DATA
@@ -266,13 +304,13 @@ export function SingleQuestionAnonymousSurveyShell({
   // ============================================
   const handleDemographicsNext = useCallback(async () => {
     if (isDemoAdvancing || isDemoCompleting) return;
-    const isLast = currentDemoIndex === TOTAL_DEMO_QUESTIONS - 1;
+    const isLast = currentDemoIndex === totalDemoQuestions - 1;
     if (isLast) {
       await completeDemographics();
     } else {
       setCurrentDemoIndex((prev) => prev + 1);
     }
-  }, [isDemoAdvancing, isDemoCompleting, currentDemoIndex, completeDemographics]);
+  }, [isDemoAdvancing, isDemoCompleting, currentDemoIndex, totalDemoQuestions, completeDemographics]);
 
   // ============================================
   // 7. DEMOGRAPHICS CHANGE HANDLER
@@ -281,8 +319,7 @@ export function SingleQuestionAnonymousSurveyShell({
     (questionId: string, value: string) => {
       if (isDemoAdvancing || isDemoCompleting) return;
       setDemoAnswers((prev) => ({ ...prev, [questionId]: value }));
-      const fieldType = currentDemoQuestion?.fieldType ?? '';
-      if (AUTO_ADVANCE_FIELDS.has(fieldType)) {
+      if (currentDemoQuestion?.autoAdvance) {
         setIsDemoAdvancing(true);
         if (demoAdvanceTimeoutRef.current) clearTimeout(demoAdvanceTimeoutRef.current);
         demoAdvanceTimeoutRef.current = setTimeout(() => {
@@ -423,7 +460,7 @@ export function SingleQuestionAnonymousSurveyShell({
   }, []);
 
   // ── Loading ───────────────────────────────────────────────────────────────
-  if (loading || !survey) {
+  if ((loading || !survey) && stage !== 'demographics') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -436,13 +473,24 @@ export function SingleQuestionAnonymousSurveyShell({
 
   // ── Demographics stage ────────────────────────────────────────────────────
   if (stage === 'demographics') {
+    if (demoLoading) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-600" />
+            <p className="text-gray-600">Loading demographics...</p>
+          </div>
+        </div>
+      );
+    }
+
     // Safety guard — index is always in bounds but TypeScript needs the check
     if (!currentDemoQuestion) return null;
 
     const currentDemoAnswer = demoAnswers[currentDemoQuestion._id];
-    const isAutoAdvanceField = AUTO_ADVANCE_FIELDS.has(currentDemoQuestion.fieldType);
+    const isAutoAdvanceField = currentDemoQuestion.autoAdvance;
     const canAdvance = Boolean(currentDemoAnswer);
-    const isLastDemo = currentDemoIndex === TOTAL_DEMO_QUESTIONS - 1;
+    const isLastDemo = currentDemoIndex === totalDemoQuestions - 1;
 
     return (
       <div className="min-h-screen bg-white px-4 py-12">
@@ -469,7 +517,7 @@ export function SingleQuestionAnonymousSurveyShell({
           <div className="mb-12">
             <div className="mb-3 flex items-center justify-between text-sm">
               <span className="font-medium text-gray-600">
-                Demographics: {currentDemoIndex + 1} of {TOTAL_DEMO_QUESTIONS}
+                Demographics: {currentDemoIndex + 1} of {totalDemoQuestions}
               </span>
               <span className="font-semibold text-primary-600">
                 {demoProgressPercentage}%
@@ -500,6 +548,10 @@ export function SingleQuestionAnonymousSurveyShell({
                     questionNumber={currentDemoQuestion.number}
                     questionText={currentDemoQuestion.text}
                     fieldType={currentDemoQuestion.fieldType}
+                    inputType={currentDemoQuestion.inputType}
+                    options={currentDemoQuestion.options}
+                    allowOther={currentDemoQuestion.allowOther}
+                    placeholder={currentDemoQuestion.placeholder}
                     value={currentDemoAnswer ?? ''}
                     onChange={handleDemographicsChange}
                     disabled={isDemoAdvancing || isDemoCompleting}
@@ -623,7 +675,7 @@ export function SingleQuestionAnonymousSurveyShell({
   }
 
   // ── Survey stage ──────────────────────────────────────────────────────────
-  if (!currentQuestion) return null;
+  if (loading || !survey || !currentQuestion) return null;
 
   const renderQuestionInput = () => {
     const currentAnswer = answers[currentQuestion._id];
