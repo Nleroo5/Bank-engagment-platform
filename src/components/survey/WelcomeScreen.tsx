@@ -176,6 +176,11 @@ export function WelcomeScreen({
           />
         )}
 
+        {/* Red line divider */}
+        <div className="mb-6 flex justify-center">
+          <Image src="/red-line.png" alt="" width={500} height={4} className="w-full h-auto" />
+        </div>
+
         {/* Logistics */}
         <div className="mb-6 space-y-2">
           {survey?.estimatedMinutes && (
@@ -190,13 +195,14 @@ export function WelcomeScreen({
               <span>Survey closes: {formatEndDate(campaignEndDate)}</span>
             </div>
           )}
-          {isAnonymous && (
-            <div className="flex items-center gap-2 text-green-700">
-              <Shield className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span>{anonymityNotice}</span>
-            </div>
-          )}
         </div>
+
+        {isAnonymous && (
+          <div className="mb-6 flex items-center gap-2 text-green-700">
+            <Shield className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <span>{anonymityNotice}</span>
+          </div>
+        )}
 
         {survey?.instructions && (
           <div className="mb-6 rounded-md bg-blue-50 p-4">
@@ -226,11 +232,6 @@ export function WelcomeScreen({
             ))}
           </div>
         )}
-
-        {/* Red line divider */}
-        <div className="mb-6 flex justify-center">
-          <Image src="/red-line.png" alt="" width={500} height={4} className="w-full h-auto" />
-        </div>
 
         <button
           onClick={onBegin}
