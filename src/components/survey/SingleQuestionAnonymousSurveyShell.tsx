@@ -861,8 +861,11 @@ export function SingleQuestionAnonymousSurveyShell({
               Your identity is fully protected.
             </div>
             <p className="text-sm text-gray-500">
-              You may now close this window. Your feedback is valuable and will
+              Your feedback is valuable and will
               help improve our organization.
+            </p>
+            <p className="mt-3 text-sm text-gray-400">
+              You may now close this window.
             </p>
           </motion.div>
         </div>
