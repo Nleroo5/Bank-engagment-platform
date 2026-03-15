@@ -48,7 +48,7 @@ export default async function EditQuestionPage({
         surveyId={params.id}
         surveyType={question.survey.surveyType}
         categories={categories}
-        question={question}
+        question={{ ...question, weight: question.weight.toNumber() }}
       />
     </div>
   );
