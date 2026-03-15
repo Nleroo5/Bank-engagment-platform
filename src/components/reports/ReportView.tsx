@@ -4,11 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { CategoryScoresChart } from '@/components/charts/CategoryScoresChart';
 import type { WeightedCategoryScore } from '@/components/charts/CategoryScoresChart';
 import { CategoryRadarChart } from '@/components/charts/CategoryRadarChart';
-import { EngagementDonutChart } from '@/components/charts/EngagementDonutChart';
 import { DemographicDonutGrid } from '@/components/charts/DemographicDonutChart';
 import { ParticipationBarChart } from '@/components/charts/ParticipationBarChart';
 import { CategoryScoreGrid } from '@/components/reports/CategoryScoreCard';
-import { EngagementGauge } from '@/components/charts/EngagementGauge';
 import { DemographicsTreemap } from '@/components/charts/DemographicsTreemap';
 import { DivergingBarChart } from '@/components/charts/DivergingBarChart';
 import type { CategoryResponseDistribution } from '@/components/charts/DivergingBarChart';
@@ -24,12 +22,6 @@ import {
   SkeletonChart,
   SkeletonTable,
 } from '@/components/ui/Skeleton';
-
-interface ScoreDistribution {
-  highlyEngaged: { count: number; percentage: number };
-  moderatelyEngaged: { count: number; percentage: number };
-  disengaged: { count: number; percentage: number };
-}
 
 interface ReportData {
   campaign: {
@@ -65,7 +57,6 @@ interface ReportData {
     }>;
   };
   categoryAggregates?: WeightedCategoryScore[];
-  scoreDistribution?: ScoreDistribution;
   responseDistribution?: CategoryResponseDistribution[];
   demographicBreakdowns?: Record<string, DemographicBreakdown>;
   respondentDemographics?: RespondentDemographicsData;
@@ -323,37 +314,7 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 2. Engagement Gauge + Distribution Donut — scored only */}
-          {!isDemographics && data.scoreDistribution && data.scores && (
-            <div className="rounded-lg border border-gray-200 bg-white p-6">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">
-                Engagement Overview
-              </h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="flex flex-col items-center">
-                  <h3 className="mb-2 text-sm font-semibold text-gray-600">
-                    Overall Score
-                  </h3>
-                  <EngagementGauge
-                    score={data.scores.overall}
-                    maxScore={scaleMax}
-                  />
-                </div>
-                <div className="flex flex-col items-center">
-                  <h3 className="mb-2 text-sm font-semibold text-gray-600">
-                    Distribution
-                  </h3>
-                  <EngagementDonutChart
-                    distribution={data.scoreDistribution}
-                    overallScore={data.scores.overall}
-                    scaleMax={scaleMax}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 3. Category Weighted Scores Chart — scored only */}
+          {/* 2. Category Weighted Scores Chart — scored only */}
           {!isDemographics && (
             <>
               {data.categoryAggregates && data.categoryAggregates.length > 0 ? (
