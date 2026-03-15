@@ -124,7 +124,7 @@ export function WelcomeScreen({
         style={{ backgroundColor: cardBackground ?? '#ffffff' }}
       >
         {/* USF Platform Header — inside card */}
-        <div className="mb-6 flex justify-center">
+        <div className="mb-6 -mx-[5%] flex justify-center">
           <Image
             src="/header-logo.png"
             alt="USF"
