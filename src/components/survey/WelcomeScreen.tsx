@@ -178,7 +178,7 @@ export function WelcomeScreen({
 
         {/* Red line divider */}
         <div className="mb-6 flex justify-center">
-          <Image src="/red-line.png" alt="" width={500} height={4} className="w-full h-auto" />
+          <Image src="/red-line.png" alt="" width={500} height={4} className="w-[95%] h-auto" />
         </div>
 
         {/* Logistics */}
