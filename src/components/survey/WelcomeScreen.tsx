@@ -131,7 +131,7 @@ export function WelcomeScreen({
             width={672}
             height={225}
             priority
-            className="h-auto w-full"
+            className="h-auto w-[90%]"
           />
         </div>
 
@@ -178,7 +178,7 @@ export function WelcomeScreen({
 
         {/* Red line divider */}
         <div className="mb-6 flex justify-center">
-          <Image src="/red-line.png" alt="" width={500} height={4} className="w-[95%] h-auto" />
+          <Image src="/red-line.png" alt="" width={500} height={4} className="w-full h-auto" />
         </div>
 
         {/* Logistics */}
