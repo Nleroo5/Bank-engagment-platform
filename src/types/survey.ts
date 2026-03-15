@@ -46,7 +46,7 @@ export interface Category {
   colorCode?: string;
   description?: string;
   sortOrder?: number;
-  weight: number; // Scoring weight multiplier (e.g., 1.75, 2.3) - default 1.0
+  weight?: number; // Legacy category-level weight (scoring now uses per-question weights)
 }
 
 // Question with populated category reference
