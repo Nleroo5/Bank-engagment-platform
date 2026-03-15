@@ -691,54 +691,54 @@ export function SingleQuestionAnonymousSurveyShell({
     return (
       <div className="min-h-screen bg-white px-4 py-12">
         <div className="mx-auto max-w-2xl">
-          {/* Logo */}
-          <div className="mb-6 flex justify-center">
-            <Image
-              src="/header-logo.png"
-              alt="Logo"
-              width={260}
-              height={87}
-              priority
-              className="h-auto w-auto"
-            />
-          </div>
+          <div className="overflow-hidden rounded-3xl bg-white shadow-xl transition-shadow duration-300 hover:shadow-2xl">
+            <div className="px-8 py-8 md:px-12 md:py-10">
+              {/* Logo */}
+              <div className="mb-6">
+                <Image
+                  src="/header-logo.png"
+                  alt="Logo"
+                  width={672}
+                  height={224}
+                  priority
+                  className="h-auto w-full"
+                />
+              </div>
 
-          {/* Anonymity badge */}
-          <div className="mb-8 flex items-center justify-center gap-2 rounded-full bg-green-50 px-5 py-2.5 text-sm font-medium text-green-700 shadow-sm">
-            <Shield className="h-4 w-4" />
-            Anonymous Survey — Demographics
-          </div>
+              {/* Anonymity badge */}
+              <div className="mb-8 flex items-center justify-center gap-2 rounded-full bg-green-50 px-5 py-2.5 text-sm font-medium text-green-700 shadow-sm">
+                <Shield className="h-4 w-4" />
+                Anonymous Survey — Demographics
+              </div>
 
-          {/* Progress */}
-          <div className="mb-12">
-            <div className="mb-3 flex items-center justify-between text-sm">
-              <span className="font-medium text-gray-600">
-                Demographics: {currentDemoIndex + 1} of {totalDemoQuestions}
-              </span>
-              <span className="font-semibold text-primary-600">
-                {demoProgressPercentage}%
-              </span>
-            </div>
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
-              <div
-                className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-600 ease-out"
-                style={{ width: `${demoProgressPercentage}%` }}
-              />
-            </div>
-          </div>
+              {/* Progress */}
+              <div className="mb-12">
+                <div className="mb-3 flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-600">
+                    Demographics: {currentDemoIndex + 1} of {totalDemoQuestions}
+                  </span>
+                  <span className="font-semibold text-primary-600">
+                    {demoProgressPercentage}%
+                  </span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-600 ease-out"
+                    style={{ width: `${demoProgressPercentage}%` }}
+                  />
+                </div>
+              </div>
 
-          {/* Question Card */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentDemoQuestion._id}
-              initial={{ opacity: 0, x: 30, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
-              transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-              className="mb-8"
-            >
-              <div className="overflow-hidden rounded-3xl bg-white shadow-xl transition-shadow duration-300 hover:shadow-2xl">
-                <div className="px-8 py-12 md:px-12 md:py-16">
+              {/* Question */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentDemoQuestion._id}
+                  initial={{ opacity: 0, x: 30, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                  className="mb-8"
+                >
                   <DemographicsField
                     questionId={currentDemoQuestion._id}
                     questionNumber={currentDemoQuestion.number}
@@ -752,55 +752,55 @@ export function SingleQuestionAnonymousSurveyShell({
                     onChange={handleDemographicsChange}
                     disabled={isDemoAdvancing || isDemoCompleting}
                   />
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+                </motion.div>
+              </AnimatePresence>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={handleDemographicsBack}
-              disabled={currentDemoIndex === 0 || isDemoAdvancing}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </button>
+              {/* Navigation */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handleDemographicsBack}
+                  disabled={currentDemoIndex === 0 || isDemoAdvancing}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </button>
 
-            {!isAutoAdvanceField && canAdvance && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => void handleDemographicsNext()}
-                disabled={isDemoAdvancing || isDemoCompleting}
-                className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-xl disabled:opacity-40"
-              >
-                {isDemoCompleting ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Saving...
-                  </>
-                ) : isLastDemo ? (
-                  <>
-                    Continue to Survey
-                    <ChevronRight className="h-4 w-4" />
-                  </>
-                ) : (
-                  'Next'
+                {!isAutoAdvanceField && canAdvance && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => void handleDemographicsNext()}
+                    disabled={isDemoAdvancing || isDemoCompleting}
+                    className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-xl disabled:opacity-40"
+                  >
+                    {isDemoCompleting ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Saving...
+                      </>
+                    ) : isLastDemo ? (
+                      <>
+                        Continue to Survey
+                        <ChevronRight className="h-4 w-4" />
+                      </>
+                    ) : (
+                      'Next'
+                    )}
+                  </motion.button>
                 )}
-              </motion.button>
-            )}
-          </div>
+              </div>
 
-          {isAutoAdvanceField && !currentDemoAnswer && (
-            <div className="mt-6 text-center text-sm text-gray-400">
-              Select an option to automatically continue
+              {isAutoAdvanceField && !currentDemoAnswer && (
+                <div className="mt-6 text-center text-sm text-gray-400">
+                  Select an option to automatically continue
+                </div>
+              )}
+
+              <div className="mt-4 text-center text-xs text-gray-300">
+                Use ← arrow key to go back
+              </div>
             </div>
-          )}
-
-          <div className="mt-4 text-center text-xs text-gray-300">
-            Use ← arrow key to go back
           </div>
         </div>
       </div>
@@ -914,116 +914,116 @@ export function SingleQuestionAnonymousSurveyShell({
   return (
     <div className="min-h-screen bg-white px-4 py-12">
       <div className="mx-auto max-w-2xl">
-        {/* Logo */}
-        <div className="mb-6 flex justify-center">
-          <Image
-            src="/header-logo.png"
-            alt="Logo"
-            width={180}
-            height={60}
-            priority
-            className="h-auto w-auto"
-          />
-        </div>
+        <div className="overflow-hidden rounded-3xl bg-white shadow-xl transition-shadow duration-300 hover:shadow-2xl">
+          <div className="px-8 py-8 md:px-12 md:py-10">
+            {/* Logo */}
+            <div className="mb-6">
+              <Image
+                src="/header-logo.png"
+                alt="Logo"
+                width={672}
+                height={224}
+                priority
+                className="h-auto w-full"
+              />
+            </div>
 
-        {/* Anonymity badge */}
-        <div className="mb-8 flex items-center justify-center gap-2 rounded-full bg-green-50 px-5 py-2.5 text-sm font-medium text-green-700 shadow-sm">
-          <Shield className="h-4 w-4" />
-          Anonymous Survey
-        </div>
+            {/* Anonymity badge */}
+            <div className="mb-8 flex items-center justify-center gap-2 rounded-full bg-green-50 px-5 py-2.5 text-sm font-medium text-green-700 shadow-sm">
+              <Shield className="h-4 w-4" />
+              Anonymous Survey
+            </div>
 
-        {/* Progress Bar */}
-        <div className="mb-12">
-          <div className="mb-3 flex items-center justify-between text-sm">
-            <span className="font-medium text-gray-600">
-              Question {currentQuestionIndex + 1} of {totalQuestions}
-            </span>
-            <span className="font-semibold text-primary-600">{progressPercentage}%</span>
-          </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
-            <div
-              className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-600 ease-out"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Save Indicator */}
-        {isSaving && (
-          <div className="mb-6 flex items-center justify-center gap-2 text-sm text-gray-500">
-            <Save className="h-4 w-4 animate-pulse" />
-            <span>Saving</span>
-          </div>
-        )}
-
-        {/* Answered Indicator */}
-        <AnimatePresence>
-          {justAnswered && !isAdvancing && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              className="mb-6 flex items-center justify-center gap-2"
-            >
-              <div className="flex items-center gap-2 rounded-full bg-accent-50 px-4 py-2 text-sm font-medium text-accent-600">
-                <CheckCircle2 className="h-5 w-5" />
-                <span>Answer recorded</span>
+            {/* Progress Bar */}
+            <div className="mb-12">
+              <div className="mb-3 flex items-center justify-between text-sm">
+                <span className="font-medium text-gray-600">
+                  Question {currentQuestionIndex + 1} of {totalQuestions}
+                </span>
+                <span className="font-semibold text-primary-600">{progressPercentage}%</span>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-600 ease-out"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            </div>
 
-        {/* Question Card */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentQuestion._id}
-            initial={{ opacity: 0, x: 30, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            className="mb-8"
-          >
-            <div className="overflow-hidden rounded-3xl bg-white shadow-xl transition-shadow duration-300 hover:shadow-2xl">
-              <div className="px-8 py-12 md:px-12 md:py-16">
+            {/* Save Indicator */}
+            {isSaving && (
+              <div className="mb-6 flex items-center justify-center gap-2 text-sm text-gray-500">
+                <Save className="h-4 w-4 animate-pulse" />
+                <span>Saving</span>
+              </div>
+            )}
+
+            {/* Answered Indicator */}
+            <AnimatePresence>
+              {justAnswered && !isAdvancing && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  className="mb-6 flex items-center justify-center gap-2"
+                >
+                  <div className="flex items-center gap-2 rounded-full bg-accent-50 px-4 py-2 text-sm font-medium text-accent-600">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span>Answer recorded</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Question */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentQuestion._id}
+                initial={{ opacity: 0, x: 30, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
+                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                className="mb-8"
+              >
                 {currentQuestion.sectionTitle && (
                   <div className="mb-4 text-sm font-medium text-gray-500">
                     {currentQuestion.sectionTitle}
                   </div>
                 )}
                 {renderQuestionInput()}
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+              </motion.div>
+            </AnimatePresence>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-center">
-          {isLastQuestion && answers[currentQuestion._id] !== undefined && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSubmit}
-              disabled={isSaving}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-xl disabled:opacity-40"
-            >
-              {isSaving ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Submitting...
-                </>
-              ) : (
-                'Submit Survey'
+            {/* Navigation */}
+            <div className="flex items-center justify-center">
+              {isLastQuestion && answers[currentQuestion._id] !== undefined && (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSubmit}
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-xl disabled:opacity-40"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Survey'
+                  )}
+                </motion.button>
               )}
-            </motion.button>
-          )}
-        </div>
+            </div>
 
-        {!isLastQuestion && !answers[currentQuestion._id] && (
-          <div className="mt-6 text-center text-sm text-gray-400">
-            Select an answer to automatically continue
+            {!isLastQuestion && !answers[currentQuestion._id] && (
+              <div className="mt-6 text-center text-sm text-gray-400">
+                Select an answer to automatically continue
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
