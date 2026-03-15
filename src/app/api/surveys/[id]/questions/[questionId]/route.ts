@@ -73,6 +73,7 @@ export async function PUT(
       questionNumber,
       isRequired,
       isReversed,
+      weight,
       categoryIds = [],
       config,
     } = body;
@@ -100,6 +101,7 @@ export async function PUT(
         surveyjsName: `q${questionNumber}`,
         isRequired,
         isReversed,
+        weight: weight ?? undefined,
         config: config ?? undefined,
         categories: {
           create: categoryIds.map((categoryId: string) => ({

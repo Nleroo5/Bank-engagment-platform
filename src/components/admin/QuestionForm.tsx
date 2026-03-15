@@ -29,6 +29,7 @@ interface Question {
   questionType: string;
   isRequired: boolean;
   isReversed: boolean;
+  weight?: number;
   categories: { category: Category; categoryId: string }[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config?: any;
@@ -76,6 +77,7 @@ export function QuestionForm({
     questionNumber: question?.questionNumber || defaultQuestionNumber,
     isRequired: question?.isRequired ?? true,
     isReversed: question?.isReversed ?? false,
+    weight: question?.weight ?? 1,
     categoryIds: question?.categories.map((c) => c.categoryId) || [],
   });
   const [demoConfig, setDemoConfig] = useState<DemoConfig>(() => {
@@ -161,7 +163,7 @@ export function QuestionForm({
           Question Details
         </h2>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
           {/* Question Number */}
           <div>
             <label
@@ -180,6 +182,30 @@ export function QuestionForm({
                 setFormData({
                   ...formData,
                   questionNumber: parseInt(e.target.value),
+                })
+              }
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+          </div>
+
+          {/* Weight */}
+          <div>
+            <label
+              htmlFor="weight"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Weight
+            </label>
+            <input
+              type="number"
+              id="weight"
+              min="0.01"
+              step="0.01"
+              value={formData.weight}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  weight: parseFloat(e.target.value) || 1,
                 })
               }
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
@@ -249,7 +275,7 @@ export function QuestionForm({
           </div>
 
           {/* Question Text */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <label
               htmlFor="text"
               className="block text-sm font-medium text-gray-700"

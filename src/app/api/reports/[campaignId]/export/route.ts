@@ -205,11 +205,11 @@ export async function GET(
           number: q.number,
           text: q.text,
           isReversed: q.isReversed,
+          weight: q.weight,
           category: {
             _id: q.category._id,
             _type: 'category' as const,
             name: q.category.name,
-            weight: q.category.weight,
             colorCode: q.category.colorCode,
             sortOrder: q.category.sortOrder,
           },
@@ -272,7 +272,7 @@ export async function GET(
         if (categoryScores.length === 0) {
           return {
             categoryName: category.name,
-            categoryWeight: category.weight,
+            categoryWeight: 1,
             questionCount: 0,
             respondentCount: 0,
             averageWeightedScore: 0,
@@ -306,7 +306,7 @@ export async function GET(
 
         return {
           categoryName: category.name,
-          categoryWeight: category.weight,
+          categoryWeight: categoryScores[0]?.categoryWeight || 1,
           questionCount: categoryScores[0]?.questionCount || 0,
           respondentCount: weightedScores.length,
           averageWeightedScore: Math.round(averageWeighted * 10) / 10,

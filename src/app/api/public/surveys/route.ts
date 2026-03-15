@@ -112,6 +112,7 @@ export async function GET(request: NextRequest) {
             number: question.questionNumber,
             text: question.text,
             isReversed: question.isReversed,
+            weight: parseFloat(question.weight.toString()),
             anchorText: (config?.anchorText as string) || null,
             fieldType: (config?.fieldType as string) || null,
             config: config || null,

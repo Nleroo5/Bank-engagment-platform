@@ -108,6 +108,7 @@ model Question {
 
   isRequired Boolean @default(true)
   isReversed Boolean @default(false)
+  weight     Decimal  @default(1.0) @db.Decimal(4, 2)
 
   sortOrder Int
   createdAt DateTime @default(now())

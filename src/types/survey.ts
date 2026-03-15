@@ -57,6 +57,7 @@ export interface Question {
   text: string;
   category: Category;
   isReversed: boolean;
+  weight: number; // Per-question scoring weight multiplier (default 1.0)
   anchorText?: string;
   fieldType?: string; // For demographics: 'bankName', 'state', 'bankSize', 'division', etc.
   config?: DemographicsQuestionConfig | null;

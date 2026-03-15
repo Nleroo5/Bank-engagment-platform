@@ -69,6 +69,7 @@ export async function POST(
       questionNumber,
       isRequired = true,
       isReversed = false,
+      weight = 1,
       categoryIds = [],
       config,
     } = body;
@@ -99,6 +100,7 @@ export async function POST(
         surveyjsName: `q${questionNumber}`,
         isRequired,
         isReversed,
+        weight,
         sortOrder,
         config: config ?? undefined,
         categories: {

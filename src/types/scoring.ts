@@ -18,7 +18,7 @@ export interface ResponseData {
   isReversed: boolean; // Whether this question uses reverse scoring
   categoryId: string;
   categoryName: string;
-  categoryWeight: number;
+  questionWeight: number; // Per-question weight multiplier (default 1.0)
 }
 
 /**

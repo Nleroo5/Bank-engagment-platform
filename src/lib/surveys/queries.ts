@@ -110,6 +110,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
             weight: parseFloat(qCategory.weight.toString()),
           },
           isReversed: question.isReversed,
+          weight: parseFloat(question.weight.toString()),
           anchorText: (question.config as { anchorText?: string })?.anchorText,
           fieldType: (question.config as { fieldType?: string })?.fieldType,
           slug: undefined,

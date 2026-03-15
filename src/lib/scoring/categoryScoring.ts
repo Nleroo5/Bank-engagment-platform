@@ -102,13 +102,13 @@ export function validateScoringData(
   const errors: ScoringError[] = [];
   const warnings: ScoringError[] = [];
 
-  // Check all categories have weights
-  for (const category of categories) {
-    if (category.weight === undefined || category.weight === null) {
+  // Check all responses have question weights
+  for (const response of responses) {
+    if (response.questionWeight === undefined || response.questionWeight === null) {
       errors.push({
         type: 'MISSING_WEIGHT',
-        categoryId: category._id,
-        message: `Category "${category.name}" is missing a weight value`,
+        categoryId: response.categoryId,
+        message: `Question "${response.questionId}" is missing a weight value`,
       });
     }
   }
@@ -171,7 +171,6 @@ export function roundScore(value: number, decimals: number = 1): number {
 function calculateSingleCategoryScore(
   categoryId: string,
   categoryName: string,
-  categoryWeight: number,
   categoryColorCode: string | undefined,
   categorySortOrder: number | undefined,
   responses: AdjustedResponse[],
@@ -185,12 +184,24 @@ function calculateSingleCategoryScore(
   // Calculate raw total (sum of adjusted values)
   const rawTotal = responses.reduce((sum, r) => sum + r.adjustedValue, 0);
 
-  // Apply weight multiplier
-  const weightedScore = rawTotal * categoryWeight;
+  // Apply per-question weight multipliers
+  const weightedScore = responses.reduce(
+    (sum, r) => sum + r.adjustedValue * r.questionWeight,
+    0
+  );
 
   // Calculate maximum possible scores
   const maxPossibleRaw = questionCount * scaleMax;
-  const maxPossibleWeighted = maxPossibleRaw * categoryWeight;
+  const maxPossibleWeighted = responses.reduce(
+    (sum, r) => sum + scaleMax * r.questionWeight,
+    0
+  );
+
+  // Effective average weight for this category (for display purposes)
+  const categoryWeight =
+    questionCount > 0
+      ? responses.reduce((sum, r) => sum + r.questionWeight, 0) / questionCount
+      : 1;
 
   // Calculate percentage
   const rawPercentage =
@@ -286,7 +297,6 @@ export function calculateCategoryScores(
     const categoryScore = calculateSingleCategoryScore(
       category._id,
       category.name,
-      category.weight,
       category.colorCode,
       category.sortOrder,
       categoryResponses,
@@ -380,10 +390,10 @@ export function prepareResponsesForScoring(
     _id: string;
     number: number;
     isReversed: boolean;
+    weight: number;
     category: {
       _id: string;
       name: string;
-      weight: number;
     };
   }>
 ): ResponseData[] {
@@ -402,7 +412,7 @@ export function prepareResponsesForScoring(
       isReversed: question.isReversed,
       categoryId: question.category._id,
       categoryName: question.category.name,
-      categoryWeight: question.category.weight,
+      questionWeight: question.weight,
     };
   });
 }

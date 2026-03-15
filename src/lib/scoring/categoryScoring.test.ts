@@ -95,7 +95,7 @@ describe('adjustResponse', () => {
       isReversed: false,
       categoryId: 'cat1',
       categoryName: 'Test',
-      categoryWeight: 1.0,
+      questionWeight: 1.0,
     };
 
     const adjusted = adjustResponse(response, 3);
@@ -111,7 +111,7 @@ describe('adjustResponse', () => {
       isReversed: true,
       categoryId: 'cat1',
       categoryName: 'Test',
-      categoryWeight: 1.0,
+      questionWeight: 1.0,
     };
 
     const adjusted = adjustResponse(response, 3);
@@ -134,7 +134,7 @@ describe('validateScoringData', () => {
         isReversed: false,
         categoryId: 'cat-communication',
         categoryName: 'Communication',
-        categoryWeight: 1.75,
+        questionWeight: 1.75,
       },
     ];
 
@@ -143,30 +143,21 @@ describe('validateScoringData', () => {
     expect(validation.errors).toHaveLength(0);
   });
 
-  it('should fail when category is missing weight', () => {
-    const invalidCategories: Category[] = [
-      {
-        _id: 'cat1',
-        _type: 'category',
-        name: 'Test',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        weight: undefined as any, // Intentionally invalid for testing
-      },
-    ];
-
+  it('should fail when question is missing weight', () => {
     const responses: ResponseData[] = [
       {
         questionId: 'q1',
         questionNumber: 1,
         value: 2,
         isReversed: false,
-        categoryId: 'cat1',
-        categoryName: 'Test',
-        categoryWeight: 1.0,
+        categoryId: 'cat-communication',
+        categoryName: 'Communication',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        questionWeight: undefined as any, // Intentionally invalid for testing
       },
     ];
 
-    const validation = validateScoringData(responses, invalidCategories, 1, 3);
+    const validation = validateScoringData(responses, mockCategories, 1, 3);
     expect(validation.isValid).toBe(false);
     expect(validation.errors).toHaveLength(1);
     expect(validation.errors[0]!.type).toBe('MISSING_WEIGHT');
@@ -181,7 +172,7 @@ describe('validateScoringData', () => {
         isReversed: false,
         categoryId: 'cat-communication',
         categoryName: 'Communication',
-        categoryWeight: 1.75,
+        questionWeight: 1.75,
       },
     ];
 
@@ -200,7 +191,7 @@ describe('validateScoringData', () => {
         isReversed: false,
         categoryId: 'non-existent-cat',
         categoryName: 'Unknown',
-        categoryWeight: 1.0,
+        questionWeight: 1.0,
       },
     ];
 
@@ -246,7 +237,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-communication',
         categoryName: 'Communication',
-        categoryWeight: 1.75,
+        questionWeight: 1.75,
       },
       {
         questionId: 'q2',
@@ -255,7 +246,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-communication',
         categoryName: 'Communication',
-        categoryWeight: 1.75,
+        questionWeight: 1.75,
       },
     ];
 
@@ -293,7 +284,7 @@ describe('calculateCategoryScores', () => {
         isReversed: true, // Should become 3 (Frequently)
         categoryId: 'cat-leadership',
         categoryName: 'Leadership',
-        categoryWeight: 1.0,
+        questionWeight: 1.0,
       },
       {
         questionId: 'q2',
@@ -302,7 +293,7 @@ describe('calculateCategoryScores', () => {
         isReversed: true, // Should become 1 (Rarely)
         categoryId: 'cat-leadership',
         categoryName: 'Leadership',
-        categoryWeight: 1.0,
+        questionWeight: 1.0,
       },
     ];
 
@@ -336,7 +327,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-communication',
         categoryName: 'Communication',
-        categoryWeight: 1.75,
+        questionWeight: 1.75,
       },
       {
         questionId: 'q2',
@@ -345,7 +336,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-leadership',
         categoryName: 'Leadership',
-        categoryWeight: 1.0,
+        questionWeight: 1.0,
       },
     ];
 
@@ -376,7 +367,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-communication',
         categoryName: 'Communication',
-        categoryWeight: 1.75,
+        questionWeight: 1.75,
       },
       {
         questionId: 'q2',
@@ -385,7 +376,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-leadership',
         categoryName: 'Leadership',
-        categoryWeight: 1.0,
+        questionWeight: 1.0,
       },
       {
         questionId: 'q3',
@@ -394,7 +385,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-culture',
         categoryName: 'Culture',
-        categoryWeight: 2.3,
+        questionWeight: 2.3,
       },
     ];
 
@@ -442,7 +433,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-leadership',
         categoryName: 'Leadership',
-        categoryWeight: 1.0,
+        questionWeight: 1.0,
       },
     ];
 
@@ -474,7 +465,7 @@ describe('calculateCategoryScores', () => {
         isReversed: false,
         categoryId: 'cat-communication',
         categoryName: 'Communication',
-        categoryWeight: 1.75,
+        questionWeight: 1.75,
       },
     ];
 
@@ -512,10 +503,10 @@ describe('prepareResponsesForScoring', () => {
         _id: 'q1',
         number: 1,
         isReversed: true,
+        weight: 1.5,
         category: {
           _id: 'cat1',
           name: 'Test Category',
-          weight: 1.5,
         },
       },
     ];
@@ -527,7 +518,7 @@ describe('prepareResponsesForScoring', () => {
     expect(prepared[0]!.value).toBe(3);
     expect(prepared[0]!.isReversed).toBe(true);
     expect(prepared[0]!.categoryName).toBe('Test Category');
-    expect(prepared[0]!.categoryWeight).toBe(1.5);
+    expect(prepared[0]!.questionWeight).toBe(1.5);
   });
 
   it('should throw error for missing question', () => {
@@ -544,10 +535,10 @@ describe('prepareResponsesForScoring', () => {
         _id: 'q1',
         number: 1,
         isReversed: false,
+        weight: 1.0,
         category: {
           _id: 'cat1',
           name: 'Test',
-          weight: 1.0,
         },
       },
     ];
