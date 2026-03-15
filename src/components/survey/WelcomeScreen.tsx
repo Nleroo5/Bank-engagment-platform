@@ -131,7 +131,7 @@ export function WelcomeScreen({
             width={672}
             height={225}
             priority
-            className="h-auto w-[90%]"
+            className="h-auto w-[86%]"
           />
         </div>
 
