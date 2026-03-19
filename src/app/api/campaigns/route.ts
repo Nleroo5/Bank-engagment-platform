@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         surveyId,
         surveyTitle: survey.title,
         organizationId: finalOrganizationId,
-        status: 'ACTIVE',
+        status: 'DRAFT',
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
         accessCode: accessCode.toUpperCase(),
