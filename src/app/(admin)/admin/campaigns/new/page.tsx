@@ -19,7 +19,7 @@ export default async function NewCampaignPage() {
   try {
     const surveys = await prisma.survey.findMany({
       where: {
-        status: 'ACTIVE',
+        status: { in: ['ACTIVE', 'PUBLISHED'] },
       },
       include: {
         _count: {
