@@ -19,7 +19,7 @@ export default async function NewCampaignPage() {
   try {
     const surveys = await prisma.survey.findMany({
       where: {
-        status: { in: ['ACTIVE', 'PUBLISHED'] },
+        status: 'PUBLISHED',
       },
       include: {
         _count: {
@@ -44,7 +44,7 @@ export default async function NewCampaignPage() {
         ? parseInt(survey.surveyNumber, 10)
         : undefined,
       surveyType: survey.surveyType,
-      isActive: survey.status === 'ACTIVE',
+      isActive: survey.status === 'PUBLISHED',
       estimatedMinutes: undefined, // Not stored in PostgreSQL surveys
     }));
   } catch (error) {

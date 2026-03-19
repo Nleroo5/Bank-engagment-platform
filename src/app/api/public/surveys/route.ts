@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     const survey = surveyId
       ? await prisma.survey.findUnique({ where: { id: surveyId }, include: surveyInclude })
-      : await prisma.survey.findFirst({ where: { surveyType: surveyType!, status: 'ACTIVE' }, include: surveyInclude });
+      : await prisma.survey.findFirst({ where: { surveyType: surveyType!, status: 'PUBLISHED' }, include: surveyInclude });
 
     if (!survey) {
       return NextResponse.json(
