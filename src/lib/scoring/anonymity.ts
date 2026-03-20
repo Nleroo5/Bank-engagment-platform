@@ -104,8 +104,8 @@ export async function getFilterableOptionsAnonymous(
     },
   });
 
-  // If below threshold, return empty filters
-  if (responses.length < ANONYMITY_THRESHOLD) {
+  // Return all filter options regardless of respondent count
+  if (responses.length === 0) {
     return {
       divisions: [],
       jobRoles: [],
@@ -140,15 +140,12 @@ export async function getFilterableOptionsAnonymous(
     const options: DemographicFilter[] = [];
 
     for (const [value, count] of counts) {
-      // Only include options that maintain the threshold
-      if (count >= ANONYMITY_THRESHOLD) {
-        options.push({
-          field,
-          label: `${label}: ${value}`,
-          value,
-          count,
-        });
-      }
+      options.push({
+        field,
+        label: `${label}: ${value}`,
+        value,
+        count,
+      });
     }
 
     return options.sort((a, b) => a.value.localeCompare(b.value));

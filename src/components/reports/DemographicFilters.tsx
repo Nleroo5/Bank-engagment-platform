@@ -93,7 +93,7 @@ export function DemographicFilters({
           </select>
           {filterOptions.divisions.length === 0 && (
             <p className="mt-1 text-xs text-gray-500">
-              No divisions meet the anonymity threshold (min 5 respondents)
+              No division data available
             </p>
           )}
         </div>
@@ -118,7 +118,7 @@ export function DemographicFilters({
           </select>
           {filterOptions.jobRoles.length === 0 && (
             <p className="mt-1 text-xs text-gray-500">
-              No job roles meet the anonymity threshold
+              No job role data available
             </p>
           )}
         </div>
@@ -143,7 +143,7 @@ export function DemographicFilters({
           </select>
           {filterOptions.timeAtBank.length === 0 && (
             <p className="mt-1 text-xs text-gray-500">
-              No tenure groups meet the anonymity threshold
+              No tenure data available
             </p>
           )}
         </div>
@@ -168,7 +168,7 @@ export function DemographicFilters({
           </select>
           {filterOptions.genders.length === 0 && (
             <p className="mt-1 text-xs text-gray-500">
-              No gender groups meet the anonymity threshold
+              No gender data available
             </p>
           )}
         </div>
