@@ -157,6 +157,9 @@ export async function GET(
     }).filter((d) => d.distribution.length > 0);
 
     const completedCount = campaign.anonymousResponses.length;
+    const totalStartedCount = await prisma.anonymousResponse.count({
+      where: { campaignId: params.campaignId },
+    });
 
     // ============================================
     // SCORED SURVEY DATA (skip for demographics)
@@ -582,8 +585,12 @@ export async function GET(
       summarySheet.addRow([]);
       const metricsHeader = summarySheet.addRow(['Response Metrics']);
       metricsHeader.getCell(1).font = { bold: true, size: 12, underline: true };
+      const tsRow = summarySheet.addRow(['Total Started', totalStartedCount]);
+      tsRow.getCell(1).font = { bold: true };
       const crRow = summarySheet.addRow(['Completed Responses', completedCount]);
       crRow.getCell(1).font = { bold: true };
+      const rrRow = summarySheet.addRow(['Completion Rate', totalStartedCount > 0 ? `${Math.round((completedCount / totalStartedCount) * 100)}%` : 'N/A']);
+      rrRow.getCell(1).font = { bold: true };
 
       if (!isDemographicsSurvey) {
         summarySheet.addRow([]);
@@ -832,7 +839,7 @@ export async function GET(
         const demoTitle = demoSheet.addRow(['RESPONDENT DEMOGRAPHICS']);
         demoTitle.getCell(1).font = { bold: true, size: 14 };
         demoSheet.addRow([]);
-        const trRow = demoSheet.addRow(['Total Respondents', completedCount]);
+        const trRow = demoSheet.addRow(['Total Respondents (Completed)', completedCount]);
         trRow.getCell(1).font = { bold: true };
         demoSheet.addRow([]);
 
@@ -916,12 +923,11 @@ export async function GET(
         );
         yPosition += 7;
       }
-      const maxResponses = campaign.maxResponses ?? completedCount;
-      doc.text(`Completed Responses: ${completedCount} / ${maxResponses}`, 20, yPosition);
+      doc.text(`Completed Responses: ${completedCount} / ${totalStartedCount}`, 20, yPosition);
       yPosition += 7;
       if (!isDemographicsSurvey) {
-        const responseRate = maxResponses > 0
-          ? Math.round((completedCount / maxResponses) * 1000) / 10
+        const responseRate = totalStartedCount > 0
+          ? Math.round((completedCount / totalStartedCount) * 1000) / 10
           : 0;
         doc.text(`Response Rate: ${responseRate}%`, 20, yPosition);
         yPosition += 7;

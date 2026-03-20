@@ -49,6 +49,11 @@ export async function GET(
       where: { campaignId: params.campaignId, flaggedForReview: true },
     });
 
+    // Total respondents who started the survey (completed or not)
+    const totalStartedCount = await prisma.anonymousResponse.count({
+      where: { campaignId: params.campaignId },
+    });
+
     // Fetch survey with full question and category data
     let survey;
     try {
@@ -166,7 +171,10 @@ export async function GET(
         };
       });
 
-      const totalCount = campaign.anonymousResponses.length;
+      const completedCount = campaign.anonymousResponses.length;
+      const completionRate = totalStartedCount > 0
+        ? Math.round((completedCount / totalStartedCount) * 100 * 10) / 10
+        : 0;
 
       return NextResponse.json({
         campaign: {
@@ -179,9 +187,9 @@ export async function GET(
           status: campaign.status,
         },
         metrics: {
-          totalInvitations: totalCount,
-          completedCount: totalCount,
-          completionRate: 100,
+          totalInvitations: totalStartedCount,
+          completedCount,
+          completionRate,
           filteredCount: filteredDemoResponses.length,
           flaggedCount,
         },
@@ -386,10 +394,10 @@ export async function GET(
       };
     });
 
-    const totalCount = campaign.anonymousResponses.length;
-    // completionRate is total completions / total completions (all loaded responses are completed)
-    // filteredCount separately tracks how many match the current demographic filters
-    const completionRate = 100;
+    const completedCount = campaign.anonymousResponses.length;
+    const completionRate = totalStartedCount > 0
+      ? Math.round((completedCount / totalStartedCount) * 100 * 10) / 10
+      : 0;
 
     const sectionAggregates = survey.sections.map((section) => {
       const sectionQuestionIds = section.questions.map((q) => q._id);
@@ -640,8 +648,8 @@ export async function GET(
         isAnonymous: true,
       },
       metrics: {
-        totalInvitations: totalCount,
-        completedCount: campaign.anonymousResponses.length,
+        totalInvitations: totalStartedCount,
+        completedCount,
         completionRate,
         filteredCount: filteredData.length,
         flaggedCount,
