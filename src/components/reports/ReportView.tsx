@@ -361,8 +361,8 @@ export function ReportView({ campaignId }: ReportViewProps) {
             </div>
           )}
 
-          {/* 6. Sections Table — scored only */}
-          {!isDemographics && data.scores && (
+          {/* 6. Sections Table — scored only, hide if only 1 section */}
+          {!isDemographics && data.scores && data.scores.sections.length > 1 && (
             <div className="rounded-lg border border-gray-200 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-gray-900">
                 Scores by Section

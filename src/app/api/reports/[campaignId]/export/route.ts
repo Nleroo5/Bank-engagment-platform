@@ -679,8 +679,8 @@ export async function GET(
         autoWidth(categorySheet);
       }
 
-      // Sheet 3: Section Scores (scored surveys only)
-      if (!isDemographicsSurvey && sectionAggregates.length > 0) {
+      // Sheet 3: Section Scores (scored surveys only, hide if only 1 section)
+      if (!isDemographicsSurvey && sectionAggregates.length > 1) {
         const sectionSheet = workbook.addWorksheet('Section Scores');
         const secTitle = sectionSheet.addRow(['SCORES BY SECTION']);
         secTitle.getCell(1).font = { bold: true, size: 14 };
@@ -1015,8 +1015,8 @@ export async function GET(
         yPosition = (doc as any).lastAutoTable.finalY + 15;
       }
 
-      // Section Scores table (scored surveys only)
-      if (!isDemographicsSurvey && sectionAggregates.length > 0) {
+      // Section Scores table (scored surveys only, hide if only 1 section)
+      if (!isDemographicsSurvey && sectionAggregates.length > 1) {
         if (yPosition > 240) {
           doc.addPage();
           yPosition = 20;
