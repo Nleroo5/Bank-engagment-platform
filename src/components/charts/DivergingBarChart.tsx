@@ -58,15 +58,10 @@ function transformData(
       const sometimes = cat.distribution['2'] || 0;
       const frequently = cat.distribution['3'] || 0;
 
-      // Split "Sometimes" evenly across both sides for a true diverging layout
-      const sometimesPct = Math.round((sometimes / total) * 1000) / 10;
-      const sometimesHalf = Math.round(sometimesPct * 5) / 10; // half, rounded to 1 decimal
-
       const row: TransformedRow = {
         category: cat.categoryName,
         'Rarely': -Math.round((rarely / total) * 1000) / 10,
-        'Sometimes (left)': -sometimesHalf,
-        'Sometimes (right)': sometimesHalf,
+        'Sometimes': -Math.round((sometimes / total) * 1000) / 10,
         'Frequently': Math.round((frequently / total) * 1000) / 10,
       };
       return row;
@@ -94,29 +89,15 @@ function transformData(
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload || !payload.length) return null;
 
-  // Merge "Sometimes (left)" and "Sometimes (right)" into a single line
   const merged: Array<{ name: string; value: number; color: string }> = [];
-  let sometimesTotal = 0;
-  let sometimesColor = '';
 
   payload.forEach((p) => {
     const name = String(p.name ?? '');
     const val = Math.abs(Number(p.value ?? 0));
-    if (name.startsWith('Sometimes')) {
-      sometimesTotal += val;
-      sometimesColor = p.color ?? sometimesColor;
-    } else if (val !== 0) {
+    if (val !== 0) {
       merged.push({ name, value: val, color: p.color ?? '#6B7280' });
     }
   });
-
-  if (sometimesTotal > 0) {
-    merged.splice(1, 0, {
-      name: 'Sometimes',
-      value: Math.round(sometimesTotal * 10) / 10,
-      color: sometimesColor,
-    });
-  }
 
   return (
     <div className="rounded-lg border bg-white px-3 py-2 text-sm shadow-lg">
@@ -186,17 +167,10 @@ export function DivergingBarChart({
                     name="Rarely"
                   />
                   <Bar
-                    dataKey="Sometimes (left)"
+                    dataKey="Sometimes"
                     stackId="stack"
                     fill={LIKERT3_COLORS.sometimes}
-                    name="Sometimes (left)"
-                  />
-                  <Bar
-                    dataKey="Sometimes (right)"
-                    stackId="stack"
-                    fill={LIKERT3_COLORS.sometimes}
-                    name="Sometimes (right)"
-                    legendType="none"
+                    name="Sometimes"
                   />
                   <Bar
                     dataKey="Frequently"
@@ -242,9 +216,7 @@ export function DivergingBarChart({
 
               <Legend
                 formatter={(value: string) => (
-                  <span className="text-xs text-gray-600">
-                    {value.replace(' (left)', '').replace(' (right)', '')}
-                  </span>
+                  <span className="text-xs text-gray-600">{value}</span>
                 )}
                 wrapperStyle={{ fontSize: 11 }}
               />
@@ -255,7 +227,7 @@ export function DivergingBarChart({
 
       <p className="mt-2 text-center text-xs text-gray-400">
         {isLikert3
-          ? 'Left = Rarely + Sometimes, Right = Sometimes + Frequently (Sometimes split across center)'
+          ? 'Left = Rarely + Sometimes, Right = Frequently'
           : 'Left = Negative sentiment, Right = Positive sentiment (Neutral on right side)'}
       </p>
     </div>
