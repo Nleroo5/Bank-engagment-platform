@@ -61,6 +61,8 @@ export interface Question {
   anchorText?: string;
   fieldType?: string; // For demographics: 'bankName', 'state', 'bankSize', 'division', etc.
   config?: DemographicsQuestionConfig | null;
+  parentQuestionId?: string;
+  subQuestionLetter?: string; // "" for parent/standalone, "a"/"b"/"c" for sub-questions
   slug?: {
     current: string;
   };

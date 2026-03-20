@@ -14,7 +14,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
         orderBy: { sortOrder: 'asc' },
         include: {
           questions: {
-            orderBy: { questionNumber: 'asc' },
+            orderBy: [{ questionNumber: 'asc' }, { subQuestionLetter: 'asc' }],
             include: {
               categories: {
                 include: {
@@ -26,7 +26,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
         },
       },
       questions: {
-        orderBy: { questionNumber: 'asc' },
+        orderBy: [{ questionNumber: 'asc' }, { subQuestionLetter: 'asc' }],
         include: {
           categories: {
             include: {
@@ -113,6 +113,8 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
           weight: parseFloat(question.weight.toString()),
           anchorText: (question.config as { anchorText?: string })?.anchorText,
           fieldType: (question.config as { fieldType?: string })?.fieldType,
+          parentQuestionId: question.parentQuestionId || undefined,
+          subQuestionLetter: question.subQuestionLetter || undefined,
           slug: undefined,
         };
       }),

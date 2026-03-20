@@ -91,6 +91,15 @@ export async function PUT(
       where: { questionId: params.questionId },
     });
 
+    // Fetch existing question to preserve sub-question fields
+    const existing = await prisma.question.findUnique({
+      where: { id: params.questionId },
+    });
+    const subLetter = existing?.subQuestionLetter || '';
+    const surveyjsName = subLetter
+      ? `q${questionNumber}${subLetter}`
+      : `q${questionNumber}`;
+
     // Update question with new categories
     const question = await prisma.question.update({
       where: { id: params.questionId },
@@ -98,7 +107,7 @@ export async function PUT(
         text,
         questionType,
         questionNumber,
-        surveyjsName: `q${questionNumber}`,
+        surveyjsName,
         isRequired,
         isReversed,
         weight: weight ?? undefined,
@@ -139,12 +148,17 @@ export async function DELETE(
   }
 
   try {
-    // Delete question (cascade will handle categories)
+    // Count sub-questions that will be cascade-deleted
+    const subQuestionCount = await prisma.question.count({
+      where: { parentQuestionId: params.questionId },
+    });
+
+    // Delete question (cascade will handle categories and sub-questions)
     await prisma.question.delete({
       where: { id: params.questionId },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, deletedSubQuestions: subQuestionCount });
   } catch (error) {
     console.error('Failed to delete question:', error);
     return NextResponse.json(

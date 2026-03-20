@@ -35,12 +35,18 @@ interface Question {
   config?: any;
 }
 
+interface ParentQuestion {
+  id: string;
+  questionNumber: number;
+}
+
 interface QuestionFormProps {
   surveyId: string;
   surveyType?: string;
   categories: Category[];
   question?: Question;
   defaultQuestionNumber?: number;
+  parentQuestion?: ParentQuestion;
 }
 
 const DEFAULT_DEMO_CONFIG: DemoConfig = {
@@ -59,6 +65,7 @@ export function QuestionForm({
   categories,
   question,
   defaultQuestionNumber = 1,
+  parentQuestion,
 }: QuestionFormProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -74,7 +81,7 @@ export function QuestionForm({
   const [formData, setFormData] = useState({
     text: question?.text || '',
     questionType: getDefaultQuestionType(),
-    questionNumber: question?.questionNumber || defaultQuestionNumber,
+    questionNumber: parentQuestion?.questionNumber || question?.questionNumber || defaultQuestionNumber,
     isRequired: question?.isRequired ?? true,
     isReversed: question?.isReversed ?? false,
     weight: question?.weight ?? 1,
@@ -121,7 +128,10 @@ export function QuestionForm({
       } else if (isCustom && customNeedsOptions) {
         payload = { ...formData, config: { options: customOptions } };
       } else {
-        payload = formData;
+        payload = { ...formData };
+      }
+      if (parentQuestion && !question?.id) {
+        (payload as Record<string, unknown>).parentQuestionId = parentQuestion.id;
       }
 
       const response = await fetch(url, {
@@ -163,30 +173,38 @@ export function QuestionForm({
           Question Details
         </h2>
 
+        {parentQuestion && (
+          <div className="mb-4 rounded-md bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            Sub-question of Question {parentQuestion.questionNumber}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
           {/* Question Number */}
-          <div>
-            <label
-              htmlFor="questionNumber"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Question Number *
-            </label>
-            <input
-              type="number"
-              id="questionNumber"
-              required
-              min="1"
-              value={formData.questionNumber}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  questionNumber: parseInt(e.target.value),
-                })
-              }
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-            />
-          </div>
+          {!parentQuestion && (
+            <div>
+              <label
+                htmlFor="questionNumber"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Question Number *
+              </label>
+              <input
+                type="number"
+                id="questionNumber"
+                required
+                min="1"
+                value={formData.questionNumber}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    questionNumber: parseInt(e.target.value),
+                  })
+                }
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+          )}
 
           {/* Weight */}
           <div>

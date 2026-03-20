@@ -884,6 +884,10 @@ export function SingleQuestionAnonymousSurveyShell({
   // ── Survey stage ──────────────────────────────────────────────────────────
   if (loading || !survey || !currentQuestion) return null;
 
+  const displayLabel = currentQuestion.subQuestionLetter
+    ? `${currentQuestion.number}.${currentQuestion.subQuestionLetter}`
+    : undefined;
+
   const renderQuestionInput = () => {
     const currentAnswer = answers[currentQuestion._id];
 
@@ -897,6 +901,7 @@ export function SingleQuestionAnonymousSurveyShell({
           value={currentAnswer as number}
           onChange={(id, value) => handleAnswer(id, value)}
           disabled={isSaving || isAdvancing}
+          displayLabel={displayLabel}
         />
       );
     }
@@ -912,6 +917,7 @@ export function SingleQuestionAnonymousSurveyShell({
           onChange={(id, value) => handleAnswer(id, value)}
           disabled={isSaving || isAdvancing}
           isReversed={currentQuestion.isReversed}
+          displayLabel={displayLabel}
         />
       );
     }

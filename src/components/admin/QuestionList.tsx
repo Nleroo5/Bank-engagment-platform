@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUp, ArrowDown, Edit, Trash2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, Edit, Trash2, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -28,6 +28,8 @@ interface Question {
   isRequired: boolean;
   isReversed: boolean;
   sortOrder: number;
+  parentQuestionId?: string | null;
+  subQuestionLetter?: string | null;
   categories: { category?: Category; categoryId: string }[];
   config?: DemographicsConfig | null;
 }
@@ -47,10 +49,6 @@ export function QuestionList({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (questionId: string) => {
-    if (!confirm('Are you sure you want to delete this question?')) {
-      return;
-    }
-
     setDeletingId(questionId);
     try {
       const response = await fetch(
@@ -100,150 +98,203 @@ export function QuestionList({
     }
   };
 
-  return (
-    <div className="space-y-3">
-      {questions.map((question, index) => {
-        const questionCategories = question.categories
-          .map((qc) => {
-            const category =
-              qc.category || categories.find((c) => c.id === qc.categoryId);
-            return category;
-          })
-          .filter(Boolean) as Category[];
+  // Separate parent/standalone questions from sub-questions
+  const parentQuestions = questions.filter((q) => !q.parentQuestionId);
+  const subQuestionMap = new Map<string, Question[]>();
+  for (const q of questions) {
+    if (q.parentQuestionId) {
+      const subs = subQuestionMap.get(q.parentQuestionId) || [];
+      subs.push(q);
+      subQuestionMap.set(q.parentQuestionId, subs);
+    }
+  }
 
-        return (
-          <div
-            key={question.id || index}
-            className="flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-4 hover:bg-gray-50"
-          >
-            {/* Question Number */}
-            <div className="flex-shrink-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700">
-                {question.questionNumber}
-              </div>
-            </div>
+  const renderQuestionRow = (
+    question: Question,
+    index: number,
+    siblings: Question[],
+    isSubQuestion: boolean
+  ) => {
+    const questionCategories = question.categories
+      .map((qc) => {
+        const category =
+          qc.category || categories.find((c) => c.id === qc.categoryId);
+        return category;
+      })
+      .filter(Boolean) as Category[];
 
-            {/* Question Content */}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900">
-                {question.text}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                  {question.questionType}
+    const displayNumber = isSubQuestion && question.subQuestionLetter
+      ? `${question.questionNumber}.${question.subQuestionLetter}`
+      : `${question.questionNumber}`;
+
+    const subCount = question.id ? (subQuestionMap.get(question.id)?.length || 0) : 0;
+
+    return (
+      <div
+        key={question.id || index}
+        className={`flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-4 hover:bg-gray-50 ${isSubQuestion ? 'ml-10 border-l-4 border-l-blue-200' : ''}`}
+      >
+        {/* Question Number */}
+        <div className="flex-shrink-0">
+          <div className={`flex h-8 items-center justify-center rounded-full px-3 text-sm font-semibold ${isSubQuestion ? 'bg-blue-50 text-blue-600' : 'bg-primary-100 text-primary-700'}`}>
+            {displayNumber}
+          </div>
+        </div>
+
+        {/* Question Content */}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-gray-900">
+            {question.text}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600">
+              {question.questionType}
+            </span>
+            {question.isReversed && (
+              <span className="inline-flex items-center rounded-md bg-yellow-100 px-2 py-1 text-xs text-yellow-800">
+                Reversed
+              </span>
+            )}
+            {question.isRequired && (
+              <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-800">
+                Required
+              </span>
+            )}
+            {questionCategories.map((cat) => (
+              <span
+                key={cat.id}
+                className="inline-flex items-center rounded-md px-2 py-1 text-xs"
+                style={{
+                  backgroundColor: cat.colorCode
+                    ? `${cat.colorCode}20`
+                    : '#f3f4f6',
+                  color: cat.colorCode || '#374151',
+                }}
+              >
+                {cat.name}
+              </span>
+            ))}
+          </div>
+          {/* Demographics config preview */}
+          {question.config?.inputType && (
+            <div className="mt-2 rounded-md border border-gray-100 bg-gray-50 p-2">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span className="font-medium">
+                  {question.config.inputType === 'text'
+                    ? 'Text Input'
+                    : question.config.inputType === 'dropdown'
+                      ? 'Dropdown'
+                      : 'Radio Buttons'}
                 </span>
-                {question.isReversed && (
-                  <span className="inline-flex items-center rounded-md bg-yellow-100 px-2 py-1 text-xs text-yellow-800">
-                    Reversed
+                {question.config.demographicKey && (
+                  <span className="text-gray-400">
+                    · key: {question.config.demographicKey}
                   </span>
                 )}
-                {question.isRequired && (
-                  <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-800">
-                    Required
-                  </span>
+                {question.config.allowOther && (
+                  <span className="text-gray-400">· has &quot;Other&quot;</span>
                 )}
-                {questionCategories.map((cat) => (
-                  <span
-                    key={cat.id}
-                    className="inline-flex items-center rounded-md px-2 py-1 text-xs"
-                    style={{
-                      backgroundColor: cat.colorCode
-                        ? `${cat.colorCode}20`
-                        : '#f3f4f6',
-                      color: cat.colorCode || '#374151',
-                    }}
-                  >
-                    {cat.name}
-                  </span>
-                ))}
               </div>
-              {/* Demographics config preview */}
-              {question.config?.inputType && (
-                <div className="mt-2 rounded-md border border-gray-100 bg-gray-50 p-2">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className="font-medium">
-                      {question.config.inputType === 'text'
-                        ? 'Text Input'
-                        : question.config.inputType === 'dropdown'
-                          ? 'Dropdown'
-                          : 'Radio Buttons'}
-                    </span>
-                    {question.config.demographicKey && (
-                      <span className="text-gray-400">
-                        · key: {question.config.demographicKey}
+              {question.config.options &&
+                question.config.options.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {question.config.options.slice(0, 6).map((opt) => (
+                      <span
+                        key={opt}
+                        className="inline-block rounded bg-white px-1.5 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200"
+                      >
+                        {opt}
+                      </span>
+                    ))}
+                    {question.config.options.length > 6 && (
+                      <span className="inline-block px-1.5 py-0.5 text-xs text-gray-400">
+                        +{question.config.options.length - 6} more
                       </span>
                     )}
-                    {question.config.allowOther && (
-                      <span className="text-gray-400">· has &quot;Other&quot;</span>
-                    )}
                   </div>
-                  {question.config.options &&
-                    question.config.options.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {question.config.options.slice(0, 6).map((opt) => (
-                          <span
-                            key={opt}
-                            className="inline-block rounded bg-white px-1.5 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200"
-                          >
-                            {opt}
-                          </span>
-                        ))}
-                        {question.config.options.length > 6 && (
-                          <span className="inline-block px-1.5 py-0.5 text-xs text-gray-400">
-                            +{question.config.options.length - 6} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-                </div>
-              )}
+                )}
             </div>
+          )}
+        </div>
 
-            {/* Actions */}
-            <div className="flex flex-shrink-0 items-center gap-2">
-              {/* Reorder buttons */}
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={() =>
-                    question.id && handleReorder(question.id, 'up')
-                  }
-                  disabled={index === 0}
-                  className="rounded p-1 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30"
-                  title="Move up"
+        {/* Actions */}
+        <div className="flex flex-shrink-0 items-center gap-2">
+          {/* Reorder buttons */}
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() =>
+                question.id && handleReorder(question.id, 'up')
+              }
+              disabled={index === 0}
+              className="rounded p-1 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30"
+              title="Move up"
+            >
+              <ArrowUp className="h-4 w-4 text-gray-600" />
+            </button>
+            <button
+              onClick={() =>
+                question.id && handleReorder(question.id, 'down')
+              }
+              disabled={index === siblings.length - 1}
+              className="rounded p-1 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30"
+              title="Move down"
+            >
+              <ArrowDown className="h-4 w-4 text-gray-600" />
+            </button>
+          </div>
+
+          {/* Edit */}
+          <Link
+            href={`/admin/surveys/${surveyId}/questions/${question.id}/edit`}
+            className="rounded p-2 hover:bg-gray-200"
+            title="Edit"
+          >
+            <Edit className="h-4 w-4 text-primary-600" />
+          </Link>
+
+          {/* Delete */}
+          <button
+            onClick={() => {
+              if (!question.id) return;
+              const msg = subCount > 0
+                ? `This will also delete ${subCount} sub-question${subCount > 1 ? 's' : ''}. Continue?`
+                : 'Are you sure you want to delete this question?';
+              if (confirm(msg)) handleDelete(question.id);
+            }}
+            disabled={deletingId === question.id}
+            className="rounded p-2 hover:bg-red-100 disabled:opacity-50"
+            title="Delete"
+          >
+            <Trash2 className="h-4 w-4 text-red-600" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      {parentQuestions.map((question, index) => {
+        const subs = question.id ? (subQuestionMap.get(question.id) || []) : [];
+        return (
+          <div key={question.id || index}>
+            {renderQuestionRow(question, index, parentQuestions, false)}
+            {/* Sub-questions */}
+            {subs.map((sub, subIndex) =>
+              renderQuestionRow(sub, subIndex, subs, true)
+            )}
+            {/* Add sub-question button */}
+            {question.id && (
+              <div className="ml-10 mt-1">
+                <Link
+                  href={`/admin/surveys/${surveyId}/questions/new?parentId=${question.id}`}
+                  className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                 >
-                  <ArrowUp className="h-4 w-4 text-gray-600" />
-                </button>
-                <button
-                  onClick={() =>
-                    question.id && handleReorder(question.id, 'down')
-                  }
-                  disabled={index === questions.length - 1}
-                  className="rounded p-1 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30"
-                  title="Move down"
-                >
-                  <ArrowDown className="h-4 w-4 text-gray-600" />
-                </button>
+                  <Plus className="h-3 w-3" />
+                  Add sub-question
+                </Link>
               </div>
-
-              {/* Edit */}
-              <Link
-                href={`/admin/surveys/${surveyId}/questions/${question.id}/edit`}
-                className="rounded p-2 hover:bg-gray-200"
-                title="Edit"
-              >
-                <Edit className="h-4 w-4 text-primary-600" />
-              </Link>
-
-              {/* Delete */}
-              <button
-                onClick={() => question.id && handleDelete(question.id)}
-                disabled={deletingId === question.id}
-                className="rounded p-2 hover:bg-red-100 disabled:opacity-50"
-                title="Delete"
-              >
-                <Trash2 className="h-4 w-4 text-red-600" />
-              </button>
-            </div>
+            )}
           </div>
         );
       })}

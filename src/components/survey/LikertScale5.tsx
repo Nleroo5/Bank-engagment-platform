@@ -10,6 +10,7 @@ interface LikertScale5Props {
   value?: number;
   onChange: (questionId: string, value: number) => void;
   disabled?: boolean;
+  displayLabel?: string;
 }
 
 const SCALE_LABELS = [
@@ -28,6 +29,7 @@ export function LikertScale5({
   value,
   onChange,
   disabled = false,
+  displayLabel,
 }: LikertScale5Props) {
   const [selectedValue, setSelectedValue] = useState<number | undefined>(value);
 
@@ -43,7 +45,7 @@ export function LikertScale5({
   return (
     <fieldset>
       <legend className="sr-only">
-        Question {questionNumber}: {questionText}
+        Question {displayLabel ?? questionNumber}: {questionText}
       </legend>
 
       {/* Question Text - Apple Style: Large, Bold, Prominent */}

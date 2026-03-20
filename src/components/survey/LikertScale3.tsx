@@ -11,6 +11,7 @@ interface LikertScale3Props {
   onChange: (questionId: string, value: number) => void;
   disabled?: boolean;
   isReversed?: boolean;
+  displayLabel?: string;
 }
 
 const SCALE_LABELS = [
@@ -28,6 +29,7 @@ export function LikertScale3({
   onChange,
   disabled = false,
   isReversed: _isReversed = false,
+  displayLabel,
 }: LikertScale3Props) {
   const [selectedValue, setSelectedValue] = useState<number | undefined>(value);
 
@@ -43,7 +45,7 @@ export function LikertScale3({
   return (
     <fieldset>
       <legend className="sr-only">
-        Question {questionNumber}: {questionText}
+        Question {displayLabel ?? questionNumber}: {questionText}
       </legend>
 
       {/* Question Text - Apple Style: Large, Bold, Prominent */}

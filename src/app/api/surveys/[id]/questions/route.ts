@@ -30,9 +30,10 @@ export async function GET(
           },
         },
       },
-      orderBy: {
-        sortOrder: 'asc',
-      },
+      orderBy: [
+        { questionNumber: 'asc' },
+        { subQuestionLetter: 'asc' },
+      ],
     });
 
     return NextResponse.json(questions);
@@ -72,14 +73,44 @@ export async function POST(
       weight = 1,
       categoryIds = [],
       config,
+      parentQuestionId,
     } = body;
 
     // Validate required fields
-    if (!text || !questionType || !questionNumber) {
+    if (!text || !questionType || (!questionNumber && !parentQuestionId)) {
       return NextResponse.json(
-        { error: 'Text, type, and number are required' },
+        { error: 'Text, type, and number (or parent question) are required' },
         { status: 400 }
       );
+    }
+
+    // If creating a sub-question, resolve parent and auto-assign letter
+    let resolvedQuestionNumber = questionNumber;
+    let subQuestionLetter = '';
+    if (parentQuestionId) {
+      const parent = await prisma.question.findUnique({
+        where: { id: parentQuestionId },
+      });
+      if (!parent || parent.surveyId !== params.id) {
+        return NextResponse.json(
+          { error: 'Parent question not found in this survey' },
+          { status: 400 }
+        );
+      }
+      resolvedQuestionNumber = parent.questionNumber;
+
+      // Find the highest existing sub-question letter for this parent
+      const existingSubs = await prisma.question.findMany({
+        where: { parentQuestionId, subQuestionLetter: { not: '' } },
+        orderBy: { subQuestionLetter: 'desc' },
+        take: 1,
+      });
+      if (existingSubs.length > 0) {
+        const lastLetter = existingSubs[0].subQuestionLetter;
+        subQuestionLetter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+      } else {
+        subQuestionLetter = 'a';
+      }
     }
 
     // Get the highest sortOrder
@@ -90,14 +121,20 @@ export async function POST(
 
     const sortOrder = (lastQuestion?.sortOrder ?? 0) + 1;
 
+    const surveyjsName = subQuestionLetter
+      ? `q${resolvedQuestionNumber}${subQuestionLetter}`
+      : `q${resolvedQuestionNumber}`;
+
     // Create question with categories
     const question = await prisma.question.create({
       data: {
         surveyId: params.id,
         text,
         questionType,
-        questionNumber,
-        surveyjsName: `q${questionNumber}`,
+        questionNumber: resolvedQuestionNumber,
+        subQuestionLetter,
+        parentQuestionId: parentQuestionId || null,
+        surveyjsName,
         isRequired,
         isReversed,
         weight,

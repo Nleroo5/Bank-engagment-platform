@@ -98,6 +98,11 @@ model Question {
   sectionId String?
   section   Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 
+  parentQuestionId  String?
+  parentQuestion    Question?  @relation("SubQuestions", fields: [parentQuestionId], references: [id], onDelete: Cascade)
+  subQuestions      Question[] @relation("SubQuestions")
+  subQuestionLetter String     @default("")
+
   questionNumber Int
   text           String
   questionType   String
@@ -116,9 +121,10 @@ model Question {
 
   categories QuestionCategory[]
 
-  @@unique([surveyId, questionNumber])
+  @@unique([surveyId, questionNumber, subQuestionLetter])
   @@index([surveyId])
   @@index([sectionId])
+  @@index([parentQuestionId])
   @@index([surveyjsName])
   @@map("questions")
 }

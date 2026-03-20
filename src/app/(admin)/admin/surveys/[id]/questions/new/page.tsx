@@ -4,8 +4,10 @@ import { notFound } from 'next/navigation';
 
 export default async function NewQuestionPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams: { parentId?: string };
 }) {
   // Verify survey exists
   const survey = await prisma.survey.findUnique({
@@ -34,12 +36,30 @@ export default async function NewQuestionPage({
     orderBy: { sortOrder: 'asc' },
   });
 
+  // Check for parent question (sub-question creation)
+  let parentQuestion: { id: string; questionNumber: number } | undefined;
+  if (searchParams.parentId) {
+    const parent = await prisma.question.findUnique({
+      where: { id: searchParams.parentId },
+      select: { id: true, questionNumber: true, surveyId: true },
+    });
+    if (parent && parent.surveyId === params.id) {
+      parentQuestion = { id: parent.id, questionNumber: parent.questionNumber };
+    }
+  }
+
+  const isSubQuestion = !!parentQuestion;
+
   return (
     <div className="space-y-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Add Question</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {isSubQuestion ? 'Add Sub-Question' : 'Add Question'}
+        </h1>
         <p className="mt-2 text-sm text-gray-600">
-          Add a new question to {survey.title}
+          {isSubQuestion
+            ? `Add a sub-question to Question ${parentQuestion!.questionNumber} in ${survey.title}`
+            : `Add a new question to ${survey.title}`}
         </p>
       </div>
 
@@ -48,6 +68,7 @@ export default async function NewQuestionPage({
         surveyType={survey.surveyType}
         categories={categories}
         defaultQuestionNumber={nextQuestionNumber}
+        parentQuestion={parentQuestion}
       />
     </div>
   );

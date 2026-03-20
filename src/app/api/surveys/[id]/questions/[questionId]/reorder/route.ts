@@ -49,56 +49,93 @@ export async function POST(
       );
     }
 
-    // Get all questions in order
-    const allQuestions = await prisma.question.findMany({
-      where: { surveyId: params.id },
-      orderBy: { sortOrder: 'asc' },
-    });
+    const isSubQuestion = !!currentQuestion.parentQuestionId;
 
-    const currentIndex = allQuestions.findIndex(
-      (q) => q.id === params.questionId
-    );
+    if (isSubQuestion) {
+      // Sub-questions reorder among siblings by swapping letters
+      const siblings = await prisma.question.findMany({
+        where: { parentQuestionId: currentQuestion.parentQuestionId! },
+        orderBy: { subQuestionLetter: 'asc' },
+      });
 
-    if (currentIndex === -1) {
-      return NextResponse.json(
-        { error: 'Question not found in survey' },
-        { status: 404 }
+      const currentIndex = siblings.findIndex((q) => q.id === params.questionId);
+      if (currentIndex === -1) {
+        return NextResponse.json({ error: 'Sub-question not found' }, { status: 404 });
+      }
+
+      if (
+        (direction === 'up' && currentIndex === 0) ||
+        (direction === 'down' && currentIndex === siblings.length - 1)
+      ) {
+        return NextResponse.json({ error: 'Cannot move in that direction' }, { status: 400 });
+      }
+
+      const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      const swapQuestion = siblings[swapIndex];
+      if (!swapQuestion) {
+        return NextResponse.json({ error: 'Invalid swap target' }, { status: 500 });
+      }
+
+      // Swap subQuestionLetter and sortOrder
+      await prisma.$transaction([
+        prisma.question.update({
+          where: { id: currentQuestion.id },
+          data: { subQuestionLetter: swapQuestion.subQuestionLetter, sortOrder: swapQuestion.sortOrder },
+        }),
+        prisma.question.update({
+          where: { id: swapQuestion.id },
+          data: { subQuestionLetter: currentQuestion.subQuestionLetter, sortOrder: currentQuestion.sortOrder },
+        }),
+      ]);
+    } else {
+      // Parent/standalone questions reorder among other parents
+      const allQuestions = await prisma.question.findMany({
+        where: { surveyId: params.id, parentQuestionId: null },
+        orderBy: { sortOrder: 'asc' },
+      });
+
+      const currentIndex = allQuestions.findIndex(
+        (q) => q.id === params.questionId
       );
+
+      if (currentIndex === -1) {
+        return NextResponse.json(
+          { error: 'Question not found in survey' },
+          { status: 404 }
+        );
+      }
+
+      if (
+        (direction === 'up' && currentIndex === 0) ||
+        (direction === 'down' && currentIndex === allQuestions.length - 1)
+      ) {
+        return NextResponse.json(
+          { error: 'Cannot move question in that direction' },
+          { status: 400 }
+        );
+      }
+
+      const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      const swapQuestion = allQuestions[swapIndex];
+
+      if (!swapQuestion) {
+        return NextResponse.json(
+          { error: 'Invalid swap target' },
+          { status: 500 }
+        );
+      }
+
+      await prisma.$transaction([
+        prisma.question.update({
+          where: { id: currentQuestion.id },
+          data: { sortOrder: swapQuestion.sortOrder },
+        }),
+        prisma.question.update({
+          where: { id: swapQuestion.id },
+          data: { sortOrder: currentQuestion.sortOrder },
+        }),
+      ]);
     }
-
-    // Check if we can move in the requested direction
-    if (
-      (direction === 'up' && currentIndex === 0) ||
-      (direction === 'down' && currentIndex === allQuestions.length - 1)
-    ) {
-      return NextResponse.json(
-        { error: 'Cannot move question in that direction' },
-        { status: 400 }
-      );
-    }
-
-    // Swap sortOrder with adjacent question
-    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    const swapQuestion = allQuestions[swapIndex];
-
-    // TypeScript safety check (should never happen due to bounds check above)
-    if (!swapQuestion) {
-      return NextResponse.json(
-        { error: 'Invalid swap target' },
-        { status: 500 }
-      );
-    }
-
-    await prisma.$transaction([
-      prisma.question.update({
-        where: { id: currentQuestion.id },
-        data: { sortOrder: swapQuestion.sortOrder },
-      }),
-      prisma.question.update({
-        where: { id: swapQuestion.id },
-        data: { sortOrder: currentQuestion.sortOrder },
-      }),
-    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {
