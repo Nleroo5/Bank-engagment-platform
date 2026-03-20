@@ -2,7 +2,7 @@
 -- parentQuestionId: references parent question for sub-questions (null for standalone/parent questions)
 -- subQuestionLetter: empty string for parents, "a"/"b"/"c" for sub-questions
 
-ALTER TABLE "questions" ADD COLUMN IF NOT EXISTS "parentQuestionId" UUID REFERENCES "questions"("id") ON DELETE CASCADE;
+ALTER TABLE "questions" ADD COLUMN IF NOT EXISTS "parentQuestionId" TEXT REFERENCES "questions"("id") ON DELETE CASCADE;
 ALTER TABLE "questions" ADD COLUMN IF NOT EXISTS "subQuestionLetter" VARCHAR(5) NOT NULL DEFAULT '';
 
 -- Drop old unique constraint and create new composite one
