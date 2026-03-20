@@ -42,6 +42,7 @@ const updateCampaignSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   maxResponses: z.number().int().min(1).nullable().optional(),
+  allowBackNavigation: z.boolean().optional(),
   splashConfig: SplashConfigSchema.nullable().optional(),
 });
 

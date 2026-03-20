@@ -45,6 +45,7 @@ export default async function AnonymousSurveyPage({
           startDate: true,
           endDate: true,
           maxResponses: true,
+          allowBackNavigation: true,
           splashConfig: true,
         },
       });
@@ -60,6 +61,7 @@ export default async function AnonymousSurveyPage({
           startDate: true,
           endDate: true,
           maxResponses: true,
+          allowBackNavigation: true,
         },
       });
       return row ? { ...row, splashConfig: null } : null;
@@ -172,6 +174,7 @@ export default async function AnonymousSurveyPage({
           demographics={
             anonymousResponse.demographics as Record<string, unknown> | null
           }
+          allowBackNavigation={campaign.allowBackNavigation}
         />
       );
     }

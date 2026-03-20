@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
       accessCode,
       maxResponses,
       splashConfig,
+      allowBackNavigation,
     } = body;
 
     const survey = await prisma.survey.findUnique({
@@ -188,6 +189,7 @@ export async function POST(request: NextRequest) {
         endDate: endDate ? new Date(endDate) : null,
         accessCode: accessCode.toUpperCase(),
         maxResponses: maxResponses ? parseInt(maxResponses) : null,
+        allowBackNavigation: allowBackNavigation === true,
         splashConfig: validatedSplashConfig ?? Prisma.JsonNull,
         createdById: adminUserId,
       },

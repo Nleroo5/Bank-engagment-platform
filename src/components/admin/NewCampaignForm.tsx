@@ -29,6 +29,7 @@ export function NewCampaignForm({
     endDate: '',
     accessCode: '',
     maxResponses: '',
+    allowBackNavigation: false,
   });
 
   const [accessCodeError, setAccessCodeError] = useState<string | null>(null);
@@ -232,6 +233,7 @@ export function NewCampaignForm({
         maxResponses: formData.maxResponses
           ? parseInt(formData.maxResponses)
           : null,
+        allowBackNavigation: formData.allowBackNavigation === true,
         splashConfig: hasSplashConfig ? splashConfigPayload : null,
       };
 
@@ -463,6 +465,30 @@ export function NewCampaignForm({
         <p className="mt-1 text-sm text-gray-500">
           Campaign closes after this many completed responses
         </p>
+      </div>
+
+      {/* Allow Back Navigation */}
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          id="allowBackNavigation"
+          checked={formData.allowBackNavigation as boolean}
+          onChange={(e) =>
+            setFormData({ ...formData, allowBackNavigation: e.target.checked })
+          }
+          className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        <div>
+          <label
+            htmlFor="allowBackNavigation"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Allow respondents to go back to previous questions
+          </label>
+          <p className="mt-0.5 text-sm text-gray-500">
+            When enabled, respondents can navigate back to review and change their previous answers during the survey.
+          </p>
+        </div>
       </div>
 
       {/* Splash Page Editor */}

@@ -234,6 +234,7 @@ interface SingleQuestionAnonymousSurveyShellProps {
   }>;
   sessionToken: string;
   demographics: Record<string, unknown> | null;
+  allowBackNavigation?: boolean;
 }
 
 type SurveyStage = 'demographics' | 'survey' | 'completed';
@@ -254,6 +255,7 @@ export function SingleQuestionAnonymousSurveyShell({
   existingResponses,
   sessionToken,
   demographics: existingDemographics,
+  allowBackNavigation = false,
 }: SingleQuestionAnonymousSurveyShellProps) {
   // ── Core state ────────────────────────────────────────────────────────────
   const [survey, setSurvey] = useState<Survey | null>(null);
@@ -584,8 +586,13 @@ export function SingleQuestionAnonymousSurveyShell({
   );
 
   // ============================================
-  // 10. SURVEY NAVIGATION (no back button — forward-only for scored surveys)
+  // 10. SURVEY NAVIGATION — back button controlled by campaign setting
   // ============================================
+  const handleSurveyBack = useCallback(() => {
+    if (currentQuestionIndex > 0 && !isAdvancing) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  }, [currentQuestionIndex, isAdvancing]);
 
   // ============================================
   // 11. SUBMIT SURVEY
@@ -637,12 +644,13 @@ export function SingleQuestionAnonymousSurveyShell({
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         if (stage === 'demographics') handleDemographicsBack();
+        if (stage === 'survey' && allowBackNavigation) handleSurveyBack();
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [stage, handleDemographicsBack]);
+  }, [stage, handleDemographicsBack, handleSurveyBack, allowBackNavigation]);
 
   // ============================================
   // 13. CLEANUP TIMEOUTS ON UNMOUNT
@@ -996,7 +1004,19 @@ export function SingleQuestionAnonymousSurveyShell({
             </AnimatePresence>
 
             {/* Navigation */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-between">
+              {allowBackNavigation ? (
+                <button
+                  onClick={handleSurveyBack}
+                  disabled={currentQuestionIndex === 0 || isAdvancing}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </button>
+              ) : (
+                <div />
+              )}
               {isLastQuestion && answers[currentQuestion._id] !== undefined && (
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -1015,6 +1035,7 @@ export function SingleQuestionAnonymousSurveyShell({
                   )}
                 </motion.button>
               )}
+              {!allowBackNavigation && <div />}
             </div>
 
             {!isLastQuestion && !answers[currentQuestion._id] && (

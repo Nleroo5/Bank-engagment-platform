@@ -185,8 +185,9 @@ model SurveyCampaign {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  accessCode   String? @unique
-  maxResponses Int?
+  accessCode          String?  @unique
+  maxResponses        Int?
+  allowBackNavigation Boolean  @default(false)
 
   splashConfig Json?
 
