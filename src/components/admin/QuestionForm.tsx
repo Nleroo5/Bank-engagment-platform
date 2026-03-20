@@ -249,6 +249,9 @@ export function QuestionForm({
             >
               {isCustom ? (
                 <>
+                  <option value="likert5">5-Point Likert Scale</option>
+                  <option value="likert3">3-Point Likert Scale</option>
+                  <option value="truefalse">True / False</option>
                   <option value="text">Text Field</option>
                   <option value="select">Dropdown (Single Choice)</option>
                   <option value="multiselect">Multiple Choice</option>

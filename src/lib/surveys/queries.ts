@@ -100,6 +100,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
           _type: 'question' as const,
           number: question.questionNumber,
           text: question.text,
+          questionType: question.questionType,
           category: {
             _id: qCategory.id,
             _type: 'category' as const,

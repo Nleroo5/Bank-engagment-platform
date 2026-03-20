@@ -890,8 +890,10 @@ export function SingleQuestionAnonymousSurveyShell({
 
   const renderQuestionInput = () => {
     const currentAnswer = answers[currentQuestion._id];
+    // Use per-question type if available, otherwise fall back to survey-level scale
+    const effectiveType = currentQuestion.questionType || survey.scale?.scaleType;
 
-    if (survey.scale?.scaleType === 'likert5') {
+    if (effectiveType === 'likert5') {
       return (
         <LikertScale5
           questionId={currentQuestion._id}
@@ -906,7 +908,7 @@ export function SingleQuestionAnonymousSurveyShell({
       );
     }
 
-    if (survey.scale?.scaleType === 'likert3') {
+    if (effectiveType === 'likert3') {
       return (
         <LikertScale3
           questionId={currentQuestion._id}
@@ -919,6 +921,44 @@ export function SingleQuestionAnonymousSurveyShell({
           isReversed={currentQuestion.isReversed}
           displayLabel={displayLabel}
         />
+      );
+    }
+
+    if (effectiveType === 'truefalse') {
+      return (
+        <fieldset>
+          <legend className="sr-only">
+            Question {displayLabel ?? currentQuestion.number}: {currentQuestion.text}
+          </legend>
+          <div className="mb-8">
+            <p
+              className="text-xl font-semibold leading-tight tracking-tight text-gray-900 sm:text-2xl md:text-3xl"
+              id={`question-${currentQuestion._id}`}
+            >
+              {currentQuestion.text}
+            </p>
+          </div>
+          <div className="flex justify-center gap-4">
+            {[
+              { value: 1, label: 'True' },
+              { value: 0, label: 'False' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleAnswer(currentQuestion._id, option.value)}
+                disabled={isSaving || isAdvancing}
+                className={`flex-1 rounded-2xl border-2 px-8 py-5 text-lg font-semibold transition-all ${
+                  currentAnswer === option.value
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-md'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                } disabled:opacity-40`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
       );
     }
 
