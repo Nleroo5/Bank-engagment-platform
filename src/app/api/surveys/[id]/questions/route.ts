@@ -84,6 +84,23 @@ export async function POST(
       );
     }
 
+    // Check question number uniqueness for top-level questions
+    if (!parentQuestionId && questionNumber) {
+      const existing = await prisma.question.findFirst({
+        where: {
+          surveyId: params.id,
+          questionNumber,
+          subQuestionLetter: '',
+        },
+      });
+      if (existing) {
+        return NextResponse.json(
+          { error: `Question number ${questionNumber} already exists in this survey` },
+          { status: 400 }
+        );
+      }
+    }
+
     // If creating a sub-question, resolve parent and auto-assign letter
     let resolvedQuestionNumber = questionNumber;
     let subQuestionLetter = '';

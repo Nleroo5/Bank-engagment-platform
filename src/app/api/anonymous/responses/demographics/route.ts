@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,12 @@ const DemographicsRequestSchema = z.object({
 });
 
 export async function PATCH(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, { interval: 60_000, uniqueTokenPerInterval: 120 });
+  if (!rl.success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const validation = DemographicsRequestSchema.safeParse(body);

@@ -96,6 +96,28 @@ export async function GET(
 
     // No minimum respondent threshold — exports allowed for any count
 
+    // Parse demographic filters from query params (same as main report API)
+    const filters: Record<string, string> = {};
+    const division = searchParams.get('division');
+    const jobRole = searchParams.get('jobRole');
+    const timeAtBank = searchParams.get('timeAtBank');
+    const bankExperience = searchParams.get('bankExperience');
+    const gender = searchParams.get('gender');
+    if (division) filters.division = division;
+    if (jobRole) filters.jobRole = jobRole;
+    if (timeAtBank) filters.timeAtBank = timeAtBank;
+    if (bankExperience) filters.bankExperience = bankExperience;
+    if (gender) filters.gender = gender;
+
+    // Apply demographic filters to responses
+    const hasFilters = Object.keys(filters).length > 0;
+    const filteredResponses = hasFilters
+      ? campaign.anonymousResponses.filter((anonResp) => {
+          const demographics = (anonResp.demographics as Record<string, unknown>) || {};
+          return Object.entries(filters).every(([key, value]) => demographics[key] === value);
+        })
+      : campaign.anonymousResponses;
+
     // ============================================
     // BUILD DEMOGRAPHICS DISTRIBUTIONS
     // ============================================
@@ -114,7 +136,7 @@ export async function GET(
       { key: 'city', label: 'City' },
     ];
 
-    const demoData: Record<string, unknown>[] = campaign.anonymousResponses.map(
+    const demoData: Record<string, unknown>[] = filteredResponses.map(
       (r) => (r.demographics as Record<string, unknown>) || {}
     );
 
@@ -139,7 +161,7 @@ export async function GET(
       return { field: field.key, label: field.label, total, distribution };
     }).filter((d) => d.distribution.length > 0);
 
-    const completedCount = campaign.anonymousResponses.length;
+    const completedCount = filteredResponses.length;
     const totalStartedCount = await prisma.anonymousResponse.count({
       where: { campaignId: params.campaignId },
     });
@@ -215,7 +237,7 @@ export async function GET(
 
       const validQuestionIds = new Set(questions.map((q) => q._id));
 
-      const individualResults = campaign.anonymousResponses.map(
+      const individualResults = filteredResponses.map(
         (anonResponse, index) => {
           const preparedResponses = prepareResponsesForScoring(
             anonResponse.responses
@@ -320,7 +342,7 @@ export async function GET(
         const sectionQuestionIds = section.questions.map((q) => q._id);
         const allSectionResponses: number[] = [];
 
-        campaign.anonymousResponses.forEach((anonResp) => {
+        filteredResponses.forEach((anonResp) => {
           anonResp.responses
             .filter((r) => sectionQuestionIds.includes(r.questionId))
             .forEach((r) => {
@@ -344,7 +366,7 @@ export async function GET(
 
       // Engagement distribution
       const scaleMax = survey.scale!.max;
-      campaign.anonymousResponses.forEach((anonResp) => {
+      filteredResponses.forEach((anonResp) => {
         const values = anonResp.responses
           .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
           .map((r) => ((r.adjustedValue ?? r.value ?? 0) as number));
@@ -360,7 +382,7 @@ export async function GET(
 
       // Per-item average score (between scale.min and scale.max) — used for the gauge
       const allAdjustedValues: number[] = [];
-      campaign.anonymousResponses.forEach((anonResp) => {
+      filteredResponses.forEach((anonResp) => {
         anonResp.responses
           .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
           .forEach((r) => {
@@ -385,7 +407,7 @@ export async function GET(
         categoryDistCounts.set(cat._id, new Map());
       });
 
-      campaign.anonymousResponses.forEach((anonResp) => {
+      filteredResponses.forEach((anonResp) => {
         anonResp.responses.forEach((r) => {
           if (r.value === null) return;
           const catId = questionCategoryMap.get(r.questionId);
@@ -419,9 +441,9 @@ export async function GET(
       ];
 
       for (const dim of BREAKDOWN_DIMENSIONS) {
-        const groupMap = new Map<string, typeof campaign.anonymousResponses>();
+        const groupMap = new Map<string, typeof filteredResponses>();
 
-        campaign.anonymousResponses.forEach((anonResp) => {
+        filteredResponses.forEach((anonResp) => {
           const demographics = (anonResp.demographics as Record<string, unknown>) || {};
           const dimValue = demographics[dim.key];
           if (!dimValue || typeof dimValue !== 'string') return;
