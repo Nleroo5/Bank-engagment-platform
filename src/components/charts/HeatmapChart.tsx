@@ -23,6 +23,7 @@ interface HeatmapChartProps {
 }
 
 function scoreToColor(score: number, scaleMax: number): string {
+  if (scaleMax <= 0) return 'bg-gray-200 text-gray-600';
   const pct = (score / scaleMax) * 100;
   if (pct >= 80) return 'bg-green-600 text-white';
   if (pct >= 70) return 'bg-green-400 text-white';
@@ -33,6 +34,7 @@ function scoreToColor(score: number, scaleMax: number): string {
 }
 
 function scoreToHex(score: number, scaleMax: number): string {
+  if (scaleMax <= 0) return '#D1D5DB';
   const pct = (score / scaleMax) * 100;
   if (pct >= 80) return '#16A34A';
   if (pct >= 70) return '#4ADE80';

@@ -21,10 +21,11 @@ function getPerformance(percentage: number) {
 }
 
 export function EngagementGauge({ score, maxScore }: EngagementGaugeProps) {
-  const percentage = maxScore > 0 ? Math.round((score / maxScore) * 1000) / 10 : 0;
+  const rawPercentage = maxScore > 0 ? Math.round((score / maxScore) * 1000) / 10 : 0;
+  const percentage = Math.min(rawPercentage, 100);
   const performance = getPerformance(percentage);
 
-  const remaining = Math.round((100 - percentage) * 10) / 10;
+  const remaining = Math.max(Math.round((100 - percentage) * 10) / 10, 0);
   const gaugeData = [
     { name: 'score', value: percentage },
     { name: 'remaining', value: remaining },
