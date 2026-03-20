@@ -285,12 +285,12 @@ export function QuestionList({
             )}
             {/* Add sub-question button */}
             {question.id && (
-              <div className="ml-10 mt-1">
+              <div className="ml-10 mt-2 mb-1">
                 <Link
                   href={`/admin/surveys/${surveyId}/questions/new?parentId=${question.id}`}
-                  className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-500 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-600"
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-4 w-4" />
                   Add sub-question
                 </Link>
               </div>

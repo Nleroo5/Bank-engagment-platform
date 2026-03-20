@@ -35,10 +35,19 @@ export default async function EditQuestionPage({
     orderBy: { sortOrder: 'asc' },
   });
 
+  // Provide parent context when editing a sub-question
+  const parentQuestion = question.parentQuestionId
+    ? { id: question.parentQuestionId, questionNumber: question.questionNumber }
+    : undefined;
+
+  const isSubQuestion = !!parentQuestion;
+
   return (
     <div className="space-y-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Edit Question</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {isSubQuestion ? 'Edit Sub-Question' : 'Edit Question'}
+        </h1>
         <p className="mt-2 text-sm text-gray-600">
           Modify question in {question.survey.title}
         </p>
@@ -49,6 +58,7 @@ export default async function EditQuestionPage({
         surveyType={question.survey.surveyType}
         categories={categories}
         question={{ ...question, weight: question.weight.toNumber() }}
+        parentQuestion={parentQuestion}
       />
     </div>
   );
