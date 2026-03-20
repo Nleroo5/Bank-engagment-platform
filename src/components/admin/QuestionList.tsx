@@ -2,7 +2,7 @@
 
 import { ArrowUp, ArrowDown, Edit, Trash2, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Category {
@@ -41,12 +41,18 @@ interface QuestionListProps {
 }
 
 export function QuestionList({
-  questions,
+  questions: initialQuestions,
   categories,
   surveyId,
 }: QuestionListProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [localQuestions, setLocalQuestions] = useState(initialQuestions);
+
+  // Sync with server data when props change (e.g., after delete refresh)
+  useEffect(() => {
+    setLocalQuestions(initialQuestions);
+  }, [initialQuestions]);
 
   const handleDelete = async (questionId: string) => {
     setDeletingId(questionId);
@@ -63,6 +69,10 @@ export function QuestionList({
         return;
       }
 
+      // Optimistically remove from local state
+      setLocalQuestions((prev) =>
+        prev.filter((q) => q.id !== questionId && q.parentQuestionId !== questionId)
+      );
       router.refresh();
     } catch (error) {
       console.error('Failed to delete question:', error);
@@ -74,8 +84,59 @@ export function QuestionList({
 
   const handleReorder = async (
     questionId: string,
-    direction: 'up' | 'down'
+    direction: 'up' | 'down',
+    isSubQuestion: boolean
   ) => {
+    // Optimistically swap in local state first
+    setLocalQuestions((prev) => {
+      const updated = [...prev];
+
+      if (isSubQuestion) {
+        const question = updated.find((q) => q.id === questionId);
+        if (!question?.parentQuestionId) return prev;
+        const siblings = updated.filter((q) => q.parentQuestionId === question.parentQuestionId);
+        const siblingIndex = siblings.findIndex((q) => q.id === questionId);
+        const swapIndex = direction === 'up' ? siblingIndex - 1 : siblingIndex + 1;
+        if (swapIndex < 0 || swapIndex >= siblings.length) return prev;
+        const swapQuestion = siblings[swapIndex];
+        if (!swapQuestion) return prev;
+
+        // Swap subQuestionLetter
+        const currentIdx = updated.findIndex((q) => q.id === questionId);
+        const swapIdx = updated.findIndex((q) => q.id === swapQuestion.id);
+        const tempLetter = updated[currentIdx].subQuestionLetter;
+        updated[currentIdx] = { ...updated[currentIdx], subQuestionLetter: updated[swapIdx].subQuestionLetter };
+        updated[swapIdx] = { ...updated[swapIdx], subQuestionLetter: tempLetter };
+        // Re-sort by questionNumber then subQuestionLetter
+        updated.sort((a, b) => {
+          if (a.questionNumber !== b.questionNumber) return a.questionNumber - b.questionNumber;
+          return (a.subQuestionLetter || '').localeCompare(b.subQuestionLetter || '');
+        });
+      } else {
+        const parents = updated.filter((q) => !q.parentQuestionId);
+        const parentIndex = parents.findIndex((q) => q.id === questionId);
+        const swapIndex = direction === 'up' ? parentIndex - 1 : parentIndex + 1;
+        if (swapIndex < 0 || swapIndex >= parents.length) return prev;
+        const swapQuestion = parents[swapIndex];
+        if (!swapQuestion) return prev;
+
+        // Swap sortOrder
+        const currentIdx = updated.findIndex((q) => q.id === questionId);
+        const swapIdx = updated.findIndex((q) => q.id === swapQuestion.id);
+        const tempSort = updated[currentIdx].sortOrder;
+        updated[currentIdx] = { ...updated[currentIdx], sortOrder: updated[swapIdx].sortOrder };
+        updated[swapIdx] = { ...updated[swapIdx], sortOrder: tempSort };
+        // Re-sort by sortOrder
+        updated.sort((a, b) => {
+          if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+          return (a.subQuestionLetter || '').localeCompare(b.subQuestionLetter || '');
+        });
+      }
+
+      return updated;
+    });
+
+    // Then persist to server
     try {
       const response = await fetch(
         `/api/surveys/${surveyId}/questions/${questionId}/reorder`,
@@ -87,21 +148,21 @@ export function QuestionList({
       );
 
       if (!response.ok) {
+        // Revert on failure
+        setLocalQuestions(initialQuestions);
         alert('Failed to reorder question');
-        return;
       }
-
-      router.refresh();
     } catch (error) {
       console.error('Failed to reorder question:', error);
+      setLocalQuestions(initialQuestions);
       alert('Failed to reorder question');
     }
   };
 
   // Separate parent/standalone questions from sub-questions
-  const parentQuestions = questions.filter((q) => !q.parentQuestionId);
+  const parentQuestions = localQuestions.filter((q) => !q.parentQuestionId);
   const subQuestionMap = new Map<string, Question[]>();
-  for (const q of questions) {
+  for (const q of localQuestions) {
     if (q.parentQuestionId) {
       const subs = subQuestionMap.get(q.parentQuestionId) || [];
       subs.push(q);
@@ -223,7 +284,7 @@ export function QuestionList({
           <div className="flex flex-col gap-1">
             <button
               onClick={() =>
-                question.id && handleReorder(question.id, 'up')
+                question.id && handleReorder(question.id, 'up', isSubQuestion)
               }
               disabled={index === 0}
               className="rounded p-1 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30"
@@ -233,7 +294,7 @@ export function QuestionList({
             </button>
             <button
               onClick={() =>
-                question.id && handleReorder(question.id, 'down')
+                question.id && handleReorder(question.id, 'down', isSubQuestion)
               }
               disabled={index === siblings.length - 1}
               className="rounded p-1 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-30"
