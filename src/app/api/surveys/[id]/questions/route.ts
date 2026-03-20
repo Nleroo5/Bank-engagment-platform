@@ -97,6 +97,12 @@ export async function POST(
           { status: 400 }
         );
       }
+      if (parent.parentQuestionId) {
+        return NextResponse.json(
+          { error: 'Cannot create sub-questions of sub-questions' },
+          { status: 400 }
+        );
+      }
       resolvedQuestionNumber = parent.questionNumber;
 
       // Find the highest existing sub-question letter for this parent
