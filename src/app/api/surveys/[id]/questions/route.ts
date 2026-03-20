@@ -111,7 +111,7 @@ export async function POST(
         orderBy: { subQuestionLetter: 'desc' },
         take: 1,
       });
-      if (existingSubs.length > 0) {
+      if (existingSubs.length > 0 && existingSubs[0]) {
         const lastLetter = existingSubs[0].subQuestionLetter;
         subQuestionLetter = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
       } else {
