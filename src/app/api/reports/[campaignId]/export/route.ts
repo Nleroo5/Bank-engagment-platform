@@ -6,7 +6,7 @@ import {
   calculateCategoryScores,
   prepareResponsesForScoring,
 } from '@/lib/scoring/categoryScoring';
-import { checkAnonymityThreshold } from '@/lib/scoring/anonymity';
+// Anonymity threshold removed — exports allowed for any respondent count
 import {
   drawEngagementVisual,
   drawCategoryBars,
@@ -94,24 +94,7 @@ export async function GET(
       );
     }
 
-    // Check anonymity threshold for scored surveys
-    if (!isDemographicsSurvey) {
-      const meetsThreshold = await checkAnonymityThreshold(
-        campaign.id,
-        survey.surveyType
-      );
-
-      if (!meetsThreshold) {
-        return NextResponse.json(
-          {
-            error: 'Insufficient respondents',
-            message:
-              'This survey requires a minimum of 5 completed responses before exporting results.',
-          },
-          { status: 403 }
-        );
-      }
-    }
+    // No minimum respondent threshold — exports allowed for any count
 
     // ============================================
     // BUILD DEMOGRAPHICS DISTRIBUTIONS
