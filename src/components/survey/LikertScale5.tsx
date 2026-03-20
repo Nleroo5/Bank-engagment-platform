@@ -11,6 +11,7 @@ interface LikertScale5Props {
   onChange: (questionId: string, value: number) => void;
   disabled?: boolean;
   displayLabel?: string;
+  isReversed?: boolean;
 }
 
 const SCALE_LABELS = [
@@ -30,6 +31,7 @@ export function LikertScale5({
   onChange,
   disabled = false,
   displayLabel,
+  isReversed = false,
 }: LikertScale5Props) {
   const [selectedValue, setSelectedValue] = useState<number | undefined>(value);
 
@@ -55,6 +57,9 @@ export function LikertScale5({
           id={`question-${questionId}`}
         >
           {questionText}
+          {isReversed && (
+            <span className="ml-2 text-sm font-normal italic text-gray-400">#&apos;s are reversed</span>
+          )}
         </p>
         {anchorText && (
           <p className="mt-3 text-base italic text-gray-500">{anchorText}</p>

@@ -28,7 +28,7 @@ export function LikertScale3({
   value,
   onChange,
   disabled = false,
-  isReversed: _isReversed = false,
+  isReversed = false,
   displayLabel,
 }: LikertScale3Props) {
   const [selectedValue, setSelectedValue] = useState<number | undefined>(value);
@@ -55,6 +55,9 @@ export function LikertScale3({
           id={`question-${questionId}`}
         >
           {questionText}
+          {isReversed && (
+            <span className="ml-2 text-sm font-normal italic text-gray-400">#&apos;s are reversed</span>
+          )}
         </p>
         {anchorText && (
           <p className="mt-3 text-base italic text-gray-500">{anchorText}</p>

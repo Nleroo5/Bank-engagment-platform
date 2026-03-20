@@ -904,6 +904,7 @@ export function SingleQuestionAnonymousSurveyShell({
           onChange={(id, value) => handleAnswer(id, value)}
           disabled={isSaving || isAdvancing}
           displayLabel={displayLabel}
+          isReversed={currentQuestion.isReversed}
         />
       );
     }
