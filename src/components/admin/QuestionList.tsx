@@ -104,9 +104,12 @@ export function QuestionList({
         // Swap subQuestionLetter
         const currentIdx = updated.findIndex((q) => q.id === questionId);
         const swapIdx = updated.findIndex((q) => q.id === swapQuestion.id);
-        const tempLetter = updated[currentIdx].subQuestionLetter;
-        updated[currentIdx] = { ...updated[currentIdx], subQuestionLetter: updated[swapIdx].subQuestionLetter };
-        updated[swapIdx] = { ...updated[swapIdx], subQuestionLetter: tempLetter };
+        if (currentIdx === -1 || swapIdx === -1) return prev;
+        const currentItem = updated[currentIdx]!;
+        const swapItem = updated[swapIdx]!;
+        const tempLetter = currentItem.subQuestionLetter;
+        updated[currentIdx] = { ...currentItem, subQuestionLetter: swapItem.subQuestionLetter };
+        updated[swapIdx] = { ...swapItem, subQuestionLetter: tempLetter };
         // Re-sort by questionNumber then subQuestionLetter
         updated.sort((a, b) => {
           if (a.questionNumber !== b.questionNumber) return a.questionNumber - b.questionNumber;
@@ -123,9 +126,12 @@ export function QuestionList({
         // Swap sortOrder
         const currentIdx = updated.findIndex((q) => q.id === questionId);
         const swapIdx = updated.findIndex((q) => q.id === swapQuestion.id);
-        const tempSort = updated[currentIdx].sortOrder;
-        updated[currentIdx] = { ...updated[currentIdx], sortOrder: updated[swapIdx].sortOrder };
-        updated[swapIdx] = { ...updated[swapIdx], sortOrder: tempSort };
+        if (currentIdx === -1 || swapIdx === -1) return prev;
+        const currentItem = updated[currentIdx]!;
+        const swapItem = updated[swapIdx]!;
+        const tempSort = currentItem.sortOrder;
+        updated[currentIdx] = { ...currentItem, sortOrder: swapItem.sortOrder };
+        updated[swapIdx] = { ...swapItem, sortOrder: tempSort };
         // Re-sort by sortOrder
         updated.sort((a, b) => {
           if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
