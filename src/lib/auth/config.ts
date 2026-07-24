@@ -3,6 +3,7 @@ import { type JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 export type UserRole = 'SUPER_ADMIN' | 'ORG_ADMIN' | 'VIEWER' | 'RESPONDENT';
 
@@ -60,9 +61,34 @@ export const authOptions: NextAuthOptions = {
         },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email and password are required');
+        }
+
+        // Rate limit login attempts by client IP to prevent brute-force password
+        // guessing. This runs ONLY on the credentials sign-in POST — NextAuth never
+        // calls authorize() for session/csrf/providers/signout requests, so those are
+        // unaffected. Budget: RATE_LIMITS.AUTH_LOGIN (5 attempts / 15 min), and the
+        // sliding window self-heals, so a legitimate admin is never locked out for long.
+        const headers = req?.headers ?? {};
+        const forwardedFor = headers['x-forwarded-for'];
+        const realIp = headers['x-real-ip'];
+        const clientIp =
+          (typeof forwardedFor === 'string'
+            ? forwardedFor.split(',')[0]?.trim()
+            : undefined) ??
+          (typeof realIp === 'string' ? realIp : undefined) ??
+          'unknown';
+
+        const { success } = rateLimit(
+          `auth-login:${clientIp}`,
+          RATE_LIMITS.AUTH_LOGIN
+        );
+        if (!success) {
+          throw new Error(
+            'Too many login attempts. Please try again in 15 minutes.'
+          );
         }
 
         // Find user by email

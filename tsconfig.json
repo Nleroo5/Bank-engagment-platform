@@ -41,8 +41,11 @@
   ],
   "exclude": [
     "node_modules",
+    "node_modules 2",
     "node_modules.old",
     "sanity",
-    "scripts"
+    "scripts",
+    "golden-archive",
+    "_audit-quarantine"
   ]
 }

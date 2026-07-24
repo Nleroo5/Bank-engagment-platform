@@ -26,6 +26,32 @@ const SaveRequestSchema = z.object({
   responses: z.array(ResponseItemSchema).min(1),
 });
 
+/**
+ * Resolve the valid numeric answer range for a question.
+ *
+ * Ranges are PER QUESTION TYPE, not per survey: True/False questions legitimately
+ * submit 0 (False) / 1 (True), so a blanket 1..scaleMax bound would wrongly reject a
+ * "False" answer. Generic 'likert' questions fall back to the survey's configured scale.
+ */
+function allowedValueRange(question: {
+  questionType: string;
+  survey: { scale: { min: number; max: number } | null };
+}): { min: number; max: number } {
+  switch (question.questionType) {
+    case 'truefalse':
+      return { min: 0, max: 1 };
+    case 'likert5':
+      return { min: 1, max: 5 };
+    case 'likert3':
+      return { min: 1, max: 3 };
+    default:
+      return {
+        min: question.survey.scale?.min ?? 1,
+        max: question.survey.scale?.max ?? 3,
+      };
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   const ip = getClientIp(request);
   const rl = rateLimit(ip, { interval: 60_000, uniqueTokenPerInterval: 120 });
@@ -116,9 +142,36 @@ export async function PATCH(request: NextRequest) {
     const questionMap = new Map(questions.map((q) => [q.id, q]));
 
     // ============================================
+    // 4b. Scope submitted responses to this campaign's survey + validate values
+    // ============================================
+    // Keep only answers whose question belongs to THIS campaign's survey. Fabricated
+    // or cross-survey question IDs (and questions removed mid-campaign) are dropped
+    // rather than stored as junk rows.
+    const validResponses = responses.filter((r) => {
+      const q = questionMap.get(r.questionId);
+      return q !== undefined && q.surveyId === campaign.surveyId;
+    });
+
+    // Reject out-of-range numeric values. Left unchecked, a value outside the survey
+    // scale later crashes report generation (validateScoringData throws). Ranges are
+    // per question type (see allowedValueRange); textValue / null answers are exempt.
+    for (const response of validResponses) {
+      if (typeof response.value === 'number') {
+        const question = questionMap.get(response.questionId)!;
+        const { min, max } = allowedValueRange(question);
+        if (response.value < min || response.value > max) {
+          return NextResponse.json(
+            { error: 'Invalid response value.' },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // ============================================
     // 5. Upsert response items with reverse-scoring
     // ============================================
-    const upsertPromises = responses.map((response) => {
+    const upsertPromises = validResponses.map((response) => {
       const question = questionMap.get(response.questionId);
 
       // Calculate adjusted value if reversed

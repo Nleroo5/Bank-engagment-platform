@@ -949,7 +949,7 @@ export function SingleQuestionAnonymousSurveyShell({
                 type="button"
                 onClick={() => handleAnswer(currentQuestion._id, option.value)}
                 disabled={isSaving || isAdvancing}
-                className={`flex-1 rounded-2xl border-2 px-8 py-5 text-lg font-semibold transition-all ${
+                className={`flex-1 rounded-2xl border-2 px-8 py-5 text-lg font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
                   currentAnswer === option.value
                     ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-md'
                     : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'

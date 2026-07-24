@@ -76,7 +76,7 @@ export function LikertScale5({
           {SCALE_LABELS.map((item) => (
             <label
               key={item.value}
-              className={`group relative flex flex-1 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 px-4 py-6 transition-all duration-200 ${
+              className={`group relative flex flex-1 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 px-4 py-6 transition-all duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary-500 has-[:focus-visible]:ring-offset-2 ${
                 selectedValue === item.value
                   ? 'scale-105 border-primary-500 bg-primary-50 shadow-lg shadow-primary-500/30'
                   : 'border-gray-200 bg-gray-50 hover:scale-105 hover:border-gray-300 hover:bg-white hover:shadow-md'
@@ -135,7 +135,7 @@ export function LikertScale5({
           {SCALE_LABELS.map((item) => (
             <label
               key={item.value}
-              className={`group relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-5 transition-all duration-200 ${
+              className={`group relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-5 transition-all duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary-500 has-[:focus-visible]:ring-offset-2 ${
                 selectedValue === item.value
                   ? 'scale-105 border-primary-500 bg-primary-50 shadow-lg shadow-primary-500/20'
                   : 'border-gray-200 bg-gray-50 active:scale-[0.98] active:bg-white'

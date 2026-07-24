@@ -48,6 +48,7 @@ export const createMockCampaign = (
   deletedBy: null,
   accessCode: 'TESTCODE',
   maxResponses: null,
+  allowBackNavigation: false,
   splashConfig: null,
   createdAt: new Date(),
   updatedAt: new Date(),

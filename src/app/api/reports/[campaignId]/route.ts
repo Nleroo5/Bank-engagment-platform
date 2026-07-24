@@ -304,7 +304,13 @@ export async function GET(
     const individualResults = filteredData.map((data) => {
       const preparedResponses = prepareResponsesForScoring(
         data.responses
-          .filter((r) => r.value !== null && validQuestionIds.has(r.questionId))
+          .filter(
+            (r) =>
+              r.value !== null &&
+              validQuestionIds.has(r.questionId) &&
+              r.value >= survey.scale!.min &&
+              r.value <= survey.scale!.max
+          )
           .map((r) => ({
             questionId: r.questionId,
             questionNumber: r.questionNumber,
