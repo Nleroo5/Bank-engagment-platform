@@ -23,6 +23,8 @@ function getDatabaseUrl(): string | undefined {
   return url;
 }
 
+const databaseUrl = getDatabaseUrl();
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -30,11 +32,13 @@ export const prisma =
       process.env.NODE_ENV === 'development'
         ? ['query', 'error', 'warn']
         : ['error'],
-    datasources: {
-      db: {
-        url: getDatabaseUrl(),
-      },
-    },
+    // Only override the datasource URL when DATABASE_URL is actually present.
+    // Passing `url: undefined` makes the PrismaClient constructor throw at import
+    // time, which crashes `next build` — page-data collection imports this module
+    // even for `force-dynamic` pages. When omitted, Prisma falls back to the
+    // schema's env("DATABASE_URL"), so a missing URL fails at query time (runtime)
+    // instead of breaking the build.
+    ...(databaseUrl ? { datasources: { db: { url: databaseUrl } } } : {}),
   });
 
 if (process.env.NODE_ENV !== 'production') {
